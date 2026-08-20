@@ -19,3 +19,6 @@ stitch_neubrutalist_meteorological_map_system.zip
 # Misc
 .DS_Store
 Thumbs.db
+
+# Skrip uji lokal
+scratchpad/

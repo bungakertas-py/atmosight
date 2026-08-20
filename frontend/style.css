@@ -65,6 +65,35 @@ html, body {
   box-shadow: var(--shadow); pointer-events: auto;
 }
 
+/* ---- Buka-tutup panel kiri (Parameter + Model) ---- */
+/* Tab kecil di tepi KIRI kontainer Parameter, sejajar tengahnya, panah biru.
+   Lebarnya PAS sebesar tonjolannya dan berdiri sendiri, tidak mengandalkan panel
+   untuk menutupi sisanya. Itu penting: dulu tab dibuat lebar lalu separuhnya
+   disembunyikan di balik panel, akibatnya begitu panel digeser keluar, separuh
+   yang tadinya tersembunyi ikut nongol dan tabnya terlihat melar. */
+.layer-bar { position: relative; }
+.panel-toggle {
+  position: absolute; left: -18px; top: 50%; transform: translateY(-50%);
+  width: 18px; height: 46px; padding: 0; cursor: pointer; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface); border: var(--bw) solid var(--ink);
+  color: var(--primary); pointer-events: auto;
+}
+.panel-toggle:hover { background: var(--primary); color: var(--on-primary); }
+.panel-toggle .material-symbols-outlined { font-size: 17px; line-height: 1; margin-left: -3px; }
+
+/* Menyembunyikan = MENGGESER keluar bingkai ke kiri, bukan display:none.
+   Alasannya penting: transform TIDAK mengubah tata letak, jadi tinggi .layer-bar
+   tetap dan tab di sebelahnya tak ikut bergeser sedikit pun. Kalau pakai
+   display:none, kontainernya mengempis dan tombolnya melompat naik ke bawah brand. */
+.layers, .level-bar, .selects { transition: transform .28s ease; }
+.col.panels-hidden .layers,
+.col.panels-hidden .level-bar,
+.col.panels-hidden .selects {
+  transform: translateX(calc(-100% - 40px));   /* 40px = lewat padding #ui + ruang bayangan */
+  pointer-events: none;
+}
+
 /* ---- Brand: bungakertas ---- */
 .brand { display: flex; align-items: center; gap: 11px; padding: 9px 16px 9px 11px; }
 .brand-logo { flex: none; }
@@ -181,6 +210,22 @@ html, body {
     z-index: 60;
   }
   .col.items-end [data-tip]:hover::after { opacity: 1; transform: translateY(-50%) translateX(0); }
+
+  /* Tombol parameter: keterangan muncul di KANAN (panelnya di tepi kiri layar).
+     Dipakai untuk memanjangkan singkatan seperti CAPE dan CIN. */
+  .layer-btn[data-tip] { position: relative; }
+  .layer-btn[data-tip]::after {
+    content: attr(data-tip);
+    position: absolute; left: calc(100% + 10px); top: 50%;
+    transform: translateY(-50%) translateX(-6px);
+    background: var(--ink); color: var(--surface);
+    font-family: var(--font-ui); font-weight: 700; font-size: 11px;
+    letter-spacing: .02em; white-space: nowrap; text-transform: none;   /* kalimat, bukan teriakan */
+    padding: 5px 9px; border: 2px solid var(--ink); box-shadow: var(--shadow-sm);
+    opacity: 0; pointer-events: none; transition: opacity .12s ease, transform .12s ease;
+    z-index: 60;
+  }
+  .layer-btn[data-tip]:hover::after { opacity: 1; transform: translateY(-50%) translateX(0); }
 }
 
 /* ---- Ikon kondisi cuaca per kota (declutter zoom) ---- */
@@ -200,6 +245,45 @@ html, body {
 .cc-rain   .material-symbols-outlined { color: #2360c8; }
 .cc-heavy  .material-symbols-outlined { color: #e8590c; }
 .cc-storm  .material-symbols-outlined { color: #c81d5a; }
+
+/* Nama kota + nilai parameter aktif, menggantung di bawah ikon. Halo hitam tebal
+   supaya tetap terbaca di atas heatmap yang warnanya bisa apa saja. */
+.city-cond { overflow: visible; }
+.cc-lbl {
+  position: absolute; top: 33px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  white-space: nowrap; pointer-events: none; text-align: center;
+}
+.cc-lbl b {
+  font-family: "Space Grotesk", system-ui, sans-serif; font-size: 11px; font-weight: 700;
+  line-height: 1.1; color: #fff; letter-spacing: .2px;
+  text-shadow: 0 0 3px #000, 0 0 6px #000, 0 1px 2px #000;
+}
+.cc-lbl i {
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; font-weight: 700;
+  font-style: normal; line-height: 1.1; color: #fff;
+  text-shadow: 0 0 3px #000, 0 0 6px #000, 0 1px 2px #000;
+}
+.cc-cap + .cc-lbl { top: 37px; }   /* ibukota provinsi ikonnya lebih besar */
+/* Nama negara & laut yang kita gambar sendiri (pengganti ubin label CARTO). */
+.geo-lbl { pointer-events: none; background: none; border: none; }
+.geo-lbl span { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); white-space: nowrap; }
+.geo-neg span {
+  font-family: "Space Grotesk", system-ui, sans-serif; font-size: 13px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 2px; color: rgba(255, 255, 255, .68);
+  text-shadow: 0 0 4px #000, 0 1px 2px #000;
+}
+.geo-laut span {
+  font-family: "Space Grotesk", system-ui, sans-serif; font-size: 11px; font-style: italic;
+  letter-spacing: .5px; color: rgba(255, 255, 255, .5);
+  text-shadow: 0 0 4px #000, 0 1px 2px #000;
+}
+/* Peta bertema terang (mis. Hujan): teks dibalik jadi gelap berhalo putih. */
+.lbl-light .geo-neg span { color: rgba(28, 27, 27, .62); text-shadow: 0 0 4px #fff, 0 1px 2px #fff; }
+.lbl-light .geo-laut span { color: rgba(28, 27, 27, .48); text-shadow: 0 0 4px #fff, 0 1px 2px #fff; }
+
+/* Tanpa ikon kondisi, label naik ke titik kotanya sendiri dan jadi bisa diklik. */
+.city-cond.no-ico .cc-lbl { top: 6px; pointer-events: auto; cursor: pointer; }
 
 /* ===================== BOTTOM: slider (kiri) + legenda (kanan) ===================== */
 .ui-bottom { display: flex; flex-direction: row; align-items: stretch; gap: 14px; }
@@ -743,6 +827,9 @@ html, body {
 /* ---- TABLET (≤1024px): kecilkan panel, legenda bisa di-scroll ---- */
 @media (max-width: 1024px) {
   #ui { padding: 14px; }
+  /* padding #ui menyusut jadi 14px, tab ikut dikecilkan biar tak terpotong tepi layar */
+  .panel-toggle { left: -13px; width: 13px; }
+  .panel-toggle .material-symbols-outlined { font-size: 15px; margin-left: -4px; }
   .layers, .selects { width: 200px; }
   .layer-btn { padding: 10px 14px; font-size: 14px; }
   .brand-text strong { font-size: 18px; }
@@ -803,6 +890,8 @@ html, body {
   .cyc-note-top { white-space: normal; }   /* boleh membungkus kalau sempit */
 
   /* ===== Variabel → dropdown "Parameter" VERTIKAL, ikon saja (kiri) ===== */
+  .panel-toggle { display: none; }
+
   .layer-bar {
     position: static; left: auto; right: auto; top: auto;
     display: flex; flex-direction: column; align-items: flex-start; gap: 6px;

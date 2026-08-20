@@ -129,9 +129,15 @@
               <button class="layer-btn" data-layer="humidity_surface" data-tip="Kelembapan"><span class="material-symbols-outlined">humidity_percentage</span> <span class="lb-txt">Kelembapan</span></button>
               <button class="layer-btn" data-layer="cloud_surface" data-tip="Awan"><span class="material-symbols-outlined">cloud</span> <span class="lb-txt">Tutupan Awan</span></button>
               <button class="layer-btn" data-layer="pressure_surface" data-tip="Tekanan"><span class="material-symbols-outlined">speed</span> <span class="lb-txt">Tekanan</span></button>
-              <button class="layer-btn" data-layer="storm_potential" data-tip="Potensi Badai"><span class="material-symbols-outlined">thunderstorm</span> <span class="lb-txt">Potensi Badai</span></button>
+              <button class="layer-btn" data-layer="storm_potential" data-tip="Convective Available Potential Energy, bahan bakar badai"><span class="material-symbols-outlined">thunderstorm</span> <span class="lb-txt">CAPE</span></button>
+              <button class="layer-btn" data-layer="cin_surface" data-tip="Convective Inhibition, penahan naiknya udara"><span class="material-symbols-outlined">shield</span> <span class="lb-txt">CIN</span></button>
             </div>
             <button id="layer-next" class="layer-nav" aria-label="Variabel berikutnya"><span class="material-symbols-outlined">chevron_right</span></button>
+            <!-- Buka-tutup panel kiri (Parameter + Model). Menempel di sisi kontainer
+                 Parameter, sejajar tengahnya. Desktop saja; di HP sudah ada dropdown. -->
+            <button id="panel-toggle" class="panel-toggle" aria-label="Sembunyikan panel" title="Sembunyikan panel">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
           </div>
 
           <!-- HP-only: pemilih LEVEL, di bawah Parameter, mekanisme buka-tutup sama.
@@ -152,7 +158,7 @@
             <div class="field">
               <div class="label-caps">MODEL</div>
               <div class="select-wrap">
-                <select id="model-select"><option>GFS (NOAA)</option></select>
+                <select id="model-select"><option>GFS (NOAA) - 28 km</option></select>
                 <span class="material-symbols-outlined">arrow_drop_down</span>
               </div>
             </div>

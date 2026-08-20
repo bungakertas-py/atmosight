@@ -19,7 +19,7 @@ import numpy as np
 import xarray as xr
 from PIL import Image
 
-from config import LAYERS, OUTPUT_DIR, REGION
+from config import BACKEND_DIR, LAYERS, OUTPUT_DIR, REGION
 
 warnings.filterwarnings("ignore", message="Ignoring index file")
 
@@ -133,6 +133,19 @@ _CAPE_SCALE = [
     (2600, (0xf5, 0xa9, 0x1e, 216)),   # oranye: tinggi
     (3400, (0xe4, 0x23, 0x20, 232)),   # merah
     (4200, (0x8a, 0x29, 0xc8, 246)),   # ungu: ekstrem
+]
+
+
+# CIN nilainya NEGATIF (J/kg), 0 berarti tak ada penghambat. Makin minus makin tebal
+# tutupnya. Titik henti disusun menaik karena interpolasi warna butuh urutan naik.
+_CIN_SCALE = [
+    (-400, (0x4a, 0x0d, 0x67, 246)),   # tutup sangat tebal
+    (-200, (0x8a, 0x29, 0xc8, 232)),
+    (-100, (0xe4, 0x23, 0x20, 216)),
+    (-50,  (0xf5, 0xa9, 0x1e, 195)),
+    (-25,  (0xea, 0xd8, 0x21, 150)),
+    (-10,  (0x5a, 0xc8, 0x6a,   0)),   # nyaris tak ada tutup: transparan
+    (0,    (0x14, 0x37, 0x8f,   0)),
 ]
 
 
@@ -272,6 +285,7 @@ _SCALAR_SCALES = {
     "cloud_surface": _CLOUD_SCALE,
     "pressure_surface": _PRESS_SCALE,
     "storm_potential": _CAPE_SCALE,
+    "cin_surface": _CIN_SCALE,
 }
 
 
@@ -421,7 +435,8 @@ _POINT_ENC = {
     "humidity": {"dtype": "uint8", "scale": 1.0,  "offset": 0.0},
     "cloud":    {"dtype": "uint8", "scale": 1.0,  "offset": 0.0},
     "pressure": {"dtype": "int16", "scale": 0.1,  "offset": 1000.0},
-    "cape":     {"dtype": "int16", "scale": 1.0,  "offset": 0.0},   # CAPE J/kg (potensi badai)
+    "cape":     {"dtype": "int16", "scale": 1.0,  "offset": 0.0},   # CAPE J/kg (bahan bakar badai)
+    "cin":      {"dtype": "int16", "scale": 1.0,  "offset": 0.0},   # CIN J/kg, NEGATIF (penghambat)
 }
 _NP_DTYPE = {"int16": np.int16, "uint8": np.uint8}
 
@@ -453,6 +468,73 @@ def write_point_data(series: dict, times: list, grid: dict, out_dir: Path = OUTP
     }
     (out_dir / "point_meta.json").write_text(json.dumps(meta))
     return (out_dir / "point_data.bin.gz").stat().st_size
+
+
+# ================= Nilai per KOTA (buat label di peta) =================
+# Label kota cuma butuh nilai di 514 titik, bukan seluruh grid 473x265. Kalau
+# frontend memakai point_data.bin.gz (21 MB) demi angka segitu, 99,6 persen isinya
+# terbuang. Jadi nilainya disampel di sini, sekali saat pipeline jalan.
+CITY_PLACES = BACKEND_DIR.parent / "frontend" / "data" / "id_places.json"
+# Skala penyimpanan: nilai dibagi angka ini lalu dibulatkan jadi bilangan bulat,
+# supaya JSON-nya pendek. Frontend mengalikannya kembali.
+_CITY_ENC = {
+    "wind": 0.1,       # knot
+    "rain": 0.1,       # mm/jam
+    "temp": 0.1,       # derajat C
+    "humidity": 1,     # persen
+    "cloud": 1,        # persen
+    "pressure": 0.1,   # hPa
+    "cape": 1,         # J/kg
+    "cin": 1,          # J/kg, negatif
+}
+
+
+def write_city_data(series: dict, times: list, grid: dict, out_dir: Path = OUTPUT_DIR) -> int:
+    """Sampel bilinear tiap variabel di titik kota/kabupaten -> city_data.json.
+    Rumus sampelnya sengaja sama dengan sampleVarAt() di frontend."""
+    if not CITY_PLACES.exists():
+        print(f"  city_data dilewati: {CITY_PLACES.name} tak ada")
+        return 0
+    places = json.loads(CITY_PLACES.read_text(encoding="utf-8"))
+    nx, ny = grid["width"], grid["height"]
+    dx = (grid["east"] - grid["west"]) / (nx - 1)
+    dy = (grid["north"] - grid["south"]) / (ny - 1)
+    lat = np.array([p["lat"] for p in places], "f8")
+    lon = np.array([p["lon"] for p in places], "f8")
+    fx = np.clip((lon - grid["west"]) / dx, 0, nx - 1)
+    fy = np.clip((grid["north"] - lat) / dy, 0, ny - 1)
+    x0 = np.floor(fx).astype(int); x1 = np.minimum(x0 + 1, nx - 1); tx = fx - x0
+    y0 = np.floor(fy).astype(int); y1 = np.minimum(y0 + 1, ny - 1); ty = fy - y0
+
+    def samp(a):
+        a = np.nan_to_num(np.asarray(a, dtype="float64"))
+        top = a[y0, x0] * (1 - tx) + a[y0, x1] * tx
+        bot = a[y1, x0] * (1 - tx) + a[y1, x1] * tx
+        return top * (1 - ty) + bot * ty
+
+    data = {}
+    for var, scale in _CITY_ENC.items():
+        if var == "wind":
+            us, vs = series.get("u"), series.get("v")
+            if not us or not vs:
+                continue
+            per_t = [np.sqrt(samp(u) ** 2 + samp(v) ** 2) * MS_TO_KNOTS for u, v in zip(us, vs)]
+        else:
+            arrs = series.get(var)
+            if not arrs or len(arrs) != len(times):
+                continue
+            per_t = [samp(a) for a in arrs]
+        # (nwaktu, nkota) -> (nkota, nwaktu), satu deret per kota
+        stack = np.round(np.stack(per_t) / scale).astype("int32").T
+        data[var] = stack.tolist()
+
+    doc = {"times": times,
+           "scales": {v: _CITY_ENC[v] for v in data},
+           "places": [p["n"] for p in places],
+           "data": data}
+    path = out_dir / "city_data.json"
+    path.write_text(json.dumps(doc, separators=(",", ":")), encoding="utf-8")
+    return path.stat().st_size
 
 
 if __name__ == "__main__":

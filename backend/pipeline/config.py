@@ -86,7 +86,14 @@ LAYERS = {
     },
     "storm_potential": {
         "kind": "scalar", "var": "CAPE", "grib_level": "surface",
-        "level_label": "surface", "units": "J/kg",   # energi labil (potensi badai/petir)
+        "level_label": "surface", "units": "J/kg",   # energi labil (bahan bakar badai)
+    },
+    # Pasangan CAPE. CAPE bilang seberapa banyak bahan bakarnya, CIN bilang seberapa
+    # tebal "tutup"-nya. CAPE besar tapi CIN tebal = badai TIDAK jadi, udaranya tak
+    # sanggup menembus lapisan penghambat. Nilainya negatif (J/kg), 0 = tanpa tutup.
+    "cin_surface": {
+        "kind": "scalar", "var": "CIN", "grib_level": "surface",
+        "level_label": "surface", "units": "J/kg",
     },
     # --- LEVEL KETINGGIAN: stratosfer 70 hPa (~18 km). Hanya angin & suhu yang
     # bermakna di sana. Dipilih lewat dropdown LEVEL di frontend; variabel lain

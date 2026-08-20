@@ -23,7 +23,7 @@ from monsoon import build_monsoon, build_monsoon_velocity
 from profiles import build_profiles
 from download import download_grib, latest_available_run
 from process import (load_prate_mmhr, process_scalar, process_wind,
-                     write_point_data, write_scalar_frame)
+                     write_city_data, write_point_data, write_scalar_frame)
 
 # Langkah forecast yang diambil (jam): 0..72 tiap 3 jam (3 hari ke depan).
 FORECAST_STEPS = list(range(0, 73, 3))
@@ -44,6 +44,7 @@ POINT_VAR_OF = {
     "cloud_surface": ("cloud",),
     "pressure_surface": ("pressure",),
     "storm_potential": ("cape",),
+    "cin_surface": ("cin",),
 }
 
 
@@ -248,6 +249,11 @@ def main() -> None:
         series = {var: [d[s] for s in steps] for var, d in ctx["series"].items()}
         sz = write_point_data(series, times, ctx["grid"])
         print(f"\npoint_data.bin.gz: {sz/1e6:.1f} MB ({len(times)} waktu, {len(series)} var)")
+
+        # Nilai di titik kota saja, buat label di peta. Kecil, jadi boleh diunduh
+        # tiap halaman dibuka; point_data yang gemuk tetap malas (baru saat diklik).
+        csz = write_city_data(series, times, ctx["grid"])
+        print(f"city_data.json: {csz/1e3:.0f} KB")
 
         # Deteksi & pelacakan siklon (indikasi GFS) -> cyclones.json
         cyc = detect_and_track(series, times, ctx["grid"])

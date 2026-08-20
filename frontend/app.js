@@ -43,10 +43,19 @@ const LEGENDS = {
     cells: [["980", "#5e3c99", 1], ["995", "#356bc4", 1], ["1005", "#7dc8d8", 0], ["1013", "#f0f0e0", 0],
             ["1020", "#f4c060", 0], ["1030", "#e05a3a", 1]],
   },
+  // CAPE & CIN pakai ANGKA MENTAH J/kg. Ambangnya persis _CAPE_SCALE / _CIN_SCALE
+  // di process.py, jadi warna di legenda selalu sama dengan warna di peta.
   storm_potential: {
-    head: "POTENSI BADAI",
-    words: true,   // label kata (bukan angka) → sel melebar ikut isi
-    cells: [["Rendah", "#26324f", 1], ["Sedang", "#5ac86a", 0], ["Tinggi", "#f5a91e", 0], ["Ekstrem", "#8a29c8", 1]],
+    head: "CAPE, J/kg",
+    cells: [["500", "#2f9e7a", 0], ["1000", "#5ac86a", 0], ["1800", "#ead821", 0],
+            ["2600", "#f5a91e", 0], ["3400", "#e42320", 1], ["4200", "#8a29c8", 1]],
+  },
+  // CIN nilainya NEGATIF. Makin minus makin tebal tutupnya, makin sulit badai
+  // terbentuk walau CAPE besar. Urutan sel dibuat dari tipis ke tebal.
+  cin_surface: {
+    head: "CIN, J/kg",
+    cells: [["-10", "#5ac86a", 0], ["-25", "#ead821", 0], ["-50", "#f5a91e", 0],
+            ["-100", "#e42320", 1], ["-200", "#8a29c8", 1], ["-400", "#4a0d67", 1]],
   },
   // --- Level stratosfer 70 hPa ---
   wind_strato: {
@@ -67,7 +76,7 @@ const LEGENDS = {
 const LAYER_THEME = {
   wind_surface: "dark", rain_surface: "dark", rain_accum_surface: "dark",
   temp_surface: "dark", humidity_surface: "dark", cloud_surface: "dark", pressure_surface: "dark",
-  storm_potential: "dark", wind_strato: "dark", temp_strato: "dark",
+  storm_potential: "dark", cin_surface: "dark", wind_strato: "dark", temp_strato: "dark",
 };
 
 // Override warna border batas administrasi per-layer (selain default tema).
@@ -185,7 +194,10 @@ const map = L.map("map", {
 // tiap sisi → tepi data tak pernah terlihat.
 const VIEW_CORE = L.latLngBounds([-28, 68], [28, 174]);
 
-L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+// dark_NOLABELS, bukan dark_all. Alas sudah punya lapisan label sendiri di pane
+// "labels"; kalau alasnya juga membawa nama, namanya muncul dua kali di tempat yang
+// datanya transparan (mis. hujan saat kering).
+L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png", {
   attribution: '&copy; OpenStreetMap &copy; CARTO | Data: NOAA GFS',
   subdomains: "abcd",
   maxZoom: 12,
@@ -248,8 +260,10 @@ let windVelByTime = {};     // PERMUKAAN: valid_time -> velocity_json (partikel 
 let windVelStrato = {};     // STRATO 70 hPa: valid_time -> velocity_json
 let worldLayer = null, provLayer = null;   // layer batas (warna diatur per-tema)
 const dataCache = new Map();
-let cityIconsOn = false;    // toggle layer ikon kondisi cuaca per kota
-let cityGroup = null;       // L.layerGroup penampung marker ikon kota
+// Tombol "Kondisi" HANYA mengatur ikon cuaca (cerah/berawan/hujan). Nama kota +
+// nilai parameter aktif berdiri sendiri, selalu tampil, tak ikut tombol itu.
+let cityIconsOn = false;    // toggle IKON kondisi cuaca per kota
+let cityGroup = null;       // L.layerGroup penampung marker kota (label + ikon opsional)
 let cyclonesOn = false;     // toggle deteksi siklon + jalur
 let cyclones = null, cyclonesLoading = null;
 let cycloneGroup = null;
@@ -263,17 +277,95 @@ let monsoon = null, monsoonLoading = null;
 let monsoonVel = null, monsoonVelData = null, monsoonVelLoading = null;
 let borneoVel = null, borneoVelData = null, borneoVelLoading = null, borneoMarker = null;
 
+// Ubin label CARTO DIMATIKAN. Alasannya: ubin itu menulis nama kota juga, sedangkan
+// label kita sendiri sudah menulis nama + angka parameter. Dua duanya hidup = tiap
+// kota punya dua nama (mis. "Majalengka" muncul dua kali, salah satunya tanpa angka).
+// Satu tempat cukup satu label, dan label yang menang adalah yang membawa angka.
+//
+// Naikkan angka ini untuk menghidupkan lagi label CARTO di bawah zoom tersebut
+// (mis. 5.5 = hidup saat peta masih jauh, mati begitu label kota kita muncul).
+const LABEL_TILE_MAX_Z = 0;
+
+// ---- Nama negara & laut, digambar sendiri ----
+// Ubin label CARTO dimatikan karena bikin nama kota kembar. Konteks geografis tetap
+// perlu, jadi kita gambar sendiri dari daftar pendek ini. Karena daftarnya kita yang
+// pegang, tak mungkin bentrok dengan label kota. Hanya yang masuk domain data
+// (bujur 62-180 timur, lintang 33 selatan sampai 33 utara).
+const GEO_LABELS = [
+  { t: "India", lat: 22.0, lon: 79.0, k: "neg" },
+  { t: "Sri Lanka", lat: 7.8, lon: 80.8, k: "neg" },
+  { t: "Bangladesh", lat: 24.0, lon: 90.0, k: "neg" },
+  { t: "Myanmar", lat: 21.0, lon: 96.2, k: "neg" },
+  { t: "Thailand", lat: 15.5, lon: 101.0, k: "neg" },
+  { t: "Laos", lat: 18.6, lon: 103.6, k: "neg" },
+  { t: "Kamboja", lat: 12.4, lon: 104.9, k: "neg" },
+  { t: "Vietnam", lat: 16.2, lon: 107.4, k: "neg" },
+  { t: "Tiongkok", lat: 27.0, lon: 107.0, k: "neg" },
+  { t: "Taiwan", lat: 23.7, lon: 121.0, k: "neg" },
+  { t: "Filipina", lat: 12.5, lon: 122.5, k: "neg" },
+  { t: "Malaysia", lat: 4.0, lon: 102.3, k: "neg" },
+  { t: "Brunei", lat: 4.5, lon: 114.7, k: "neg" },
+  { t: "Indonesia", lat: -4.2, lon: 109.8, k: "neg" },
+  { t: "Timor Leste", lat: -8.8, lon: 125.9, k: "neg" },
+  { t: "Papua Nugini", lat: -6.2, lon: 144.0, k: "neg" },
+  { t: "Australia", lat: -24.0, lon: 133.0, k: "neg" },
+  { t: "Samudra Hindia", lat: -15.0, lon: 85.0, k: "laut" },
+  { t: "Laut Arab", lat: 15.0, lon: 65.0, k: "laut" },
+  { t: "Teluk Benggala", lat: 15.0, lon: 88.0, k: "laut" },
+  { t: "Laut Andaman", lat: 11.0, lon: 95.5, k: "laut" },
+  { t: "Laut Cina Selatan", lat: 13.5, lon: 114.0, k: "laut" },
+  { t: "Laut Jawa", lat: -5.4, lon: 114.6, k: "laut" },
+  { t: "Laut Sulawesi", lat: 3.5, lon: 122.0, k: "laut" },
+  { t: "Laut Banda", lat: -5.6, lon: 128.0, k: "laut" },
+  { t: "Laut Timor", lat: -11.5, lon: 127.0, k: "laut" },
+  { t: "Laut Arafura", lat: -9.5, lon: 136.0, k: "laut" },
+  { t: "Laut Filipina", lat: 16.0, lon: 130.0, k: "laut" },
+  { t: "Samudra Pasifik", lat: 5.0, lon: 158.0, k: "laut" },
+];
+// Di atas zoom ini pengguna sudah tahu sedang melihat mana, dan label kota yang
+// membawa angka jadi yang lebih berguna.
+const GEO_LABEL_MAX_Z = 6;
+let geoGroup = null;
+let cityPlacedPts = [];   // titik label kota terakhir, dipakai geo label biar tak tabrakan
+
+function refreshGeoLabels() {
+  if (!geoGroup) return;
+  geoGroup.clearLayers();
+  if (map.getZoom() >= GEO_LABEL_MAX_Z) return;
+  const b = map.getBounds();
+  // Nama negara/laut cuma konteks, jadi mengalah pada label kota yang membawa angka.
+  // Titik label kota dipakai sebagai penghalang, lalu antar-geo saling menghindar juga.
+  const halang = cityPlacedPts.slice(), GX = 66, GY = 22;
+  for (const g of GEO_LABELS) {
+    if (!b.contains([g.lat, g.lon])) continue;
+    const pt = map.latLngToContainerPoint([g.lat, g.lon]);
+    let ok = true;
+    for (let i = 0; i < halang.length; i++)
+      if (Math.abs(pt.x - halang[i].x) < GX && Math.abs(pt.y - halang[i].y) < GY) { ok = false; break; }
+    if (!ok) continue;
+    halang.push(pt);
+    geoGroup.addLayer(L.marker([g.lat, g.lon], {
+      pane: "labels", interactive: false, keyboard: false,
+      icon: L.divIcon({ className: "geo-lbl geo-" + g.k, iconSize: [0, 0],
+                        html: `<span>${g.t}</span>` }),
+    }));
+  }
+}
+
+// Pilih set label CARTO sesuai tema, atau matikan bila zoom sudah melewati ambang.
+function applyLabelTiles() {
+  const light = LAYER_THEME[activeLayer] === "light";
+  const pakai = map.getZoom() < LABEL_TILE_MAX_Z ? (light ? lightLabels : darkLabels) : null;
+  for (const l of [darkLabels, lightLabels])
+    if (l !== pakai && map.hasLayer(l)) map.removeLayer(l);
+  if (pakai && !map.hasLayer(pakai)) pakai.addTo(map);
+}
+
 // Tema per-layer: angin = gelap (latar peta gelap), hujan = terang (latar putih).
 function applyTheme() {
   const light = LAYER_THEME[activeLayer] === "light";
-  // Label: teks gelap (light) saat tema terang, teks terang (dark) saat gelap.
-  if (light) {
-    if (map.hasLayer(darkLabels)) map.removeLayer(darkLabels);
-    if (!map.hasLayer(lightLabels)) lightLabels.addTo(map);
-  } else {
-    if (map.hasLayer(lightLabels)) map.removeLayer(lightLabels);
-    if (!map.hasLayer(darkLabels)) darkLabels.addTo(map);
-  }
+  applyLabelTiles();
+  map.getPane("labels").classList.toggle("lbl-light", light);   // teks gelap di peta terang
   // Batas: override per-layer bila ada, jika tidak ikut tema (gelap/putih).
   const color = BORDER_COLOR[activeLayer] || (light ? "#1c1b1b" : "#ffffff");
   const opacity = light ? 0.7 : 0.85;
@@ -466,7 +558,7 @@ async function showFrame(i) {
   const vt = $("valid-time");
   if (vt) vt.textContent = DAILY_LAYERS.has(activeLayer) ? fmtDay(frame.valid_time) : fmtValid(frame.valid_time);
   const ts = $("time-slider"); if (ts) ts.value = String(current);
-  if (cityIconsOn) refreshCityIcons();   // ikon kondisi kota ikut waktu aktif
+  refreshCityIcons();                    // label kota (+ikon bila aktif) ikut waktu aktif
   if (cyclonesOn) refreshCyclones();     // siklon + jalur ikut waktu aktif
   if (itczOn) refreshItcz();             // zona ITCZ ikut waktu aktif
   if (activeLayer === "pressure_surface") refreshIsobars();   // isobar ikut waktu aktif
@@ -775,7 +867,9 @@ function chartSeries(pd, lat, lon) {
     case "humidity_surface": return num("humidity", "Kelembapan", "%", "#1f8a5c", "line", [0, 100]);
     case "cloud_surface": return num("cloud", "Tutupan Awan", "%", "#5a6472", "line", [0, 100]);
     case "pressure_surface": return num("pressure", "Tekanan", "hPa", "#7a3fb0", "line", [1200, 400]);
-    case "storm_potential": return num("cape", "Potensi Badai (CAPE)", "J/kg", "#e84a2f", "line", [0, 4000]);
+    case "storm_potential": return num("cape", "CAPE", "J/kg", "#e84a2f", "line", [0, 4000]);
+    // Sumbu CIN sengaja 0 di atas, -400 di bawah: makin ke bawah makin tebal tutupnya.
+    case "cin_surface": return num("cin", "CIN", "J/kg", "#8a29c8", "line", [-400, 0]);
     case "rain_accum_surface": {
       const rain = sampleVar(pd, "rain", lat, lon), days = {};
       times.forEach((t, i) => { const d = t.slice(0, 10); days[d] = (days[d] || 0) + rain[i] * 3; });
@@ -1263,23 +1357,7 @@ function pickPlace(lat, lon, name) {
   $("search-box")?.classList.remove("open");
 }
 
-// ================= IKON KONDISI CUACA PER KOTA =================
-// Sampel bilinear SATU waktu (index ti) — ringan, dipakai declutter ikon kota.
-function sampleVarAt(pd, name, lat, lon, ti) {
-  const v = pd.vars[name]; if (!v) return 0;
-  const { nx, ny, bounds, dx, dy } = pd.meta;
-  const [w, , , n] = bounds;
-  const fx = Math.max(0, Math.min(nx - 1, (lon - w) / dx));
-  const fy = Math.max(0, Math.min(ny - 1, (n - lat) / dy));
-  const x0 = Math.floor(fx), x1 = Math.min(x0 + 1, nx - 1), tx = fx - x0;
-  const y0 = Math.floor(fy), y1 = Math.min(y0 + 1, ny - 1), ty = fy - y0;
-  const b = ti * nx * ny;
-  const A = v.arr[b + y0 * nx + x0], B = v.arr[b + y0 * nx + x1];
-  const C = v.arr[b + y1 * nx + x0], D = v.arr[b + y1 * nx + x1];
-  const raw = (1 - tx) * (1 - ty) * A + tx * (1 - ty) * B + (1 - tx) * ty * C + tx * ty * D;
-  return raw * v.scale + v.offset;
-}
-
+// ================= LABEL & IKON KONDISI PER KOTA =================
 // Kondisi cuaca titik dari hujan (mm/jam) + tutupan awan (%). sev = prioritas
 // declutter (cuaca lebih parah menang saat berdesakan).
 function cityCondition(rain, cloud) {
@@ -1292,9 +1370,9 @@ function cityCondition(rain, cloud) {
 }
 
 // Index waktu point_data terdekat dengan frame yang sedang ditampilkan.
-function currentTimeIndex(pd) {
+const currentTimeIndex = (pd) => timeIndexOf(pd.meta.times);
+function timeIndexOf(times) {
   const vt = frames[current] && frames[current].valid_time;
-  const times = pd.meta.times;
   if (!vt) return 0;
   const target = new Date(vt).getTime();
   let bi = 0, bd = Infinity;
@@ -1308,40 +1386,141 @@ function currentTimeIndex(pd) {
 // Tempatkan ikon kota: filter tier×zoom + dalam layar, urut prioritas, lalu
 // GREEDY anti-tabrakan piksel → hanya yang tak overlap yang digambar. Efeknya
 // zoom-out = ibukota provinsi saja; makin zoom-in makin banyak kota/kabupaten.
+// ---- Sumber nilai label kota ----
+// SENGAJA bukan point_data.bin.gz. Berkas itu 21 MB (seluruh grid 473x265), padahal
+// label cuma butuh 514 titik. city_data.json sudah disampel di backend: ~100 KB
+// terkirim. point_data tetap ada, tapi kembali malas: baru diunduh saat pengguna
+// mengklik peta atau membuka Skew-T.
+let cityData = null, cityDataLoading = null, cityIndexByName = null;
+function loadCityData() {
+  if (cityData) return Promise.resolve(cityData);
+  if (!cityDataLoading) {
+    cityDataLoading = fetch(DATA_BASE + "city_data.json")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) {
+          cityIndexByName = new Map(d.places.map((n, i) => [n, i]));
+          cityData = d;
+        }
+        return cityData;
+      })
+      .catch(() => null);
+  }
+  return cityDataLoading;
+}
+// Satu nilai, sudah dikembalikan ke satuan aslinya.
+function cityRaw(key, i, ti) {
+  const a = cityData && cityData.data[key];
+  if (!a || !a[i] || a[i][ti] === undefined) return NaN;
+  return a[i][ti] * cityData.scales[key];
+}
+
+// Satuan per parameter untuk label kota. Pakai SIMBOL, bukan kata.
+// Derajat & persen menempel ke angka, sisanya diberi spasi (31°C, 88%, 12 kt).
+const CITY_UNIT = {
+  wind_surface: { u: "kt", d: 0 },
+  rain_surface: { u: "mm", d: 1 },
+  rain_accum_surface: { u: "mm", d: 0 },
+  temp_surface: { u: "\u00b0C", d: 0 },
+  humidity_surface: { u: "%", d: 0 },
+  cloud_surface: { u: "%", d: 0 },
+  pressure_surface: { u: "hPa", d: 0 },
+  storm_potential: { u: "J/kg", d: 0 },
+  cin_surface: { u: "J/kg", d: 0 },
+};
+const CITY_VAR = { wind_surface: "wind", rain_surface: "rain", temp_surface: "temp",
+                   humidity_surface: "humidity", cloud_surface: "cloud",
+                   pressure_surface: "pressure", storm_potential: "cape",
+                   cin_surface: "cin" };
+
+// Nilai parameter aktif di satu kota. Rumusnya SENGAJA disamakan dengan chartSeries
+// supaya angka di label dan angka di grafik panel titik tak pernah berbeda.
+function cityValueText(i, ti) {
+  if (BASE_OF[activeLayer]) return "";        // level strato: data titik hanya permukaan
+  const s = CITY_UNIT[activeLayer];
+  if (!s || !cityData) return "";
+  let v;
+  if (activeLayer === "rain_accum_surface") {
+    const d = cityData.times[ti].slice(0, 10);   // total sepanjang TANGGAL frame aktif
+    v = 0;
+    cityData.times.forEach((t, k) => { if (t.slice(0, 10) === d) v += cityRaw("rain", i, k) * 3; });
+  } else {
+    v = cityRaw(CITY_VAR[activeLayer], i, ti);
+  }
+  if (!isFinite(v)) return "";
+  // Hujan per jam angkanya kecil, jadi 1 desimal. Tapi "0.0 mm" di seluruh peta
+  // cuma jadi sampah visual, dan di atas 10 mm desimalnya tak berguna.
+  const dec = (activeLayer === "rain_surface" && (v < 0.05 || v >= 10)) ? 0 : s.d;
+  const sep = (s.u === "\u00b0C" || s.u === "%") ? "" : " ";
+  return v.toFixed(dec) + sep + s.u;
+}
+
+// Nama untuk DI PETA saja, biar label pendek. Judul panel titik & tooltip tetap
+// memakai nama lengkap.
+//
+// Awalan "Kabupaten"/"Kota" dibuang, TAPI "Kota" dipertahankan kalau ada kabupaten
+// bernama sama. Tanpa ini "Kota Bandung" dan "Kabupaten Bandung" sama sama jadi
+// "Bandung", padahal wilayah dan angkanya berbeda. Ada 26 pasangan seperti itu.
+let cityDupNames = null;
+const cityBaseName = (n) => n.replace(/^(Kabupaten|Kota)(\s+Administrasi)?\s+/, "");
+function buildCityDupNames(places) {
+  if (cityDupNames) return;
+  const hitung = {};
+  for (const p of places) { const b = cityBaseName(p.n); hitung[b] = (hitung[b] || 0) + 1; }
+  cityDupNames = new Set(Object.keys(hitung).filter((k) => hitung[k] > 1));
+}
+function cityShortName(n) {
+  const base = cityBaseName(n);
+  return (/^Kota\b/.test(n) && cityDupNames && cityDupNames.has(base)) ? "Kota " + base : base;
+}
+const escHtml = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
 async function refreshCityIcons() {
-  if (!cityIconsOn || !cityGroup) return;
-  let pd, pl;
-  try { pd = await loadPointData(); pl = await loadPlaces(); }
-  catch (e) { console.warn("Ikon kota gagal dimuat:", e); return; }
-  if (!cityIconsOn || !cityGroup) return;   // bisa dimatikan selama await
-  const ti = currentTimeIndex(pd);
+  if (!cityGroup) return;
+  let cd, pl;
+  try { cd = await loadCityData(); pl = await loadPlaces(); }
+  catch (e) { console.warn("Label kota gagal dimuat:", e); return; }
+  if (!cityGroup || !cd) return;   // bisa dibongkar selama await
+  buildCityDupNames(pl);
+  const ti = timeIndexOf(cd.times);
   const z = map.getZoom(), b = map.getBounds();
   const cands = [];
   for (const p of pl) {
     if (z < p.minZoom || !b.contains([p.lat, p.lon])) continue;
-    const rain = sampleVarAt(pd, "rain", p.lat, p.lon, ti);
-    const cloud = sampleVarAt(pd, "cloud", p.lat, p.lon, ti);
-    cands.push({ p, cond: cityCondition(rain, cloud) });
+    const i = cityIndexByName.get(p.n);
+    if (i === undefined) continue;   // daftar tempat & city_data tak sinkron
+    cands.push({ p, cond: cityCondition(cityRaw("rain", i, ti), cityRaw("cloud", i, ti)),
+                 val: cityValueText(i, ti) });
   }
   cands.sort((a, c) => a.p.tier - c.p.tier || c.cond.sev - a.cond.sev);
   cityGroup.clearLayers();
-  const placed = [], R = 32;
+  // Kotak anti-tabrakan LEBIH LEBAR dari ikon, karena ada nama + nilai di bawahnya.
+  // Kalau tetap 32px, labelnya saling tindih dan tak terbaca. Tanpa ikon, tumpukannya
+  // lebih pendek jadi jarak tegaknya boleh lebih rapat.
+  const placed = [], RX = 68, RY = cityIconsOn ? 44 : 34;
   for (const c of cands) {
     const pt = map.latLngToContainerPoint([c.p.lat, c.p.lon]);
     let ok = true;
     for (let i = 0; i < placed.length; i++)
-      if (Math.abs(pt.x - placed[i].x) < R && Math.abs(pt.y - placed[i].y) < R) { ok = false; break; }
+      if (Math.abs(pt.x - placed[i].x) < RX && Math.abs(pt.y - placed[i].y) < RY) { ok = false; break; }
     if (!ok) continue;
     placed.push(pt);
+    const ico = cityIconsOn
+      ? `<span class="cc-ico ${c.cond.cls}${c.p.tier === 0 ? " cc-cap" : ""}">` +
+        `<span class="material-symbols-outlined">${c.cond.icon}</span></span>`
+      : "";
     const m = L.marker([c.p.lat, c.p.lon], {
       pane: "cityicons", title: c.p.n, keyboard: false,
-      icon: L.divIcon({ className: "city-cond", iconSize: [30, 30], iconAnchor: [15, 15],
-        html: `<span class="cc-ico ${c.cond.cls}${c.p.tier === 0 ? " cc-cap" : ""}">` +
-              `<span class="material-symbols-outlined">${c.cond.icon}</span></span>` }),
+      icon: L.divIcon({ className: "city-cond" + (cityIconsOn ? "" : " no-ico"),
+        iconSize: [30, 30], iconAnchor: [15, 15],
+        html: ico + `<span class="cc-lbl"><b>${escHtml(cityShortName(c.p.n))}</b>` +
+              (c.val ? `<i>${escHtml(c.val)}</i>` : "") + `</span>` }),
     });
     m.on("click", (e) => { L.DomEvent.stopPropagation(e); openPoint(c.p.lat, c.p.lon, c.p.n); });
     cityGroup.addLayer(m);
   }
+  cityPlacedPts = placed;
+  refreshGeoLabels();   // nama negara/laut ditata ULANG supaya menghindari label kota
 }
 
 // Legenda kecil kategori ikon (cermin cityCondition) — dibangun sekali.
@@ -1365,20 +1544,37 @@ function buildCondLegend() {
   el.dataset.built = "1";
 }
 
+// Tombol "Kondisi" kini HANYA menyalakan ikon cuaca + legendanya. Label nama & nilai
+// tak ikut mati, karena itu informasi parameter yang sedang dipilih, bukan kondisi.
+// Sembunyikan/tampilkan panel Parameter + Model. Brand sengaja TETAP terlihat,
+// jadi identitas dan tombol Tentang tak ikut hilang.
+function togglePanels() {
+  const col = document.querySelector("#ui .col:not(.items-end)");
+  const btn = $("panel-toggle");
+  if (!col || !btn) return;
+  const tutup = col.classList.toggle("panels-hidden");
+  const ic = btn.querySelector(".material-symbols-outlined");
+  if (ic) ic.textContent = tutup ? "chevron_right" : "chevron_left";
+  const label = tutup ? "Tampilkan panel" : "Sembunyikan panel";
+  btn.setAttribute("aria-label", label);
+  btn.title = label;
+}
+
 function toggleCityIcons() {
   cityIconsOn = !cityIconsOn;
   $("city-toggle") && $("city-toggle").classList.toggle("active", cityIconsOn);
   const cl = $("cond-legend");
-  if (cityIconsOn) {
-    if (!cityGroup) cityGroup = L.layerGroup([], { pane: "cityicons" });
-    cityGroup.addTo(map);
-    buildCondLegend();
-    if (cl) cl.classList.add("show");
-    refreshCityIcons();
-  } else {
-    if (cityGroup) { cityGroup.clearLayers(); map.removeLayer(cityGroup); }
-    if (cl) cl.classList.remove("show");
-  }
+  if (cityIconsOn) { buildCondLegend(); if (cl) cl.classList.add("show"); }
+  else if (cl) cl.classList.remove("show");
+  refreshCityIcons();
+}
+
+// Label kota selalu ada sejak peta dibuka. point_data dimuat di latar, jadi peta
+// tetap bisa dipakai selagi berkasnya turun; labelnya menyusul saat sudah siap.
+function initCityLabels() {
+  if (!cityGroup) cityGroup = L.layerGroup([], { pane: "cityicons" });
+  cityGroup.addTo(map);
+  refreshCityIcons();
 }
 
 // ================= SIKLON (indikasi model GFS) =================
@@ -1808,17 +2004,24 @@ async function init() {
       let halfH = Math.abs(ne.y - sw.y) / 2;
       const size = map.getSize();
       const screenRatio = size.x / size.y;
+      // Setengah-ukuran domain data GRIB. Bingkai tak boleh melewati ini di sumbu
+      // mana pun, kalau lewat yang kelihatan cuma latar kosong di tepi.
+      const dsw = crs.project(dataBounds.getSouthWest());
+      const dne = crs.project(dataBounds.getNorthEast());
+      const dataHalfW = Math.abs(dne.x - dsw.x) / 2;
+      const dataHalfH = Math.abs(dne.y - dsw.y) / 2;
       if (screenRatio > halfW / halfH) {
-        halfW = halfH * screenRatio;                                // layar lebih lebar → perlebar bujur
+        // Layar lebih lebar (mis. jendela browser yang tingginya termakan bilah
+        // alamat) → perlebar bujur. TAPI jangan keluar domain data (lon 62-180E),
+        // nanti tepi KIRI/KANAN kosong. Bila melebihi, KUNCI bujur ke domain data
+        // & POTONG lintang: layar terisi penuh, zoom sedikit lebih dekat.
+        halfW = halfH * screenRatio;
+        if (halfW > dataHalfW) { halfW = dataHalfW; halfH = halfW / screenRatio; }
       } else {
-        // Layar lebih tinggi (mis. HP potret) → perlu pertinggi lintang. TAPI
-        // jangan sampai keluar domain data GRIB (lat ±33) → atas/bawah kosong.
-        // Bila melebihi, KUNCI lintang ke domain data & POTONG bujur: tampil
-        // strip vertikal (data penuh atas–bawah, zoom lebih dekat di HP).
+        // Layar lebih tinggi (mis. HP potret) → kebalikannya. Pertinggi lintang,
+        // tapi jangan keluar domain data (lat ±33), nanti tepi ATAS/BAWAH kosong.
+        // Bila melebihi, KUNCI lintang & POTONG bujur: tampil strip vertikal.
         halfH = halfW / screenRatio;
-        const dsw = crs.project(dataBounds.getSouthWest());
-        const dne = crs.project(dataBounds.getNorthEast());
-        const dataHalfH = Math.abs(dne.y - dsw.y) / 2;
         if (halfH > dataHalfH) { halfH = dataHalfH; halfW = halfH * screenRatio; }
       }
       const box = L.latLngBounds(
@@ -1835,6 +2038,9 @@ async function init() {
     frameRegion();
     map.on("resize", frameRegion);
     loadAdmin(); // batas negara + provinsi Indonesia (non-blocking)
+    initCityLabels(); // nama kota + nilai parameter aktif (non-blocking)
+    geoGroup = L.layerGroup([], { pane: "labels" }).addTo(map);
+    refreshGeoLabels();   // nama negara & laut (pengganti label CARTO)
 
     // Wiring UI dibuat tahan-null: elemen dekoratif yang hilang (mis. cache
     // index.html lama) tak boleh menggagalkan pemuatan peta & data.
@@ -1846,6 +2052,7 @@ async function init() {
         showFrame(parseInt(ev.target.value, 10));
       });
     }
+    $("panel-toggle")?.addEventListener("click", togglePanels);
     $("play-btn")?.addEventListener("click", togglePlay);
     buildTicks(); // label tanggal/jam WIB di bawah slider
 
@@ -1880,7 +2087,8 @@ async function init() {
     $("cyclone-toggle")?.addEventListener("click", toggleCyclones);
     $("itcz-toggle")?.addEventListener("click", toggleItcz);
     $("mon-toggle")?.addEventListener("click", toggleMonsoon);
-    map.on("moveend", () => { if (cityIconsOn) refreshCityIcons(); });
+    map.on("moveend", () => { refreshCityIcons(); });
+    map.on("zoomend", applyLabelTiles);   // ambang label CARTO vs label kota sendiri
 
     // "Cuaca lokasi saya" — geolokasi browser → buka detail di titik pengguna
     $("geo-btn")?.addEventListener("click", () => {
