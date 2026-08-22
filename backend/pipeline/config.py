@@ -143,3 +143,38 @@ OUTPUT_DIR = DATA_DIR / "output"  # PNG + JSON siap-frontend
 
 for _d in (DATA_DIR, RAW_DIR, OUTPUT_DIR):
     _d.mkdir(parents=True, exist_ok=True)
+
+
+# ============================ AKURASI GFS ============================
+# Dihitung SEKALI di scratchpad/verif_metar.py, lalu dipatok di sini.
+#
+# Pembandingnya PENGAMATAN, bukan model: METAR, yaitu bacaan alat di bandara.
+# Ini penting. Mengadu GFS dengan prakiraan BMKG cuma mengukur kemiripan dua
+# prakiraan, bukan ketepatan. Dengan METAR angkanya sah disebut akurasi.
+#
+# Kenapa statis. Butuh 7 hari run GFS lama, dan NOMADS cuma menyimpan 10 hari.
+# Jadi tak bisa dihitung ulang tiap deploy tanpa menyeret arsip sendiri.
+#
+# Periode 15 sampai 21 Agustus 2026, run 00Z, langkah 0 sampai 72 jam tiap 3 jam,
+# 21 stasiun Indonesia, 7.047 laporan METAR. Pengamatan dicocokkan ke waktu
+# valid dengan beda maksimum 20 menit.
+#
+# Toleransi "dianggap tepat" mengikuti kelaziman verifikasi cuaca operasional,
+# bukan dikarang supaya angkanya bagus. MAE dan bias ikut disimpan supaya
+# pembaca bisa menilai sendiri.
+AKURASI = {
+    "nilai": 76.6,
+    "label": "",                 # badge cukup menampilkan persennya saja
+    "sumber": "METAR 21 stasiun",
+    "periode": "15-21 Agustus 2026",
+    "pasangan": 3191,
+    "parameter": {
+        "Suhu":         {"tepat": 63.4, "mae": 1.75,  "sat": "C",   "tol": 2},
+        "Angin":        {"tepat": 80.8, "mae": 3.00,  "sat": "kt",  "tol": 5},
+        "Arah angin":   {"tepat": 73.2, "mae": 37.71, "sat": "der", "tol": 45},
+        "Kelembapan":   {"tepat": 70.9, "mae": 7.67,  "sat": "%",   "tol": 10},
+        "Tekanan":      {"tepat": 94.6, "mae": 0.75,  "sat": "hPa", "tol": 2},
+    },
+    "catatan": ("Diadu dengan pengamatan METAR 21 bandara, 15-21 Agustus 2026, "
+                "prakiraan 0 sampai 72 jam. Rata-rata dari 5 parameter."),
+}

@@ -1474,11 +1474,21 @@ function updateAkurasi() {
   // Koma sebagai pemisah desimal, ikut kebiasaan Indonesia.
   const nil = a.nilai.toFixed(1).replace(".", ",");
   el.textContent = `Akurasi : ${nil}% ${a.label || ""}`.trim();
-  box.title =
-    `${a.catatan || ""}\n` +
-    `Tebakan sepele "selalu kering" dapat ${a.dasar}%.\n` +
-    `Tertangkap ${a.pod}% hari hujan, ${a.far}% alarm palsu.\n` +
-    `${a.pos} pos, ${a.hari} hari, ${a.pasangan} pasangan hari-pos.`;
+
+  // Rinciannya ditaruh di title, bukan di layar. Angka telanjang gampang dibaca
+  // sebagai klaim yang lebih kuat dari yang sebenarnya, jadi dasarnya harus
+  // selalu bisa dilihat. Dua model bentuk datanya beda, keduanya ditangani.
+  const baris = [];
+  if (a.catatan) baris.push(a.catatan);
+  if (a.parameter) {
+    baris.push("");
+    for (const [nama, p] of Object.entries(a.parameter))
+      baris.push(`${nama}: ${p.tepat}% dalam ${p.tol} ${p.sat}, MAE ${p.mae} ${p.sat}`);
+  }
+  if (a.dasar !== undefined) baris.push(`Tebakan sepele "selalu kering" dapat ${a.dasar}%.`);
+  if (a.pod !== undefined) baris.push(`Tertangkap ${a.pod}% kejadian, ${a.far}% alarm palsu.`);
+  if (a.pasangan) baris.push(`${a.pasangan} pasangan pengamatan.`);
+  box.title = baris.join("\n");
 }
 
 let toastTimer = null;

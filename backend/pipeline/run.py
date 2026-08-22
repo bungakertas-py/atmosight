@@ -15,7 +15,7 @@ from pathlib import Path
 
 import numpy as np
 
-from config import KEEP_PAST_HOURS, LAYERS, OUTPUT_DIR, PROFILE_LEVELS
+from config import AKURASI, KEEP_PAST_HOURS, LAYERS, OUTPUT_DIR, PROFILE_LEVELS
 from cyclones import detect_and_track
 from itcz import detect_itcz
 from isobars import build_isobars
@@ -192,6 +192,9 @@ def reconcile_and_catalog(run: dt.datetime) -> tuple[dict, int]:
         "model": "GFS",
         "run_time": run.strftime("%Y-%m-%dT%H:00:00Z"),
         "region": None,
+        # Akurasi STATIS lawan pengamatan METAR. Tak ikut slider, tak ikut run.
+        # Alasan dan cara hitungnya di config.AKURASI.
+        "akurasi": AKURASI,
         "layers": {},
     }
     total = 0
