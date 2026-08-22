@@ -47,6 +47,16 @@ jobs:
         working-directory: backend/pipeline
         run: python run.py
 
+      # Model kedua: WRF Citarum, arsip 2018-2019 dari server terbuka ITB.
+      # Tidak menambah dependensi apa pun, pembaca GeoTIFF-nya pure python.
+      # Dibiarkan gagal-lunak: kalau server ITB mati, situs GFS tetap terbit,
+      # cuma pilihan WRF yang kosong sampai run berikutnya.
+      - name: Run pipeline WRF Citarum (model kedua)
+        working-directory: backend/pipeline
+        env:
+          WRF_WORKERS: "8"
+        run: python wrf_run.py || echo "WRF dilewati, server sumber tak terjangkau"
+
       - name: Assemble site (jaga struktur ../backend/data/output)
         run: |
           mkdir -p _site/frontend _site/backend/data/output

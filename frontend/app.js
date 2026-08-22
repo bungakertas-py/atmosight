@@ -2,7 +2,25 @@
  * Membaca catalog.json + aset dari pipeline backend; angin = partikel + heatmap
  * kecepatan, hujan = heatmap laju hujan. Layout & gaya ala BMKG Signature.
  */
-const DATA_BASE = "../backend/data/output/";
+// ================= MODEL =================
+// Dua sumber data. GFS = pipeline utama (realtime, seluruh Asia Tenggara).
+// WRF Citarum = arsip ITB, domain kecil sekitar Jawa, resolusi 7 km.
+// Pindah model = MUAT ULANG halaman, bukan tukar state di tempat. Disengaja:
+// ada belasan cache lazy (point_data, city_data, siklon, ITCZ, isobar, monsun,
+// profil) yang semuanya terkunci ke DATA_BASE. Menukarnya di tempat berarti
+// membatalkan semuanya satu per satu, dan satu yang kelewat = data model lama
+// nempel di model baru. Muat ulang selalu benar dan ongkosnya sepersekian detik.
+const MODELS = {
+  gfs: { base: "../backend/data/output/", label: "GFS (NOAA) - 28 km", ekstra: true },
+  wrf: { base: "../backend/data/output/wrf/", label: "WRF Citarum - 7 km", ekstra: false },
+};
+const MODEL_ID = (new URLSearchParams(location.search).get("model") === "wrf") ? "wrf" : "gfs";
+const MODEL = MODELS[MODEL_ID];
+const DATA_BASE = MODEL.base;
+// Layer tambahan (siklon, ITCZ, isobar, monsun, Skew-T, level stratosfer) cuma
+// ada di pipeline GFS. Di WRF berkasnya memang tak dibuat, jadi tombolnya
+// disembunyikan daripada dibiarkan mengejar 404.
+const PUNYA_EKSTRA = MODEL.ekstra;
 
 // Definisi legend per layer: [label, warna, teksPutih?]
 const LEGENDS = {
@@ -71,6 +89,36 @@ const LEGENDS = {
   },
 };
 
+// Tiga layer WRF memakai ambang yang BEDA dari GFS, jadi legendanya ditimpa.
+// Kalau tidak, warna di legenda dan warna di peta akan berbeda arti.
+// Angkanya WAJIB sama persis dengan SKALA_SUHU / SKALA_TEKANAN / SKALA_KNOT
+// di backend/pipeline/wrf_run.py.
+const LEGENDS_WRF = {
+  // Jawa cuma 14-35 derajat. Skala GFS -10..42 bikin seluruh pulau oranye rata.
+  temp_surface: {
+    head: "°C",
+    cells: [["14", "#2450b4", 1], ["18", "#4a97dc", 1], ["22", "#cfe4f2", 0],
+            ["25", "#ffe08a", 0], ["28", "#fbaa4a", 0], ["31", "#ee7233", 0],
+            ["34", "#d43325", 1]],
+  },
+  // TEKANAN PERMUKAAN MENTAH, bukan tekanan muka laut. Nilai rendah = tempat
+  // tinggi, bukan tekanan rendah cuaca. Judulnya sengaja dibedakan.
+  pressure_surface: {
+    head: "hPa permukaan",
+    cells: [["780", "#3b0f5c", 1], ["850", "#5e3c99", 1], ["910", "#356bc4", 1],
+            ["955", "#7dc8d8", 0], ["985", "#f0f0e0", 0], ["1000", "#f4c060", 0],
+            ["1012", "#e05a3a", 1]],
+  },
+  // Angin WRF mentok sekitar 23 knot, skala GFS sampai 120 knot jadi biru semua.
+  wind_surface: {
+    head: "KNOTS",
+    cells: [["3", "#2b83ba", 1], ["6", "#5aa8cf", 0], ["10", "#abdda4", 0],
+            ["14", "#66bd63", 0], ["18", "#d9ef8b", 0], ["22", "#fee08b", 0],
+            ["28", "#fdae61", 0], ["34", "#f46d43", 1], ["42+", "#d73027", 1]],
+  },
+};
+if (MODEL_ID === "wrf") Object.assign(LEGENDS, LEGENDS_WRF);
+
 // Tema per-layer: "dark" = latar peta gelap (overlay putih); "light" = latar
 // terang (overlay gelap). Menentukan label/batas/partikel.
 const LAYER_THEME = {
@@ -134,6 +182,44 @@ function setLevel(lv) {
 }
 
 // Hidupkan pemilih LEVEL (dropdown desktop + tombol HP) bila data strato tersedia.
+// Dropdown MODEL. Dulu dekoratif satu opsi, sekarang benar benar memindah sumber
+// data. Pindah model = muat ulang halaman dengan ?model=..., alasannya ada di
+// komentar MODELS di atas.
+function setupModelSelect() {
+  const sel = $("model-select");
+  if (!sel) return;
+  sel.innerHTML = "";
+  for (const [id, m] of Object.entries(MODELS)) {
+    const o = document.createElement("option");
+    o.value = id;
+    o.textContent = m.label;
+    sel.appendChild(o);
+  }
+  sel.value = MODEL_ID;
+  sel.addEventListener("change", () => {
+    const id = sel.value;
+    if (id === MODEL_ID) return;
+    // Hash (layer, waktu, titik) sengaja DIBUANG. Layer & waktu model lama
+    // belum tentu ada di model baru, dan restore yang gagal separuh lebih
+    // membingungkan daripada mulai bersih.
+    location.href = location.pathname + (id === "gfs" ? "" : "?model=" + id);
+  });
+}
+
+// Sembunyikan yang memang tak ada datanya di model ini, daripada membiarkan
+// tombolnya mengejar berkas yang tak pernah dibuat lalu diam diam gagal.
+function terapkanFiturModel() {
+  if (PUNYA_EKSTRA) return;
+  ["cyclone-toggle", "itcz-toggle", "mon-toggle"].forEach((id) => {
+    const el = $(id);
+    if (el) el.style.display = "none";
+  });
+  document.querySelector(".level-bar")?.style.setProperty("display", "none", "important");
+  const lv = $("level-select");
+  if (lv) lv.closest(".field")?.style.setProperty("display", "none");
+  document.body.classList.add("model-wrf");
+}
+
 function setupLevelSelect() {
   const sel = $("level-select");
   const bar = document.querySelector(".level-bar");
@@ -192,7 +278,10 @@ const map = L.map("map", {
 // tengah Australia. Bingkai tampilan diturunkan dari kotak ini, diperlebar
 // mengikuti rasio layar. Domain DATA (dari catalog) lebih luas dari kotak ini di
 // tiap sisi → tepi data tak pernah terlihat.
-const VIEW_CORE = L.latLngBounds([-28, 68], [28, 174]);
+// Kotak inti tampilan awal. Default = domain GFS. Model lain boleh membawa
+// kotaknya sendiri lewat catalog.region.view_core, jadi WRF membingkai Jawa
+// bukan seluruh Asia Tenggara. Diganti di init() setelah katalog terbaca.
+let VIEW_CORE = L.latLngBounds([-28, 68], [28, 174]);
 
 // dark_NOLABELS, bukan dark_all. Alas sudah punya lapisan label sendiri di pane
 // "labels"; kalau alasnya juga membawa nama, namanya muncul dua kali di tempat yang
@@ -225,6 +314,18 @@ labelPane.style.pointerEvents = "none";
 const cityPane = map.createPane("cityicons");
 cityPane.style.zIndex = 660;
 // Siklon: jalur (garis, non-interaktif) di bawah, ikon pusat (klik) di atas.
+// Pos hujan WRF: penanda TETAP, selalu tampil selama model WRF dipilih.
+// z 670, di ATAS label kota/kabupaten beserta nilainya (pane cityicons z660)
+// dan di atas label negara/laut (pane labels z650). Pos ini titik acuan
+// akurasi, jadi tak boleh ketutup nama kota.
+const posPane = map.createPane("poshujan");
+posPane.style.zIndex = 670;
+// Tooltip pos hujan punya pane SENDIRI di z690. Kalau memakai tooltipPane
+// bawaan Leaflet (z650) ia kalah dari label kota/kabupaten (z660) dan
+// tertutup separuh. Harus di atas label kota DAN di atas ikon posnya sendiri.
+const posTipPane = map.createPane("poshujan-tip");
+posTipPane.style.zIndex = 690;
+posTipPane.style.pointerEvents = "none";
 const cyclonePathPane = map.createPane("cyclonepath");
 cyclonePathPane.style.zIndex = 655;
 cyclonePathPane.style.pointerEvents = "none";
@@ -249,7 +350,20 @@ let frames = [];
 let current = 0;
 let velocityLayer = null;
 let speedLayer = null;      // heatmap (imageOverlay preview PNG) — dipakai kedua layer
-let dataBounds = null;      // L.latLngBounds domain data penuh (untuk overlay)
+// Jarak antar langkah waktu, dalam JAM. GFS 3 jam, WRF Citarum 1 jam.
+// Dipakai untuk mengubah laju hujan (mm/jam) jadi akumulasi. Dulu dipatok 3
+// dan itu benar selama cuma ada GFS; begitu WRF masuk, patokan itu melebihkan
+// akumulasi tepat 3 kali. Dihitung ulang dari deret waktu yang sebenarnya.
+let STEP_JAM = 3;
+function hitungStepJam(times) {
+  if (!times || times.length < 2) return;
+  const a = new Date(times[0]).getTime(), b = new Date(times[1]).getTime();
+  const j = Math.round((b - a) / 3600000);
+  if (j > 0 && j <= 24) STEP_JAM = j;
+}
+
+let dataBounds = null;      // L.latLngBounds untuk BINGKAI, minZoom, dan kunci pan
+let imageBounds = null;     // L.latLngBounds tempat heatmap ditempel (bisa lebih kecil)
 let playing = false;
 let playTimer = null;
 let activeLayer = "wind_surface";
@@ -401,8 +515,20 @@ function fmtDay(iso) {
 
 // Frame terdekat ke waktu "sekarang" (untuk posisi awal slider, karena window
 // bisa memuat masa lalu -24 jam).
+// "Sekarang" versi aplikasi. Untuk GFS ini jam dinding sungguhan. Untuk model
+// ARSIP (WRF Citarum, datanya 2018) jam dinding tak ada gunanya, semua frame
+// jadi masa lalu dan slider melompat ke ujung. Jadi dipakai run_time katalog,
+// yaitu batas antara 1 hari lampau dan 3 hari ke depan di jendela itu.
+function nowMs() {
+  if (catalog?.arsip && catalog.run_time) {
+    const t = new Date(catalog.run_time).getTime();
+    if (isFinite(t)) return t;
+  }
+  return Date.now();
+}
+
 function nearestNowIndex() {
-  const now = Date.now();
+  const now = nowMs();
   let best = 0, bestDiff = Infinity;
   frames.forEach((f, i) => {
     const d = Math.abs(new Date(f.valid_time).getTime() - now);
@@ -520,7 +646,7 @@ async function showFrame(i) {
   // Heatmap (kedua layer punya preview_image): angin = kecepatan, hujan = laju hujan.
   const url = DATA_BASE + frame.preview_image;
   if (!speedLayer) {
-    speedLayer = L.imageOverlay(url, dataBounds, { pane: "speed", opacity: 0.92, interactive: false });
+    speedLayer = L.imageOverlay(url, imageBounds, { pane: "speed", opacity: 0.92, interactive: false });
     speedLayer.addTo(map);
   } else {
     speedLayer.setUrl(url);
@@ -872,7 +998,7 @@ function chartSeries(pd, lat, lon) {
     case "cin_surface": return num("cin", "CIN", "J/kg", "#8a29c8", "line", [-400, 0]);
     case "rain_accum_surface": {
       const rain = sampleVar(pd, "rain", lat, lon), days = {};
-      times.forEach((t, i) => { const d = t.slice(0, 10); days[d] = (days[d] || 0) + rain[i] * 3; });
+      times.forEach((t, i) => { const d = t.slice(0, 10); days[d] = (days[d] || 0) + rain[i] * STEP_JAM; });
       const dts = Object.keys(days).sort();
       return { label: "Akumulasi Hujan Harian", unit: "mm/hari", color: "#2360c8", type: "line",
                times: dts.map((d) => d + "T00:00:00Z"), values: dts.map((d) => days[d]), daily: true };
@@ -898,15 +1024,15 @@ function chartSVG(spec) {
   const y = (v) => y0 - plotH * ((v - lo) / (hi - lo));
   const fmt = (v) => (Math.abs(v) < 10 ? v.toFixed(1) : v.toFixed(0));
   const tms = times ? times.map((t) => new Date(t).getTime()) : [];
-  const nowMs = Date.now();
+  const nowT = nowMs();
 
   // Posisi pecahan "kini" di dalam deret (utk memisah garis solid vs putus-putus).
   let sxi = n - 1;
   if (times && n > 1) {
-    if (nowMs <= tms[0]) sxi = 0;
-    else if (nowMs >= tms[n - 1]) sxi = n - 1;
+    if (nowT <= tms[0]) sxi = 0;
+    else if (nowT >= tms[n - 1]) sxi = n - 1;
     else for (let i = 0; i < n - 1; i++)
-      if (nowMs >= tms[i] && nowMs <= tms[i + 1]) { sxi = i + (nowMs - tms[i]) / (tms[i + 1] - tms[i]); break; }
+      if (nowT >= tms[i] && nowT <= tms[i + 1]) { sxi = i + (nowT - tms[i]) / (tms[i + 1] - tms[i]); break; }
   }
   const sx = x(sxi);
 
@@ -915,7 +1041,7 @@ function chartSVG(spec) {
   if (type === "bar") {
     const bw = Math.max(3, (plotW / n) * 0.6);
     for (let i = 0; i < n; i++) {
-      const past = !times || tms[i] <= nowMs;
+      const past = !times || tms[i] <= nowT;
       const bx = (x(i) - bw / 2).toFixed(1), by = y(values[i]).toFixed(1), bh = (y0 - y(values[i])).toFixed(1);
       body += `<rect x="${bx}" y="${by}" width="${bw.toFixed(1)}" height="${bh}" fill="${color}" ` +
         (past ? `opacity="0.82"/>` : `opacity="0.26" stroke="${color}" stroke-width="1" stroke-dasharray="3 2"/>`);
@@ -1031,7 +1157,7 @@ function feelsLike(tC, rh, spdKt) {
 
 // Kalimat bahasa manusia: kondisi kini + hujan mendatang + angin.
 function pointSummary(times, temp, rain, cloud, wind, rh, ci) {
-  const now = cityCondition(rain[ci], cloud[ci]);
+  const now = cityCondition(rain[ci], cloud ? cloud[ci] : null);
   let s = `Saat ini <b>${now.label}</b>`;
   if (temp) {
     const t = Math.round(temp[ci]);
@@ -1071,7 +1197,7 @@ function pointAdvice(times, rain, cloud, wind, ci) {
   if (maxRain >= 0.5) chips.push(["umbrella", "cc-rain", "Bawa payung"]);
   if (storm) chips.push(["thunderstorm", "cc-storm", "Waspada petir"]);
   if (maxRain >= 10 || strongWind) chips.push(["two_wheeler", "cc-heavy", "Hati-hati berkendara"]);
-  if (dry6 && cloud[ci] < 85) chips.push(["dry_cleaning", "cc-sunny", "Aman jemur"]);
+  if (dry6 && (!cloud || cloud[ci] < 85)) chips.push(["dry_cleaning", "cc-sunny", "Aman jemur"]);
   if (!chips.length) chips.push(["check_circle", "cc-pcloud", "Cuaca bersahabat"]);
   return chips.map(([ic, cls, txt]) =>
     `<span class="adv-chip ${cls}"><span class="material-symbols-outlined">${ic}</span>${txt}</span>`).join("");
@@ -1098,12 +1224,14 @@ function dailyCards(times, temp, rain, cloud, ci) {
   for (let i = 0; i < times.length; i++) {
     const d = times[i].slice(0, 10);
     if (d < fromDate) continue;
-    const o = days[d] || (days[d] = { tmax: -99, tmin: 99, peak: 0, rain: 0, cloud: 0, n: 0 });
+    const o = days[d] || (days[d] = { tmax: -99, tmin: 99, peak: 0, rain: 0, cloud: 0, n: 0, nc: 0 });
     if (temp) { o.tmax = Math.max(o.tmax, temp[i]); o.tmin = Math.min(o.tmin, temp[i]); }
-    o.peak = Math.max(o.peak, rain[i]); o.rain += rain[i] * 3; o.cloud += cloud[i]; o.n++;
+    o.peak = Math.max(o.peak, rain[i]); o.rain += rain[i] * STEP_JAM;
+    if (cloud) { o.cloud += cloud[i]; o.nc++; }
+    o.n++;
   }
   return Object.keys(days).sort().slice(0, 3).map((d) => {
-    const o = days[d], cond = cityCondition(o.peak, o.cloud / o.n);
+    const o = days[d], cond = cityCondition(o.peak, o.nc ? o.cloud / o.nc : null);
     const base = new Date(d + "T00:00:00Z");
     const wd = base.toLocaleDateString("id-ID", { weekday: "short", timeZone: "UTC" });
     const dm = base.toLocaleDateString("id-ID", { day: "numeric", month: "short", timeZone: "UTC" });
@@ -1127,15 +1255,20 @@ function renderPoint(pd, lat, lon) {
   const wind = u && v ? u.map((uu, i) => windAt(uu, v[i])) : null;
   lastPoint = { lat, lon, times, temp, rain, wind, rh, cloud, pres };
 
+  // Kolom disusun dari variabel yang MEMANG ada. Model WRF tak punya tutupan
+  // awan, dan kolom berisi "–" dari atas sampai bawah cuma memakan lebar.
+  const kolom = [
+    ["Tgl/Jam", (i) => fmtHour(times[i])],
+    temp && ["°C", (i) => temp[i].toFixed(1)],
+    wind && ["Angin", (i) => Math.round(wind[i].spd) + " " + wind[i].dir],
+    rain && ["mm/j", (i) => rain[i].toFixed(1)],
+    rh && ["RH%", (i) => Math.round(rh[i])],
+    cloud && ["Awan%", (i) => Math.round(cloud[i])],
+    pres && ["hPa", (i) => Math.round(pres[i])],
+  ].filter(Boolean);
   let rows = "";
   for (let i = 0; i < times.length; i++) {
-    rows += `<tr><td>${fmtHour(times[i])}</td>` +
-      `<td>${temp ? temp[i].toFixed(1) : "–"}</td>` +
-      `<td>${wind ? Math.round(wind[i].spd) + " " + wind[i].dir : "–"}</td>` +
-      `<td>${rain ? rain[i].toFixed(1) : "–"}</td>` +
-      `<td>${rh ? Math.round(rh[i]) : "–"}</td>` +
-      `<td>${cloud ? Math.round(cloud[i]) : "–"}</td>` +
-      `<td>${pres ? Math.round(pres[i]) : "–"}</td></tr>`;
+    rows += "<tr>" + kolom.map(([, f]) => `<td>${f(i)}</td>`).join("") + "</tr>";
   }
   const ci = currentTimeIndex(pd);
   const extras =
@@ -1148,14 +1281,18 @@ function renderPoint(pd, lat, lon) {
     `<div class="pt-sec">${spec.label.toUpperCase()} <span>${spec.unit}</span></div>${chartSVG(spec)}${chartLegend(spec.color)}` +
     `<div class="pt-sec">DATA PER-JAM (WIB)</div>` +
     `<div class="pt-table-wrap"><table class="pt-table"><thead><tr>` +
-    `<th>Tgl/Jam</th><th>°C</th><th>Angin</th><th>mm/j</th><th>RH%</th><th>Awan%</th><th>hPa</th>` +
+    kolom.map(([h]) => `<th>${h}</th>`).join("") +
     `</tr></thead><tbody>${rows}</tbody></table></div>` +
-    // Kartu LANJUTAN: profil vertikal Skew-T (dimuat malas saat dibuka)
-    `<button type="button" class="pt-skewt-head${skewtOpen ? " open" : ""}" id="pt-skewt-toggle">` +
-    `<span class="skt-lead material-symbols-outlined">stacked_line_chart</span>` +
-    `<span class="skt-label">Profil Atmosfer · Skew-T</span>` +
-    `<span class="skt-caret material-symbols-outlined">expand_more</span></button>` +
-    `<div class="pt-skewt-wrap${skewtOpen ? " open" : ""}" id="pt-skewt-wrap"></div>`;
+    // Kartu LANJUTAN: profil vertikal Skew-T (dimuat malas saat dibuka).
+    // Butuh profile.bin.gz yang cuma dibuat pipeline GFS, jadi di WRF kartunya
+    // tidak ditampilkan sama sekali daripada dibuka lalu gagal.
+    (PUNYA_EKSTRA
+      ? `<button type="button" class="pt-skewt-head${skewtOpen ? " open" : ""}" id="pt-skewt-toggle">` +
+        `<span class="skt-lead material-symbols-outlined">stacked_line_chart</span>` +
+        `<span class="skt-label">Profil Atmosfer · Skew-T</span>` +
+        `<span class="skt-caret material-symbols-outlined">expand_more</span></button>` +
+        `<div class="pt-skewt-wrap${skewtOpen ? " open" : ""}" id="pt-skewt-wrap"></div>`
+      : "");
 
   const tog = $("pt-skewt-toggle");
   if (tog) tog.addEventListener("click", () => {
@@ -1215,7 +1352,65 @@ function updateFreshness() {
   const w = toWIB(catalog.run_time);
   const hh = String(w.getUTCHours()).padStart(2, "0");
   const mm = String(w.getUTCMinutes()).padStart(2, "0");
-  el.textContent = `Last update : ${hh}:${mm} WIB, ${w.getUTCDate()} ${MONTHS_ID[w.getUTCMonth()]} ${w.getUTCFullYear()}`;
+  const tgl = `${hh}:${mm} WIB, ${w.getUTCDate()} ${MONTHS_ID[w.getUTCMonth()]} ${w.getUTCFullYear()}`;
+  // Model arsip (WRF Citarum) tanggalnya 2018-2019. Kalau ditulis "Last update"
+  // begitu saja orang mengira situsnya basi. Ditandai terang terangan.
+  el.textContent = catalog.arsip ? `ARSIP : ${tgl}` : `Last update : ${tgl}`;
+}
+
+// Badge AKURASI. Angkanya statis, dihitung sekali di backend lawan pos hujan,
+// jadi TIDAK berubah waktu slider digeser. Cuma muncul di model yang memang
+// punya verifikasi. Rinciannya ditaruh di title supaya angka telanjang di
+// layar tak dibaca sebagai klaim yang lebih kuat dari yang sebenarnya.
+// ================= POS HUJAN (khusus WRF) =================
+// Titik pengamatan yang dipakai menghitung akurasi. Digambar TETAP, tak ikut
+// tombol Kondisi, supaya orang bisa melihat angka akurasi itu diuji di mana.
+// Ikonnya divIcon, bukan gambar, biar tetap tajam dan sewarna tema.
+let posLayer = null;
+
+function posIcon() {
+  return L.divIcon({
+    className: "",
+    iconSize: [18, 18], iconAnchor: [9, 9],
+    // Ikon MENARA UKUR, bukan hujan atau awan. Yang ditandai di sini alatnya,
+    // bukan cuacanya, jadi lambang cuaca malah rancu dengan ikon kondisi kota.
+    html: '<span class="pos-mark"><span class="material-symbols-outlined">cell_tower</span></span>',
+  });
+}
+
+function drawPosHujan() {
+  if (posLayer) { map.removeLayer(posLayer); posLayer = null; }
+  const pos = catalog?.pos_hujan;
+  if (!pos || !pos.length) return;
+  const a = catalog.akurasi || {};
+  posLayer = L.layerGroup([], { pane: "poshujan" });
+  pos.forEach((p) => {
+    L.marker([p.lat, p.lon], { icon: posIcon(), pane: "poshujan", title: `Pos hujan ${p.n}` })
+      .bindTooltip(
+        `<b>${p.n}</b><br>Pos hujan DAS Citarum` +
+        `<br><span class="mono">${p.lat.toFixed(4)}, ${p.lon.toFixed(4)}</span>` +
+        (a.hari ? `<br>Dipakai verifikasi ${a.hari} hari` : ""),
+        { direction: "top", offset: [0, -10], className: "pos-tip",
+          pane: "poshujan-tip" })
+      .addTo(posLayer);
+  });
+  posLayer.addTo(map);
+}
+
+function updateAkurasi() {
+  const box = $("acc-badge"), el = $("acc-text");
+  if (!box || !el) return;
+  const a = catalog?.akurasi;
+  if (!a) { box.hidden = true; return; }
+  box.hidden = false;
+  // Koma sebagai pemisah desimal, ikut kebiasaan Indonesia.
+  const nil = a.nilai.toFixed(1).replace(".", ",");
+  el.textContent = `Akurasi : ${nil}% ${a.label || ""}`.trim();
+  box.title =
+    `${a.catatan || ""}\n` +
+    `Tebakan sepele "selalu kering" dapat ${a.dasar}%.\n` +
+    `Tertangkap ${a.pod}% hari hujan, ${a.far}% alarm palsu.\n` +
+    `${a.pos} pos, ${a.hari} hari, ${a.pasangan} pasangan hari-pos.`;
 }
 
 let toastTimer = null;
@@ -1364,6 +1559,10 @@ function cityCondition(rain, cloud) {
   if (rain >= 20) return { icon: "thunderstorm", cls: "cc-storm", sev: 5, label: "hujan sangat lebat" };
   if (rain >= 10) return { icon: "rainy_heavy", cls: "cc-heavy", sev: 4, label: "hujan lebat" };
   if (rain >= 0.5) return { icon: "rainy", cls: "cc-rain", sev: 3, label: "hujan" };
+  // Model tanpa tutupan awan (WRF Citarum). Jangan mengaku "cerah", itu klaim
+  // yang datanya tak ada. Cukup katakan tidak hujan.
+  if (cloud === null || cloud === undefined || !isFinite(cloud))
+    return { icon: "partly_cloudy_day", cls: "cc-pcloud", sev: 1, label: "tidak hujan" };
   if (cloud >= 85) return { icon: "cloud", cls: "cc-cloud", sev: 2, label: "berawan tebal" };
   if (cloud >= 40) return { icon: "partly_cloudy_day", cls: "cc-pcloud", sev: 1, label: "cerah berawan" };
   return { icon: "sunny", cls: "cc-sunny", sev: 0, label: "cerah" };
@@ -1443,7 +1642,7 @@ function cityValueText(i, ti) {
   if (activeLayer === "rain_accum_surface") {
     const d = cityData.times[ti].slice(0, 10);   // total sepanjang TANGGAL frame aktif
     v = 0;
-    cityData.times.forEach((t, k) => { if (t.slice(0, 10) === d) v += cityRaw("rain", i, k) * 3; });
+    cityData.times.forEach((t, k) => { if (t.slice(0, 10) === d) v += cityRaw("rain", i, k) * STEP_JAM; });
   } else {
     v = cityRaw(CITY_VAR[activeLayer], i, ti);
   }
@@ -1954,13 +2153,33 @@ async function init() {
     const cat = await catRes.json();
     catalog = cat;
     const avail = Object.keys(cat.layers || {});
+    // Cadence sebenarnya, dari layer non-harian pertama yang punya >= 2 frame.
+    for (const k of avail) {
+      if (DAILY_LAYERS.has(k)) continue;
+      const fr = cat.layers[k].frames;
+      if (fr && fr.length > 1) { hitungStepJam(fr.map((f) => f.valid_time)); break; }
+    }
     if (!avail.length) throw new Error("catalog.json tidak punya layer");
     activeLayer = cat.layers["wind_surface"] ? "wind_surface" : avail[0];
     frames = cat.layers[activeLayer].frames;
 
-    // Domain data penuh (untuk imageOverlay heatmap).
+    // Tiga kotak yang beda peran, jangan tertukar.
+    //   bounds        domain data model (pusat sel). Dipakai panel titik.
+    //   image_bounds  tepi sel, tempat heatmap ditempel. Kalau tak ada, pakai bounds.
+    //   frame_bounds  kotak untuk bingkai, minZoom, dan kunci pan.
+    // WRF domainnya cuma sekitar Jawa. Kalau bingkainya ikut domain itu, peta
+    // melompat ke Jawa saat ganti model. Sementara ini frame_bounds-nya sengaja
+    // diisi domain GFS supaya tampilannya tak berubah, WRF jadi tempelan kecil
+    // di dalamnya. Nanti disesuaikan bareng user.
     const [dw, ds, de, dn] = cat.region.bounds;
-    dataBounds = L.latLngBounds([ds, dw], [dn, de]);
+    const [iw, is_, ie, iN] = cat.region.image_bounds || cat.region.bounds;
+    const [fw, fs, fe, fn] = cat.region.frame_bounds || cat.region.bounds;
+    dataBounds = L.latLngBounds([fs, fw], [fn, fe]);
+    imageBounds = L.latLngBounds([is_, iw], [iN, ie]);
+    if (cat.region.view_core) {
+      const [vw, vs, ve, vn] = cat.region.view_core;
+      VIEW_CORE = L.latLngBounds([vs, vw], [vn, ve]);
+    }
 
     // Wire tombol layer: klik memilih varian sesuai LEVEL aktif (permukaan/strato).
     // Tombol tanpa data (atau diredupkan oleh level) diabaikan saat diklik.
@@ -1988,7 +2207,9 @@ async function init() {
     const windS = cat.layers["wind_strato"];
     if (windS) windS.frames.forEach((f) => { if (f.velocity_json) windVelStrato[f.valid_time] = f.velocity_json; });
 
-    setupLevelSelect();   // hidupkan dropdown LEVEL kalau data strato ada
+    setupModelSelect();      // dropdown MODEL: GFS <-> WRF Citarum
+    terapkanFiturModel();    // sembunyikan fitur yang tak punya data di model ini
+    setupLevelSelect();      // hidupkan dropdown LEVEL kalau data strato ada
 
     // Bingkai tampilan = kotak inti (VIEW_CORE) yang diperlebar pada sumbu yang
     // perlu hingga RASIONYA sama dengan jendela desktop. Efeknya: seluruh wilayah
@@ -2169,6 +2390,8 @@ async function init() {
     await showFrame(current);
     restoreFromHash();                 // pulihkan layer/waktu/titik dari link dibagikan
     updateFreshness();
+    updateAkurasi();
+    drawPosHujan();
     await whenHeatmapReady();          // reveal setelah frame pertama tergambar
     hideSkeleton();
   } catch (err) {
