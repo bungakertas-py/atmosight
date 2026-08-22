@@ -2598,12 +2598,17 @@ function ikonDari(btn) {
   return i ? i.textContent.trim() : "";
 }
 function labelDari(btn) {
-  // .lb-txt DULU, baru data-tip. Tombol parameter memakai data-tip untuk
-  // KEPANJANGAN singkatan (CAPE jadi "Convective Available Potential Energy"),
-  // yang kepanjangan untuk tombol selebar sepertiga layar. Tombol ikon seperti
-  // Kondisi dan ITCZ tak punya .lb-txt, jadi tetap jatuh ke data-tip.
-  return btn.querySelector(".lb-txt")?.textContent.trim()
-      || btn.dataset.tip || btn.getAttribute("aria-label") || "";
+  // Urutan: .lb-txt, lalu TEKS TOMBOL ITU SENDIRI, baru data-tip.
+  // data-tip sering berisi keterangan panjang yang tak muat di tombol selebar
+  // sepertiga layar. Ikon dikeluarkan dulu, kalau tidak nama ligature Material
+  // ikut terbaca sebagai teks.
+  const t = btn.querySelector(".lb-txt")?.textContent.trim();
+  if (t) return t;
+  const salin = btn.cloneNode(true);
+  salin.querySelectorAll(".material-symbols-outlined").forEach((e) => e.remove());
+  const teks = salin.textContent.replace(/\s+/g, " ").trim();
+  if (teks) return teks;
+  return btn.dataset.tip || btn.getAttribute("aria-label") || "";
 }
 
 function bangunLowbar() {
