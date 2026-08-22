@@ -52,9 +52,15 @@ const LEGENDS = {
     cells: [["0", "#7a450a", 1], ["25", "#b9843a", 1], ["50", "#88b055", 0], ["70", "#359a86", 1],
             ["85", "#216bb0", 1], ["100", "#123f86", 1]],
   },
+  // Inferno dibalik. Angkanya WAJIB sama dengan _CLOUD_SCALE di process.py.
+  // Sel 0% sengaja "transparent": dirender jadi kotak-kotak catur, bukan warna,
+  // supaya jelas artinya TIDAK ADA awan dan peta di bawahnya tembus.
   cloud_surface: {
     head: "%",
-    cells: [["20", "#c8d0d8", 0], ["50", "#aab4be", 0], ["80", "#96a0ac", 1], ["100", "#78828e", 1]],
+    cells: [["0", "transparent", 0], ["10", "#f6d645", 0], ["20", "#fca50a", 0],
+            ["30", "#f37819", 0], ["40", "#dd513a", 1], ["50", "#bc3754", 1],
+            ["60", "#932667", 1], ["70", "#6a176e", 1], ["80", "#420a68", 1],
+            ["90", "#160b39", 1], ["100", "#0d1a52", 1]],
   },
   pressure_surface: {
     head: "hPa",
@@ -131,7 +137,8 @@ const LAYER_THEME = {
 const BORDER_COLOR = {
   temp_surface: "#000000",       // batas hitam di atas heatmap suhu
   humidity_surface: "#000000",   // batas hitam di atas heatmap kelembapan
-  cloud_surface: "#39ff14",      // batas hijau neon di atas tutupan awan
+  // Tutupan awan TIDAK didaftar lagi. Dulu hijau neon #39ff14, sekarang jatuh ke
+  // bawaan yaitu PUTIH di tema gelap, sama seperti parameter lain.
   pressure_surface: "#6d7787",   // batas ABU (redup) di layer tekanan → isobar jadi garis utama
   temp_strato: "#000000",        // batas hitam di atas heatmap suhu stratosfer
 };
@@ -608,7 +615,10 @@ function renderLegend(layerKey) {
   head.textContent = def.head;
   cells.classList.toggle("legend-words", !!def.words);   // sel melebar utk label kata
   cells.innerHTML = def.cells.map(([label, bg, dark]) =>
-    `<div class="legend-cell${dark ? " dark" : ""}" style="background:${bg}">${label}</div>`).join("");
+    (bg === "transparent"
+      ? `<div class="legend-cell kotak-catur${dark ? " dark" : ""}">${label}</div>`
+      : `<div class="legend-cell${dark ? " dark" : ""}" style="background:${bg}">${label}</div>`)
+  ).join("");
 }
 
 function setActiveLayer(layerKey) {

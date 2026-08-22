@@ -108,11 +108,33 @@ _HUM_SCALE = [
     (85, (0x21, 0x6b, 0xb0, 255)), (100, (0x12, 0x3f, 0x86, 255)),
 ]
 
-# Tutupan awan (%) RGBA: cerah transparan -> abu (makin tertutup makin pekat).
+# Tutupan awan (%) RGBA: INFERNO DIBALIK, langit bersih transparan -> biru donker.
+# Warna diambil dari colormap `inferno` matplotlib di posisi 1,00 turun ke 0,00
+# (jadi terbalik: makin tertutup makin gelap), lalu DIBEKUKAN di sini. Matplotlib
+# sengaja TIDAK jadi dependensi CI, konvensi yang sama dipakai Kertas Emisi.
+#
+# Dua penyimpangan yang disengaja dari inferno murni.
+# 1. Hentian 0 persen alfanya NOL. Langit tanpa awan berarti tak ada yang perlu
+#    digambar, biar peta di bawahnya kelihatan.
+# 2. Hentian 100 persen diganti BIRU DONKER, bukan #000004 milik inferno yang
+#    praktis hitam. Hitam pekat di atas alas gelap tak terbaca sebagai "tertutup
+#    penuh", malah tampak seperti lubang di peta.
+#
+# Alfanya menanjak pelan di ujung bawah supaya awan tipis tak terlihat berlebihan,
+# lalu rata di atas 40 persen. Ini beda dari kasus PBLH di Kertas Emisi: di sini
+# nilai rendah memang berarti "nyaris tak ada", jadi pudar itu tepat.
 _CLOUD_SCALE = [
-    (0,   (0xff, 0xff, 0xff,   0)), (20, (0xc8, 0xd0, 0xd8,  70)),
-    (50,  (0xaa, 0xb4, 0xbe, 150)), (80, (0x96, 0xa0, 0xac, 205)),
-    (100, (0x78, 0x82, 0x8e, 235)),
+    (0,   (0xfc, 0xff, 0xa4,   0)),   # bersih, transparan penuh
+    (10,  (0xf6, 0xd6, 0x45, 120)),
+    (20,  (0xfc, 0xa5, 0x0a, 170)),
+    (30,  (0xf3, 0x78, 0x19, 200)),
+    (40,  (0xdd, 0x51, 0x3a, 220)),
+    (50,  (0xbc, 0x37, 0x54, 230)),
+    (60,  (0x93, 0x26, 0x67, 235)),
+    (70,  (0x6a, 0x17, 0x6e, 238)),
+    (80,  (0x42, 0x0a, 0x68, 240)),
+    (90,  (0x16, 0x0b, 0x39, 242)),
+    (100, (0x0d, 0x1a, 0x52, 245)),   # biru donker, sengaja BUKAN hitam
 ]
 
 # Tekanan MSL (hPa) OPAQUE: rendah (badai) ungu/biru -> tinggi merah.
