@@ -259,6 +259,24 @@
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <!-- Kartu Tentang -->
+    <!-- Gerbang sandi model WRF. CATATAN: ini di sisi browser, jadi cuma
+         penghalang sopan, BUKAN pengaman. Sandinya ada di app.js yang bisa
+         dibaca siapa saja, dan berkas datanya sendiri tetap publik. -->
+    <div id="pw-overlay" class="about-overlay">
+      <div class="pw-card">
+        <span class="about-tag">TERKUNCI</span>
+        <h2 class="pw-title">Model WRF Citarum</h2>
+        <p class="pw-note">Masukkan sandi untuk menampilkan model ini.</p>
+        <input id="pw-input" class="pw-input" type="password" autocomplete="off"
+               spellcheck="false" placeholder="Sandi" aria-label="Sandi model WRF" />
+        <div id="pw-err" class="pw-err" hidden>Sandi salah.</div>
+        <div class="pw-act">
+          <button id="pw-cancel" type="button" class="pw-btn">Batal</button>
+          <button id="pw-ok" type="button" class="pw-btn pw-btn-primary">Buka</button>
+        </div>
+      </div>
+    </div>
+
     <div id="about-overlay" class="about-overlay">
       <div class="about-card">
         <button id="about-close" class="about-close" aria-label="Tutup"><span class="material-symbols-outlined">close</span></button>

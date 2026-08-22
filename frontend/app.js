@@ -57,10 +57,10 @@ const LEGENDS = {
   // supaya jelas artinya TIDAK ADA awan dan peta di bawahnya tembus.
   cloud_surface: {
     head: "%",
-    cells: [["0", "transparent", 0], ["10", "#f6d645", 0], ["20", "#fca50a", 0],
-            ["30", "#f37819", 0], ["40", "#dd513a", 1], ["50", "#bc3754", 1],
-            ["60", "#932667", 1], ["70", "#6a176e", 1], ["80", "#420a68", 1],
-            ["90", "#160b39", 1], ["100", "#0d1a52", 1]],
+    cells: [["0", "transparent", 0], ["10", "#f9dc5c", 0], ["20", "#fcac1c", 0],
+            ["30", "#f4802a", 0], ["40", "#e05a41", 1], ["50", "#c2415c", 1],
+            ["60", "#9c3273", 1], ["70", "#75248a", 1], ["80", "#4f1e8c", 1],
+            ["90", "#2e1c7d", 1], ["100", "#0f1a5e", 1]],
   },
   pressure_surface: {
     head: "hPa",
@@ -189,6 +189,60 @@ function setLevel(lv) {
 }
 
 // Hidupkan pemilih LEVEL (dropdown desktop + tombol HP) bila data strato tersedia.
+// ================= GERBANG SANDI MODEL WRF =================
+// PERINGATAN JUJUR: ini berjalan di browser, jadi TIDAK mengamankan apa pun.
+// Sandinya ada di berkas ini dan bisa dibaca siapa saja lewat view-source, dan
+// berkas datanya di /backend/data/output/wrf/ tetap bisa diambil langsung tanpa
+// melewati halaman ini. Fungsinya cuma penghalang sopan supaya model ini tidak
+// terbuka begitu saja bagi yang sekadar lewat. Kalau datanya benar benar harus
+// dibatasi, satu satunya cara adalah tidak menerbitkannya di Pages publik.
+const WRF_SANDI = "bungakertas123!";
+const WRF_KUNCI = "kertas-cuaca:wrf-terbuka";
+
+function wrfTerbuka() {
+  try { return localStorage.getItem(WRF_KUNCI) === "1"; } catch { return false; }
+}
+function bukaWrf() {
+  try { localStorage.setItem(WRF_KUNCI, "1"); } catch { /* mode privat, abaikan */ }
+}
+
+// Tampilkan modal, kembalikan janji true kalau sandinya benar.
+function mintaSandi() {
+  return new Promise((selesai) => {
+    const ov = $("pw-overlay"), inp = $("pw-input"), err = $("pw-err");
+    if (!ov || !inp) { selesai(false); return; }
+    ov.classList.add("show");
+    inp.value = "";
+    err.hidden = true;
+    setTimeout(() => inp.focus(), 50);
+
+    const tutup = (hasil) => {
+      ov.classList.remove("show");
+      $("pw-ok").removeEventListener("click", onOk);
+      $("pw-cancel").removeEventListener("click", onBatal);
+      inp.removeEventListener("keydown", onTombol);
+      ov.removeEventListener("click", onLatar);
+      selesai(hasil);
+    };
+    const onOk = () => {
+      if (inp.value === WRF_SANDI) { bukaWrf(); tutup(true); }
+      else { err.hidden = false; inp.select(); }
+    };
+    const onBatal = () => tutup(false);
+    const onTombol = (e) => {
+      if (e.key === "Enter") onOk();
+      else if (e.key === "Escape") onBatal();
+      else err.hidden = true;
+    };
+    const onLatar = (e) => { if (e.target === ov) onBatal(); };
+
+    $("pw-ok").addEventListener("click", onOk);
+    $("pw-cancel").addEventListener("click", onBatal);
+    inp.addEventListener("keydown", onTombol);
+    ov.addEventListener("click", onLatar);
+  });
+}
+
 // Dropdown MODEL. Dulu dekoratif satu opsi, sekarang benar benar memindah sumber
 // data. Pindah model = muat ulang halaman dengan ?model=..., alasannya ada di
 // komentar MODELS di atas.
@@ -203,9 +257,13 @@ function setupModelSelect() {
     sel.appendChild(o);
   }
   sel.value = MODEL_ID;
-  sel.addEventListener("change", () => {
+  sel.addEventListener("change", async () => {
     const id = sel.value;
     if (id === MODEL_ID) return;
+    if (id === "wrf" && !wrfTerbuka()) {
+      const boleh = await mintaSandi();
+      if (!boleh) { sel.value = MODEL_ID; return; }   // batal, kembalikan pilihan
+    }
     // Hash (layer, waktu, titik) sengaja DIBUANG. Layer & waktu model lama
     // belum tentu ada di model baru, dan restore yang gagal separuh lebih
     // membingungkan daripada mulai bersih.
@@ -2156,6 +2214,12 @@ async function init() {
   if (typeof L === "undefined" || typeof L.velocityLayer !== "function") {
     showLoadMsg("⚠️ Library peta gagal dimuat (cek koneksi internet ke unpkg.com / CDN diblokir).");
     return;
+  }
+  // Dibuka langsung lewat ?model=wrf juga harus lewat gerbang, kalau tidak
+  // penguncian di dropdown gampang dilewati cuma dengan mengetik alamatnya.
+  if (MODEL_ID === "wrf" && !wrfTerbuka()) {
+    const boleh = await mintaSandi();
+    if (!boleh) { location.replace(location.pathname); return; }
   }
   try {
     const catRes = await fetch(DATA_BASE + "catalog.json");

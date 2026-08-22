@@ -1018,3 +1018,28 @@ html, body {
   padding: 6px 8px;
 }
 .leaflet-tooltip.pos-tip::before { display: none; }
+
+/* ---- Gerbang sandi model WRF (neubrutalist, senada kartu Tentang) ---- */
+.pw-card {
+  position: relative; width: 100%; max-width: 360px; padding: 20px;
+  display: flex; flex-direction: column; gap: 10px; align-items: flex-start;
+  background: var(--surface); border: var(--bw) solid var(--ink); box-shadow: var(--shadow);
+}
+.pw-title { font-family: var(--font-display); font-size: 20px; margin: 2px 0 0; }
+.pw-note { font-family: var(--font-ui); font-size: 13px; color: var(--variant); margin: 0; }
+.pw-input {
+  width: 100%; padding: 10px 12px; font-family: var(--font-mono); font-size: 14px;
+  color: var(--ink); background: var(--surface-high);
+  border: 2px solid var(--ink); border-radius: 0; outline: none;
+}
+.pw-input:focus { box-shadow: 3px 3px 0 0 var(--ink); }
+.pw-err { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: #e8342c; }
+.pw-err[hidden] { display: none; }
+.pw-act { display: flex; gap: 8px; align-self: stretch; justify-content: flex-end; margin-top: 4px; }
+.pw-btn {
+  padding: 8px 14px; font-family: var(--font-ui); font-size: 13px; font-weight: 700;
+  background: var(--surface); color: var(--ink);
+  border: 2px solid var(--ink); box-shadow: 3px 3px 0 0 var(--ink); cursor: pointer;
+}
+.pw-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 0 var(--ink); }
+.pw-btn-primary { background: var(--lime); color: var(--on-lime); }

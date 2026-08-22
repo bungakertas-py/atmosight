@@ -123,18 +123,25 @@ _HUM_SCALE = [
 # Alfanya menanjak pelan di ujung bawah supaya awan tipis tak terlihat berlebihan,
 # lalu rata di atas 40 persen. Ini beda dari kasus PBLH di Kertas Emisi: di sini
 # nilai rendah memang berarti "nyaris tak ada", jadi pudar itu tepat.
+# WAJIB MAKIN GELAP KE BAWAH. Versi pertama kebalik di dua hentian terakhir:
+# 90 persen luminansinya 16,7 sedangkan 100 persen 27,3, jadi blok terakhir malah
+# tampak lebih terang. Sebabnya inferno berakhir di #000004 yang nyaris hitam;
+# begitu diganti biru donker, birunya pasti lebih terang karena kanal hijau ikut
+# naik. Jadi bukan cuma blok 100 yang dibetulkan, pita 70 sampai 90 ikut
+# dilonggarkan supaya turunnya tetap mulus sampai biru donker.
+# Luminansi sekarang 247,8 turun terus sampai 28,6 tanpa satu pun naik.
 _CLOUD_SCALE = [
     (0,   (0xfc, 0xff, 0xa4,   0)),   # bersih, transparan penuh
-    (10,  (0xf6, 0xd6, 0x45, 120)),
-    (20,  (0xfc, 0xa5, 0x0a, 170)),
-    (30,  (0xf3, 0x78, 0x19, 200)),
-    (40,  (0xdd, 0x51, 0x3a, 220)),
-    (50,  (0xbc, 0x37, 0x54, 230)),
-    (60,  (0x93, 0x26, 0x67, 235)),
-    (70,  (0x6a, 0x17, 0x6e, 238)),
-    (80,  (0x42, 0x0a, 0x68, 240)),
-    (90,  (0x16, 0x0b, 0x39, 242)),
-    (100, (0x0d, 0x1a, 0x52, 245)),   # biru donker, sengaja BUKAN hitam
+    (10,  (0xf9, 0xdc, 0x5c, 120)),
+    (20,  (0xfc, 0xac, 0x1c, 170)),
+    (30,  (0xf4, 0x80, 0x2a, 200)),
+    (40,  (0xe0, 0x5a, 0x41, 220)),
+    (50,  (0xc2, 0x41, 0x5c, 230)),
+    (60,  (0x9c, 0x32, 0x73, 235)),
+    (70,  (0x75, 0x24, 0x8a, 238)),
+    (80,  (0x4f, 0x1e, 0x8c, 240)),
+    (90,  (0x2e, 0x1c, 0x7d, 242)),
+    (100, (0x0f, 0x1a, 0x5e, 245)),   # biru donker, sengaja BUKAN hitam
 ]
 
 # Tekanan MSL (hPa) OPAQUE: rendah (badai) ungu/biru -> tinggi merah.
