@@ -256,6 +256,33 @@
     </div>
 
     <!-- Toast kecil (mis. "Link disalin") -->
+    <!-- ============ TATA LETAK HP ============
+         Semua kontrol dirangkum ke satu bilah bawah yang disembunyikan di luar
+         bingkai. Isinya DIBANGUN di app.js dari tombol yang sudah ada, dan
+         kliknya diteruskan ke tombol aslinya. Sengaja begitu: satu sumber
+         kebenaran, jadi tak ada dua tempat yang harus disamakan tiap kali ada
+         parameter baru. Di desktop seluruh blok ini disembunyikan CSS. -->
+    <button id="lowbar-handle" class="lowbar-handle" aria-label="Buka panel kontrol">
+      <span class="material-symbols-outlined">keyboard_arrow_up</span>
+    </button>
+    <div id="lowbar" class="lowbar" aria-hidden="true">
+      <div class="lowbar-grip"></div>
+      <div id="lowbar-body" class="lowbar-body"></div>
+    </div>
+
+    <!-- Nama parameter aktif, mengambang di tengah atas. Pengganti deretan
+         tombol, supaya layar HP bersih tapi tetap jelas sedang melihat apa. -->
+    <div id="par-chip" class="par-chip" hidden></div>
+
+    <!-- Tumpukan keterangan (Kondisi, Siklon, ITCZ, Fenomena) di kiri bawah,
+         bisa diciutkan keluar bingkai lewat panah di sisinya. -->
+    <div id="ket-stack" class="ket-stack" hidden>
+      <div id="ket-body" class="ket-body"></div>
+      <button id="ket-toggle" class="ket-toggle" aria-label="Sembunyikan keterangan">
+        <span class="material-symbols-outlined">chevron_left</span>
+      </button>
+    </div>
+
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <!-- Kartu Tentang -->

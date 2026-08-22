@@ -197,13 +197,26 @@ function setLevel(lv) {
 // terbuka begitu saja bagi yang sekadar lewat. Kalau datanya benar benar harus
 // dibatasi, satu satunya cara adalah tidak menerbitkannya di Pages publik.
 const WRF_SANDI = "bungakertas123!";
-const WRF_KUNCI = "kertas-cuaca:wrf-terbuka";
+const WRF_KUNCI = "kertas-cuaca:wrf-tiket";
 
-function wrfTerbuka() {
-  try { return localStorage.getItem(WRF_KUNCI) === "1"; } catch { return false; }
+// Sandinya TIDAK diingat. Tiap muat ulang, dan tiap balik lagi dari GFS ke WRF,
+// harus diketik lagi. Permintaan user.
+//
+// Masalahnya, membuka WRF itu MEMUAT ULANG halaman (?model=wrf), jadi kalau
+// sama sekali tak ada yang disimpan, sandi yang barusan benar akan langsung
+// ditanya lagi begitu halaman baru terbuka. Jadi dipakai TIKET SEKALI PAKAI:
+// ditulis tepat sebelum pindah, lalu DIHAPUS saat dibaca. Sekali dipakai habis.
+// Akibatnya F5 menanyakan lagi, dan pulang pergi GFS-WRF juga menanyakan lagi,
+// persis yang diminta.
+function ambilTiket() {
+  try {
+    const ada = sessionStorage.getItem(WRF_KUNCI) === "1";
+    sessionStorage.removeItem(WRF_KUNCI);   // sekali pakai, langsung hangus
+    return ada;
+  } catch { return false; }
 }
-function bukaWrf() {
-  try { localStorage.setItem(WRF_KUNCI, "1"); } catch { /* mode privat, abaikan */ }
+function tulisTiket() {
+  try { sessionStorage.setItem(WRF_KUNCI, "1"); } catch { /* mode privat, abaikan */ }
 }
 
 // Tampilkan modal, kembalikan janji true kalau sandinya benar.
@@ -225,7 +238,7 @@ function mintaSandi() {
       selesai(hasil);
     };
     const onOk = () => {
-      if (inp.value === WRF_SANDI) { bukaWrf(); tutup(true); }
+      if (inp.value === WRF_SANDI) { tutup(true); }
       else { err.hidden = false; inp.select(); }
     };
     const onBatal = () => tutup(false);
@@ -260,9 +273,10 @@ function setupModelSelect() {
   sel.addEventListener("change", async () => {
     const id = sel.value;
     if (id === MODEL_ID) return;
-    if (id === "wrf" && !wrfTerbuka()) {
+    if (id === "wrf") {
       const boleh = await mintaSandi();
       if (!boleh) { sel.value = MODEL_ID; return; }   // batal, kembalikan pilihan
+      tulisTiket();                                   // tiket sekali pakai
     }
     // Hash (layer, waktu, titik) sengaja DIBUANG. Layer & waktu model lama
     // belum tentu ada di model baru, dan restore yang gagal separuh lebih
@@ -687,6 +701,7 @@ function setActiveLayer(layerKey) {
   document.querySelectorAll(".layer-btn[data-layer]").forEach((b) =>
     b.classList.toggle("active", b.dataset.layer === activeBase));
   renderLegend(layerKey);
+  updateParChip();
   applyTheme();
   if (velocityLayer) { map.removeLayer(velocityLayer); velocityLayer = null; } // recreate warna partikel
   // Recreate imageOverlay heatmap tiap ganti layer: elemen <img> yang sama TAK
@@ -2152,7 +2167,60 @@ function fillPhenomPanel() {
     row(!!s.active, SURGE_DOT, "<i>Cold Surge</i>", s.active ? `${s.level}, angin utara ${s.north_kt || 0} kt. ${s.note}` : "Belum terjadi (fenomena musim hujan / DJF).") +
     row(!!vx.active, BV_DOT, "<i>Borneo Vortex</i>", vx.active ? `Vortisitas ${vx.vort}. ${vx.note}` : "Belum terjadi (fenomena musim hujan / DJF).");
 }
+// Terapkan keadaan tiga fenomena. Dipanggil tombol HP (satu satu) maupun
+// tombol desktop #mon-toggle (ketiganya sekaligus). Cold Surge sengaja tak
+// punya lapisan peta, karena BMKG-pun tak menggambarnya; yang ada cuma status,
+// jadi tombolnya hanya memunculkan barisnya di kotak keterangan.
+function terapkanFenomena() {
+  const adaYangNyala = fenOn.monsun || fenOn.bv || fenOn.surge;
+  monsoonOn = adaYangNyala;
+  $("mon-toggle")?.classList.toggle("active", adaYangNyala);
+  document.querySelectorAll("#lowbar-body .lb-btn[data-fen]").forEach((b) =>
+    b.classList.toggle("active", !!fenOn[b.dataset.fen]));
+
+  const panel = $("phenom-panel");
+  if (!adaYangNyala) {
+    if (monsoonVel && map.hasLayer(monsoonVel)) map.removeLayer(monsoonVel);
+    hideBorneoVortex();
+    panel?.classList.remove("show");
+    updateHash();
+    return;
+  }
+  Promise.all([loadMonsoon(), fenOn.monsun ? loadMonsoonVel() : null]).then(([mon, data]) => {
+    segarkanTombolFenomena();
+    fillPhenomPanel();
+    panel?.classList.add("show");
+
+    if (fenOn.bv) showBorneoVortex(mon && mon.vortex); else hideBorneoVortex();
+
+    if (fenOn.monsun && data) {
+      const code = mon && mon.phase ? mon.phase.code : "AUS";
+      if (!monsoonVel) {
+        monsoonVel = L.velocityLayer({
+          displayValues: false, data,
+          minVelocity: 0, maxVelocity: 14, velocityScale: 0.02,
+          particleAge: 120, particleMultiplier: 1 / 500, lineWidth: 2.4,
+          colorScale: monColors(code).scale, frameRate: 22,
+        });
+        monsoonVel.addTo(map);
+      } else if (!map.hasLayer(monsoonVel)) {
+        monsoonVel.addTo(map);
+      }
+    } else if (monsoonVel && map.hasLayer(monsoonVel)) {
+      map.removeLayer(monsoonVel);
+    }
+  });
+  updateHash();
+}
+
 function toggleMonsoon() {
+  // Tombol desktop: satu klik menyalakan/mematikan KETIGANYA, perilaku lama.
+  const nyala = !(fenOn.monsun || fenOn.bv || fenOn.surge);
+  fenOn = { monsun: nyala, bv: nyala, surge: nyala };
+  terapkanFenomena();
+}
+
+function toggleMonsoonLama() {
   monsoonOn = !monsoonOn;
   $("mon-toggle") && $("mon-toggle").classList.toggle("active", monsoonOn);
   const panel = $("phenom-panel");
@@ -2227,7 +2295,7 @@ async function init() {
   }
   // Dibuka langsung lewat ?model=wrf juga harus lewat gerbang, kalau tidak
   // penguncian di dropdown gampang dilewati cuma dengan mengetik alamatnya.
-  if (MODEL_ID === "wrf" && !wrfTerbuka()) {
+  if (MODEL_ID === "wrf" && !ambilTiket()) {
     const boleh = await mintaSandi();
     if (!boleh) { location.replace(location.pathname); return; }
   }
@@ -2292,6 +2360,7 @@ async function init() {
     if (windS) windS.frames.forEach((f) => { if (f.velocity_json) windVelStrato[f.valid_time] = f.velocity_json; });
 
     setupModelSelect();      // dropdown MODEL: GFS <-> WRF Citarum
+    setupHP();               // bilah bawah + chip parameter + kotak keterangan (HP)
     terapkanFiturModel();    // sembunyikan fitur yang tak punya data di model ini
     setupLevelSelect();      // hidupkan dropdown LEVEL kalau data strato ada
 
@@ -2490,4 +2559,219 @@ init();
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () =>
     navigator.serviceWorker.register("sw.js").catch((e) => console.warn("SW gagal:", e)));
+}
+
+/* ==================================================================
+   TATA LETAK HP: bilah bawah, chip parameter, tumpukan keterangan.
+
+   Prinsip yang dipegang: bilah bawah TIDAK punya tombol sendiri. Isinya
+   dibangun dari tombol yang sudah ada di DOM, dan kliknya diteruskan ke
+   tombol aslinya. Jadi tak ada dua tempat yang harus disamakan tiap kali
+   ada parameter baru, dan status aktif/redup selalu ikut yang asli.
+   Penyelarasan statusnya pakai MutationObserver, bukan memanggil ulang
+   dari belasan tempat, supaya tak ada jalur yang kelewat.
+   ================================================================== */
+const HP = () => window.matchMedia("(max-width: 640px)").matches;
+
+// Seksi bilah bawah. `sel` = pemilih tombol ASLI yang diwakili.
+const LB_SEKSI = [
+  { judul: "Model", jenis: "model" },
+  { judul: "Parameter", sel: ".layer-btn[data-layer]" },
+  // Nama seksi ini dipilih sendiri: isinya penanda yang digambar DI ATAS peta
+  // (ikon kondisi kota, ikon siklon, garis ITCZ), bukan parameter dan bukan
+  // fenomena. "Penanda" paling pas dan tetap awam.
+  { judul: "Penanda", sel: "#city-toggle, #cyclone-toggle, #itcz-toggle" },
+  { judul: "Fenomena", jenis: "fenomena" },
+];
+
+// Tiga fenomena jadi tombol TERPISAH di HP. Di desktop satu tombol
+// #mon-toggle tetap menyalakan ketiganya sekaligus (perilaku lama).
+const FEN = [
+  { k: "monsun", label: "Monsun", ikon: "air" },
+  { k: "bv", label: "Borneo Vortex", ikon: "cyclone" },
+  { k: "surge", label: "Cold Surge", ikon: "ac_unit" },
+];
+let fenOn = { monsun: false, bv: false, surge: false };
+
+function ikonDari(btn) {
+  const i = btn.querySelector(".material-symbols-outlined");
+  return i ? i.textContent.trim() : "";
+}
+function labelDari(btn) {
+  // .lb-txt DULU, baru data-tip. Tombol parameter memakai data-tip untuk
+  // KEPANJANGAN singkatan (CAPE jadi "Convective Available Potential Energy"),
+  // yang kepanjangan untuk tombol selebar sepertiga layar. Tombol ikon seperti
+  // Kondisi dan ITCZ tak punya .lb-txt, jadi tetap jatuh ke data-tip.
+  return btn.querySelector(".lb-txt")?.textContent.trim()
+      || btn.dataset.tip || btn.getAttribute("aria-label") || "";
+}
+
+function bangunLowbar() {
+  const body = $("lowbar-body");
+  if (!body) return;
+  body.innerHTML = "";
+  for (const sec of LB_SEKSI) {
+    let isi = [];
+    if (sec.jenis === "model") {
+      const selEl = $("model-select");
+      if (!selEl) continue;
+      isi = [...selEl.options].map((o) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "lb-btn" + (o.value === MODEL_ID ? " active" : "");
+        b.textContent = o.textContent.replace(/\s*-\s*\d+\s*km$/, "");
+        b.addEventListener("click", () => {
+          if (o.value === MODEL_ID) return;
+          selEl.value = o.value;
+          selEl.dispatchEvent(new Event("change"));
+        });
+        return b;
+      });
+    } else if (sec.jenis === "fenomena") {
+      if (!$("mon-toggle")) continue;
+      isi = FEN.map((f) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "lb-btn" + (fenOn[f.k] ? " active" : "");
+        b.dataset.fen = f.k;
+        b.innerHTML = `<span class="material-symbols-outlined">${f.ikon}</span>${f.label}`;
+        b.addEventListener("click", () => {
+          if (b.classList.contains("disabled")) return;
+          fenOn[f.k] = !fenOn[f.k];
+          terapkanFenomena();
+        });
+        return b;
+      });
+      // Borneo Vortex & Cold Surge BUKAN saklar bebas. Keduanya kejadian yang
+      // ada atau tidak ada hari itu; kalau sedang tak terjadi, tak ada yang
+      // bisa digambar. Jadi tombolnya diredupkan dan tak bisa dipencet,
+      // menjadi penunjuk keadaan. Monsun selalu ada, jadi selalu bisa dipencet.
+      loadMonsoon().then(() => segarkanTombolFenomena());
+    } else {
+      const asli = [...document.querySelectorAll(sec.sel)];
+      if (!asli.length) continue;
+      isi = asli.map((src) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.dataset.sumber = src.id || src.dataset.layer;
+        b.innerHTML = `<span class="material-symbols-outlined">${ikonDari(src)}</span>${labelDari(src)}`;
+        b.addEventListener("click", () => { if (!src.classList.contains("disabled")) src.click(); });
+        return b;
+      });
+      // Status awal + ikut berubah otomatis kalau kelas tombol asli berubah.
+      asli.forEach((src, i) => {
+        const cermin = () => {
+          isi[i].className = "lb-btn"
+            + (src.classList.contains("active") ? " active" : "")
+            + (src.classList.contains("disabled") ? " disabled" : "");
+        };
+        cermin();
+        new MutationObserver(cermin).observe(src, { attributes: true, attributeFilter: ["class"] });
+      });
+    }
+    if (!isi.length) continue;
+    const wrap = document.createElement("div");
+    wrap.className = "lb-sec";
+    wrap.innerHTML = `<div class="lb-head">${sec.judul}</div><div class="lb-rule"></div>`;
+    const box = document.createElement("div");
+    box.className = "lb-items";
+    isi.forEach((b) => box.appendChild(b));
+    wrap.appendChild(box);
+    body.appendChild(wrap);
+  }
+}
+
+// Redupkan tombol fenomena yang kejadiannya sedang TIDAK berlangsung.
+function segarkanTombolFenomena() {
+  const vx = monsoon?.vortex || {}, sg = monsoon?.surge || {};
+  const hidup = { monsun: true, bv: !!vx.active, surge: !!sg.active };
+  document.querySelectorAll("#lowbar-body .lb-btn[data-fen]").forEach((b) => {
+    const k = b.dataset.fen;
+    const bisa = hidup[k];
+    b.classList.toggle("disabled", !bisa);
+    b.title = bisa ? "" : "Sedang tidak terjadi";
+    if (!bisa && fenOn[k]) { fenOn[k] = false; }   // matikan kalau terlanjur nyala
+    b.classList.toggle("active", !!fenOn[k]);
+  });
+}
+
+function setLowbar(buka) {
+  const lb = $("lowbar"), h = $("lowbar-handle"), st = $("stage");
+  if (!lb || !h) return;
+  lb.classList.toggle("open", buka);
+  h.classList.toggle("open", buka);
+  lb.setAttribute("aria-hidden", String(!buka));
+  st && st.classList.toggle("lowbar-open", buka);
+  // Peta berubah tinggi (jadi 4:3), Leaflet harus diberi tahu.
+  setTimeout(() => map && map.invalidateSize({ animate: false }), 300);
+}
+
+// Chip nama parameter aktif di tengah atas.
+function updateParChip() {
+  const el = $("par-chip");
+  if (!el) return;
+  if (!HP()) { el.hidden = true; return; }
+  const src = document.querySelector(`.layer-btn[data-layer="${activeBase}"]`);
+  if (!src) { el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = `<span class="material-symbols-outlined">${ikonDari(src)}</span>${labelDari(src)}`;
+}
+
+// Keterangan (Kondisi, Siklon, ITCZ, Fenomena) dikumpulkan ke kiri bawah.
+// Elemen ASLINYA yang dipindah, bukan disalin, supaya isinya tetap ikut
+// diperbarui oleh kode yang sudah ada.
+const KET_SUMBER = [
+  ["cond-legend", "Kondisi"], ["cyc-note", "Siklon"],
+  ["itcz-note", "ITCZ"], ["phenom-panel", "Fenomena"],
+];
+const ketAsal = new Map();
+function susunKeterangan() {
+  const stack = $("ket-stack"), body = $("ket-body");
+  if (!stack || !body) return;
+  if (!HP()) {                       // desktop: kembalikan ke tempat semula
+    for (const [id] of KET_SUMBER) {
+      const el = $(id), asal = ketAsal.get(id);
+      if (el && asal && el.parentElement === body) { el.classList.remove("di-ket"); asal.appendChild(el); }
+    }
+    stack.hidden = true;
+    return;
+  }
+  let ada = 0;
+  for (const [id, judul] of KET_SUMBER) {
+    const el = $(id);
+    if (!el) continue;
+    if (!ketAsal.has(id)) ketAsal.set(id, el.parentElement);
+    const tampil = el.classList.contains("show") || el.classList.contains("open")
+                || getComputedStyle(el).display !== "none";
+    if (tampil) {
+      if (el.parentElement !== body) {
+        el.classList.add("di-ket");
+        const t = document.createElement("div");
+        t.className = "ket-judul"; t.textContent = judul.toUpperCase();
+        body.appendChild(t); body.appendChild(el);
+      }
+      ada++;
+    } else if (el.parentElement === body) {
+      el.classList.remove("di-ket");
+      el.previousElementSibling?.classList.contains("ket-judul") && el.previousElementSibling.remove();
+      ketAsal.get(id)?.appendChild(el);
+    }
+  }
+  stack.hidden = ada === 0;
+}
+
+function setupHP() {
+  bangunLowbar();
+  updateParChip();
+  $("lowbar-handle")?.addEventListener("click", () => setLowbar(true));
+  $("lowbar")?.addEventListener("click", (e) => {
+    // Klik di area kosong bilah menutupnya kembali.
+    if (e.target === $("lowbar") || e.target.classList.contains("lowbar-grip")) setLowbar(false);
+  });
+  $("ket-toggle")?.addEventListener("click", () => $("ket-stack").classList.toggle("ciut"));
+  window.addEventListener("resize", () => { updateParChip(); susunKeterangan(); });
+  // Keterangan bisa muncul/hilang dari mana saja; pantau saja perubahannya.
+  new MutationObserver(susunKeterangan).observe(document.body,
+    { attributes: true, subtree: true, attributeFilter: ["class", "style"] });
+  susunKeterangan();
 }
