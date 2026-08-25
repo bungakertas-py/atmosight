@@ -57,6 +57,26 @@ jobs:
           WRF_WORKERS: "8"
         run: python wrf_run.py || echo "WRF dilewati, server sumber tak terjangkau"
 
+      # Model ketiga: WRF Indonesia 9 km dari server ITERA. Server mendorong
+      # satu nc per hari ke GitHub Release (repo data terpisah, publik). Di sini
+      # kita tarik asset terbaru lalu olah jadi aset frontend. Buang 6 jam
+      # spin-up. Gagal-lunak: kalau release kosong, situs tetap terbit tanpa
+      # model ini.
+      - name: Run pipeline WRF Indonesia (model ketiga)
+        working-directory: backend/pipeline
+        env:
+          WRF_ITERA_TRIM: "6"
+        run: |
+          API=https://api.github.com/repos/bungakertas-py/kertas-cuaca-wrf-data/releases/tags/latest
+          URL=$(curl -sL "$API" | python -c "import sys,json; a=[x for x in json.load(sys.stdin).get('assets',[]) if x['name'].startswith('wrf_itera_') and x['name'].endswith('.nc')]; a.sort(key=lambda x: x['name']); print(a[-1]['browser_download_url'] if a else '')") || URL=""
+          if [ -n "$URL" ]; then
+            echo "unduh nc terbaru: $URL"
+            mkdir -p ../data/raw/wrf_itera
+            curl -sL -o ../data/raw/wrf_itera/latest.nc "$URL" && python wrf_itera_run.py || echo "WRF Indonesia gagal diolah, dilewati"
+          else
+            echo "WRF Indonesia dilewati, belum ada nc di release"
+          fi
+
       - name: Assemble site (jaga struktur ../backend/data/output)
         run: |
           mkdir -p _site/frontend _site/backend/data/output

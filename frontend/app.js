@@ -13,8 +13,10 @@
 const MODELS = {
   gfs: { base: "../backend/data/output/", label: "GFS (NOAA) - 28 km", ekstra: true },
   wrf: { base: "../backend/data/output/wrf/", label: "WRF Citarum - 7 km", ekstra: false },
+  wrf_itera: { base: "../backend/data/output/wrf_itera/", label: "Private Model", ekstra: false },
 };
-const MODEL_ID = (new URLSearchParams(location.search).get("model") === "wrf") ? "wrf" : "gfs";
+const _mp = new URLSearchParams(location.search).get("model");
+const MODEL_ID = MODELS[_mp] ? _mp : "gfs";
 const MODEL = MODELS[MODEL_ID];
 const DATA_BASE = MODEL.base;
 // Layer tambahan (siklon, ITCZ, isobar, monsun, Skew-T, level stratosfer) cuma
@@ -220,10 +222,12 @@ function tulisTiket() {
 }
 
 // Tampilkan modal, kembalikan janji true kalau sandinya benar.
-function mintaSandi() {
+function mintaSandi(label) {
   return new Promise((selesai) => {
     const ov = $("pw-overlay"), inp = $("pw-input"), err = $("pw-err");
     if (!ov || !inp) { selesai(false); return; }
+    const judul = $("pw-title");
+    if (judul && label) judul.textContent = "Buka " + label;
     ov.classList.add("show");
     inp.value = "";
     err.hidden = true;
@@ -273,8 +277,8 @@ function setupModelSelect() {
   sel.addEventListener("change", async () => {
     const id = sel.value;
     if (id === MODEL_ID) return;
-    if (id === "wrf") {
-      const boleh = await mintaSandi();
+    if (id !== "gfs") {
+      const boleh = await mintaSandi(MODELS[id].label);
       if (!boleh) { sel.value = MODEL_ID; return; }   // batal, kembalikan pilihan
       tulisTiket();                                   // tiket sekali pakai
     }
@@ -2295,8 +2299,8 @@ async function init() {
   }
   // Dibuka langsung lewat ?model=wrf juga harus lewat gerbang, kalau tidak
   // penguncian di dropdown gampang dilewati cuma dengan mengetik alamatnya.
-  if (MODEL_ID === "wrf" && !ambilTiket()) {
-    const boleh = await mintaSandi();
+  if (MODEL_ID !== "gfs" && !ambilTiket()) {
+    const boleh = await mintaSandi(MODEL.label);
     if (!boleh) { location.replace(location.pathname); return; }
   }
   try {
