@@ -85,6 +85,24 @@ def main() -> None:
             t2, rh, mslp, u, v, rain, cld = (a[keep] for a in (t2, rh, mslp, u, v, rain, cld))
             print(f"  spin-up dibuang: sisa {len(times)} frame (>= {TRIM_HOURS} jam)")
 
+    # akurasi otomatis lawan METAR. Cuma di produksi (nc penuh >= 24 jam);
+    # di uji coba pendek badge tampil "segera". Gagal-lunak.
+    akurasi = {"status": "soon"}
+    if os.environ.get("WRF_ITERA_VERIFY") and max(hours) >= 24:
+        try:
+            import metar_verify
+            times_dt = [dt.datetime.strptime(t, "%Y-%m-%dT%H:00:00Z") for t in times]
+            ak = metar_verify.verify(
+                grid, {"t2m": t2, "rh2m": rh, "mslp": mslp, "u10": u, "v10": v},
+                times_dt, dt.datetime.utcnow())
+            if ak:
+                akurasi = ak
+                print(f"  akurasi METAR: {ak['nilai']}% dari {ak['pasangan']} pasangan")
+            else:
+                print("  akurasi: segera (verifikasi belum cukup)")
+        except Exception as e:
+            print("  verifikasi METAR gagal:", str(e)[:100])
+
     OUT.mkdir(parents=True, exist_ok=True)
     for f in OUT.glob("*"):
         if f.is_file():
@@ -99,7 +117,7 @@ def main() -> None:
     catalog = {
         "generated_at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "model": "Private Model",
-        "model_label": "Private Model",
+        "model_label": "Private Model - 9 km",
         "arsip": False,
         "run_time": run_dt.strftime("%Y-%m-%dT%H:00:00Z"),
         "region": {
@@ -109,6 +127,7 @@ def main() -> None:
             "view_core": VIEW_CORE,
         },
         "pos_hujan": [],
+        "akurasi": akurasi,
         "layers": {},
     }
 
@@ -157,6 +176,18 @@ def main() -> None:
               "pressure": list(mslp), "cloud": list(cld), "u": list(u), "v": list(v)}
     pd_size = process.write_point_data(series, times, grid, out_dir=OUT)
     cd_size = process.write_city_data(series, times, grid, out_dir=OUT)
+
+    # -------- Monsun (indikasi dari angin permukaan, sama seperti GFS) --------
+    try:
+        import monsoon
+        mon = monsoon.build_monsoon(series, times, grid)
+        (OUT / "monsoon.json").write_text(json.dumps(mon))
+        mv = monsoon.build_monsoon_velocity(series, grid, run_dt)
+        if mv:
+            (OUT / "monsoon_velocity.json").write_text(json.dumps(mv, separators=(",", ":")))
+        print(f"  monsun: {mon.get('phase', {}).get('label', '-')}")
+    except Exception as e:
+        print("  monsun gagal:", str(e)[:80])
 
     (OUT / "catalog.json").write_text(json.dumps(catalog, indent=2))
     total = sum(f.stat().st_size for f in OUT.glob("*") if f.is_file())

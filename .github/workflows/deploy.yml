@@ -66,6 +66,7 @@ jobs:
         working-directory: backend/pipeline
         env:
           WRF_ITERA_TRIM: "6"
+          WRF_ITERA_VERIFY: "1"   # hitung akurasi lawan METAR tiap deploy
         run: |
           API=https://api.github.com/repos/bungakertas-py/kertas-cuaca-wrf-data/releases/tags/latest
           URL=$(curl -sL "$API" | python -c "import sys,json; a=[x for x in json.load(sys.stdin).get('assets',[]) if x['name'].startswith('wrf_itera_') and x['name'].endswith('.nc')]; a.sort(key=lambda x: x['name']); print(a[-1]['browser_download_url'] if a else '')") || URL=""

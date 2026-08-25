@@ -13,7 +13,7 @@
 const MODELS = {
   gfs: { base: "../backend/data/output/", label: "GFS (NOAA) - 28 km", ekstra: true },
   wrf: { base: "../backend/data/output/wrf/", label: "WRF Citarum - 7 km", ekstra: false },
-  wrf_itera: { base: "../backend/data/output/wrf_itera/", label: "Private Model", ekstra: false },
+  wrf_itera: { base: "../backend/data/output/wrf_itera/", label: "Private Model - 9 km", ekstra: false },
 };
 const _mp = new URLSearchParams(location.search).get("model");
 const MODEL_ID = MODELS[_mp] ? _mp : "gfs";
@@ -293,7 +293,12 @@ function setupModelSelect() {
 // tombolnya mengejar berkas yang tak pernah dibuat lalu diam diam gagal.
 function terapkanFiturModel() {
   if (PUNYA_EKSTRA) return;
-  ["cyclone-toggle", "itcz-toggle", "mon-toggle"].forEach((id) => {
+  // Private Model punya monsun (dihitung dari anginnya sendiri), jadi toggle
+  // Monsun tetap ada. Siklon & ITCZ belum dibuat untuk model ini, disembunyikan.
+  const sembunyi = (MODEL_ID === "wrf_itera")
+    ? ["cyclone-toggle", "itcz-toggle"]
+    : ["cyclone-toggle", "itcz-toggle", "mon-toggle"];
+  sembunyi.forEach((id) => {
     const el = $(id);
     if (el) el.style.display = "none";
   });
@@ -301,6 +306,7 @@ function terapkanFiturModel() {
   const lv = $("level-select");
   if (lv) lv.closest(".field")?.style.setProperty("display", "none");
   document.body.classList.add("model-wrf");
+  if (MODEL_ID === "wrf_itera") document.body.classList.add("model-private");
 }
 
 function setupLevelSelect() {
@@ -1490,6 +1496,15 @@ function updateAkurasi() {
   const a = catalog?.akurasi;
   if (!a) { box.hidden = true; return; }
   box.hidden = false;
+  // Belum ada angka (mis. Private Model saat uji coba): tampil "segera",
+  // nanti terisi otomatis setelah run harian penuh diverifikasi lawan METAR.
+  if (a.status === "soon" || a.nilai == null) {
+    el.textContent = "Akurasi : segera";
+    box.title = "Akurasi otomatis lawan pengamatan METAR. Tampil setelah run harian penuh.";
+    box.classList.add("acc-soon");
+    return;
+  }
+  box.classList.remove("acc-soon");
   // Koma sebagai pemisah desimal, ikut kebiasaan Indonesia.
   const nil = a.nilai.toFixed(1).replace(".", ",");
   el.textContent = `Akurasi : ${nil}% ${a.label || ""}`.trim();
@@ -2501,6 +2516,7 @@ async function init() {
     $("about-btn")?.addEventListener("click", openAbout);
     $("nav-arrow")?.addEventListener("click", () => $("nav-arrow").closest(".brand-row")?.classList.toggle("nav-open"));
     $("about-close")?.addEventListener("click", closeAbout);
+    $("about-close-team")?.addEventListener("click", closeAbout);
     $("about-overlay")?.addEventListener("click", (e) => { if (e.target === e.currentTarget) closeAbout(); });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAbout(); });
     // Badge "Last update" (HP): tap ikon "!" → buka teks; tap lagi/panah → tutup.
