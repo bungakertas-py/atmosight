@@ -636,7 +636,13 @@ function buildTicks() {
   wrap.innerHTML = frames.map((f, i) => {
     const wib = toWIB(f.valid_time);
     const day = wib.getUTCDate();
-    const isDay = i === 0 || day !== prevDay;
+    // Frame 0 hanya dilabeli kalau memang hari tersendiri (layer HARIAN). Di layer
+    // per-jam frame 0 itu hari yang belum genap; dulu labelnya dipaksa muncul lalu
+    // menyerempet label tengah malam pertama, jadi terlihat bertumpuk di awal.
+    // Sekarang tanggal cuma muncul di pergantian hari yang sebenarnya.
+    const isDay = i === 0
+      ? (n <= 1 || day !== toWIB(frames[1].valid_time).getUTCDate())
+      : day !== prevDay;
     prevDay = day;
     const pos = n === 1 ? 0 : (i / (n - 1)) * 100;
     const edge = i === 0 ? " edge-start" : (i === n - 1 ? " edge-end" : "");
