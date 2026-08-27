@@ -1,7 +1,10 @@
 name: build-and-deploy
 
-# Jalankan pipeline GFS lalu publish frontend+data ke GitHub Pages.
-# Cron tiap 6 jam (menit :15). Bisa juga dipicu manual (workflow_dispatch).
+# Jalankan pipeline GFS + Citarum + WRF ITERA, lalu publish ke GitHub Pages.
+# Deploy utama harian 21:00 UTC (04:00 WIB). Re-check ITERA (deploy kedua) ada
+# di workflow terpisah deploy-itera.yml, 09:00 UTC (16:00 WIB): khusus menarik
+# nc ITERA yang mungkin mendarat terlambat, TANPA menjalankan GFS/Citarum lagi
+# (pakai output yang disimpan ke cache di sini).
 on:
   push:
     branches: [main]
@@ -69,14 +72,28 @@ jobs:
           WRF_ITERA_VERIFY: "1"   # hitung akurasi lawan METAR tiap deploy
         run: |
           API=https://api.github.com/repos/bungakertas-py/kertas-cuaca-wrf-data/releases/tags/latest
-          URL=$(curl -sL "$API" | python -c "import sys,json; a=[x for x in json.load(sys.stdin).get('assets',[]) if x['name'].startswith('wrf_itera_') and x['name'].endswith('.nc')]; a.sort(key=lambda x: x['name']); print(a[-1]['browser_download_url'] if a else '')") || URL=""
+          read NAME URL <<<"$(curl -sL "$API" | python -c "import sys,json; a=[x for x in json.load(sys.stdin).get('assets',[]) if x['name'].startswith('wrf_itera_') and x['name'].endswith('.nc')]; a.sort(key=lambda x: x['name']); print((a[-1]['name']+' '+a[-1]['browser_download_url']) if a else '')")"
           if [ -n "$URL" ]; then
-            echo "unduh nc terbaru: $URL"
+            echo "unduh nc terbaru: $NAME"
             mkdir -p ../data/raw/wrf_itera
-            curl -sL -o ../data/raw/wrf_itera/latest.nc "$URL" && python wrf_itera_run.py || echo "WRF Indonesia gagal diolah, dilewati"
+            if curl -sL -o ../data/raw/wrf_itera/latest.nc "$URL" && python wrf_itera_run.py; then
+              echo "$NAME" > ../data/output/wrf_itera/source.txt   # penanda buat re-check deploy kedua
+            else
+              echo "WRF Indonesia gagal diolah, dilewati"
+            fi
           else
             echo "WRF Indonesia dilewati, belum ada nc di release"
           fi
+
+      # Simpan seluruh output situs (GFS + Citarum + ITERA) ke cache, supaya
+      # deploy kedua (deploy-itera.yml) bisa republish situs dengan ITERA baru
+      # TANPA menjalankan GFS/Citarum lagi. Kunci unik per run; deploy kedua
+      # mengambil yang terbaru lewat restore-keys prefix "site-output-".
+      - name: Simpan output ke cache untuk re-check ITERA
+        uses: actions/cache/save@v4
+        with:
+          path: backend/data/output
+          key: site-output-${{ github.run_id }}
 
       - name: Assemble site (jaga struktur ../backend/data/output)
         run: |

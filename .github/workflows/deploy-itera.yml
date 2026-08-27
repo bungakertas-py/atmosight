@@ -1,0 +1,121 @@
+name: refresh-wrf-itera
+
+# Deploy KEDUA, KHUSUS WRF ITERA. Jaring pengaman: kalau nc ITERA mendarat
+# terlambat (run server lambat/retry) dan deploy utama 21:00 UTC belum sempat
+# menangkapnya, workflow ini menariknya ~12 jam kemudian.
+#
+# GFS & Citarum TIDAK dijalankan lagi. Output situs (termasuk GFS+Citarum)
+# diambil dari cache yang disimpan deploy utama, lalu HANYA bagian ITERA yang
+# diperbarui, baru situs diterbitkan ulang. Kalau tak ada nc baru, tidak
+# republish sama sekali. Kalau cache tak ada, dilewati (deploy utama tetap jalan).
+on:
+  schedule:
+    - cron: "0 9 * * *"   # 09:00 UTC = 16:00 WIB (+12 jam dari deploy utama)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false   # jangan batalkan deploy utama yang mungkin jalan
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Ambil output situs terakhir (GFS + Citarum + ITERA lama) dari cache.
+      - name: Restore output situs dari cache
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/data/output
+          key: site-output-none
+          restore-keys: |
+            site-output-
+
+      - name: Cek apakah ada nc ITERA baru
+        id: check
+        run: |
+          if [ ! -f backend/data/output/wrf_itera/catalog.json ]; then
+            echo "cache output tak ada -> lewati (deploy utama tetap jalan)"
+            echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          API=https://api.github.com/repos/bungakertas-py/kertas-cuaca-wrf-data/releases/tags/latest
+          NAME=$(curl -sL "$API" | python3 -c "import sys,json; a=[x for x in json.load(sys.stdin).get('assets',[]) if x['name'].startswith('wrf_itera_') and x['name'].endswith('.nc')]; a.sort(key=lambda x: x['name']); print(a[-1]['name'] if a else '')")
+          CUR=$(cat backend/data/output/wrf_itera/source.txt 2>/dev/null || echo "")
+          echo "nc terbaru di release : $NAME"
+          echo "nc yang sudah terbit  : $CUR"
+          if [ -n "$NAME" ] && [ "$NAME" != "$CUR" ]; then
+            echo "-> ada nc ITERA baru, republish"; echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "-> tak ada yang baru, tak republish"; echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.check.outputs.changed == 'true'
+        with:
+          python-version: "3.12"
+
+      - name: Install eccodes system lib (fallback)
+        if: steps.check.outputs.changed == 'true'
+        run: sudo apt-get update && sudo apt-get install -y libeccodes0
+
+      - name: Install Python deps
+        if: steps.check.outputs.changed == 'true'
+        run: pip install -r requirements.txt
+
+      - name: Tarik nc ITERA terbaru + olah ulang (GFS/Citarum tak disentuh)
+        if: steps.check.outputs.changed == 'true'
+        working-directory: backend/pipeline
+        env:
+          WRF_ITERA_TRIM: "6"
+          WRF_ITERA_VERIFY: "1"
+        run: |
+          API=https://api.github.com/repos/bungakertas-py/kertas-cuaca-wrf-data/releases/tags/latest
+          read NAME URL <<<"$(curl -sL "$API" | python -c "import sys,json; a=[x for x in json.load(sys.stdin).get('assets',[]) if x['name'].startswith('wrf_itera_') and x['name'].endswith('.nc')]; a.sort(key=lambda x: x['name']); print((a[-1]['name']+' '+a[-1]['browser_download_url']) if a else '')")"
+          echo "unduh nc: $NAME"
+          mkdir -p ../data/raw/wrf_itera
+          curl -sL -o ../data/raw/wrf_itera/latest.nc "$URL" && python wrf_itera_run.py && echo "$NAME" > ../data/output/wrf_itera/source.txt
+
+      - name: Assemble site (jaga struktur ../backend/data/output)
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          mkdir -p _site/frontend _site/backend/data/output
+          cp -r frontend/. _site/frontend/
+          cp -r backend/data/output/. _site/backend/data/output/
+          cat > _site/index.html <<'HTML'
+          <!doctype html><meta charset="utf-8">
+          <title>Kertas Cuaca — Peta cuaca interaktif Indonesia</title>
+          <meta http-equiv="refresh" content="0; url=./frontend/index.html">
+          <meta property="og:type" content="website">
+          <meta property="og:site_name" content="Kertas Cuaca">
+          <meta property="og:title" content="Kertas Cuaca — Peta cuaca interaktif Indonesia">
+          <meta property="og:description" content="Angin, hujan, suhu, awan, dan tekanan untuk seluruh Indonesia. Klik lokasimu untuk prakiraan detail per jam.">
+          <meta property="og:url" content="https://bungakertas-py.github.io/bungakertas-signature/">
+          <meta property="og:image" content="https://bungakertas-py.github.io/bungakertas-signature/frontend/og-image.png">
+          <meta name="twitter:card" content="summary_large_image">
+          <meta name="twitter:image" content="https://bungakertas-py.github.io/bungakertas-signature/frontend/og-image.png">
+          <a href="./frontend/index.html">Buka Kertas Cuaca</a>
+          HTML
+
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.check.outputs.changed == 'true'
+        with:
+          path: _site
+
+  deploy:
+    needs: refresh
+    if: needs.refresh.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
