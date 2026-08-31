@@ -15,8 +15,29 @@ const MODELS = {
   wrf: { base: "../backend/data/output/wrf/", label: "WRF Citarum - 7 km", ekstra: false },
   wrf_itera: { base: "../backend/data/output/wrf_itera/", label: "Private Model - 9 km", ekstra: false },
 };
+
+// ================= SAKLAR MODEL =================
+// Primeon Atmos tahap awal SENGAJA cuma menampilkan GFS. Kode dan pipeline dua
+// model lain TIDAK dihapus, cuma dimatikan, supaya bisa dinyalakan lagi tanpa
+// menulis apa pun dari nol.
+//
+// CARA MENYALAKAN LAGI, ubah false jadi true di bawah ini. Tapi ingat, ada DUA
+// tempat yang harus cocok:
+//   1. di sini, supaya modelnya muncul di dropdown
+//   2. di .github/workflows/deploy.yml pada MASAK_MODEL_EXTRA, supaya datanya
+//      betul betul dimasak. Kalau cuma yang di sini dinyalakan, dropdown-nya
+//      muncul tapi petanya kosong karena berkasnya memang tak pernah dibuat.
+const MODEL_AKTIF = {
+  gfs: true,
+  wrf: false,          // WRF Citarum 7 km
+  wrf_itera: false,    // Private Model 9 km
+};
+const modelHidup = (id) => !!MODELS[id] && MODEL_AKTIF[id] === true;
+
 const _mp = new URLSearchParams(location.search).get("model");
-const MODEL_ID = MODELS[_mp] ? _mp : "gfs";
+// Dijaga juga di sini, bukan cuma di dropdown. Kalau tidak, model yang sudah
+// dimatikan masih bisa dibuka orang cuma dengan mengetik ?model=wrf di alamat.
+const MODEL_ID = modelHidup(_mp) ? _mp : "gfs";
 const MODEL = MODELS[MODEL_ID];
 const DATA_BASE = MODEL.base;
 // Layer tambahan (siklon, ITCZ, isobar, monsun, Skew-T, level stratosfer) cuma
@@ -267,13 +288,21 @@ function setupModelSelect() {
   const sel = $("model-select");
   if (!sel) return;
   sel.innerHTML = "";
-  for (const [id, m] of Object.entries(MODELS)) {
+  const hidup = Object.entries(MODELS).filter(([id]) => modelHidup(id));
+  for (const [id, m] of hidup) {
     const o = document.createElement("option");
     o.value = id;
     o.textContent = m.label;
     sel.appendChild(o);
   }
   sel.value = MODEL_ID;
+  // Kalau cuma satu model yang hidup, dropdown-nya tak ada gunanya. Disembunyikan
+  // berikut labelnya, daripada memajang kotak pilihan yang cuma berisi satu isi.
+  if (hidup.length < 2) {
+    const bungkus = sel.closest("label, .ctl, .kontrol, div") || sel;
+    bungkus.style.display = "none";
+    return;
+  }
   sel.addEventListener("change", async () => {
     const id = sel.value;
     if (id === MODEL_ID) return;
@@ -1593,7 +1622,7 @@ function restoreFromHash() {
 async function shareCurrent() {
   updateHash();
   const url = location.href;
-  const data = { title: "Kertas Cuaca", text: "Lihat cuaca di Kertas Cuaca", url };
+  const data = { title: "Primeon Atmos", text: "Lihat cuaca di Primeon Atmos", url };
   try {
     if (navigator.share) { await navigator.share(data); return; }
     await navigator.clipboard.writeText(url);

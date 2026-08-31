@@ -1,5 +1,15 @@
 name: build-and-deploy
 
+# ================= SAKLAR MODEL TAMBAHAN =================
+# Primeon Atmos tahap awal SENGAJA cuma memasak GFS. Langkah WRF Citarum dan
+# Private Model tetap ada di bawah, cuma dilewati.
+#
+# CARA MENYALAKAN LAGI: ubah MASAK_MODEL_EXTRA di bawah jadi "1". Lalu jangan
+# lupa nyalakan juga MODEL_AKTIF di frontend/app.js, kalau tidak datanya masak
+# tapi tak muncul di dropdown.
+env:
+  MASAK_MODEL_EXTRA: "0"
+
 # Jalankan pipeline GFS + Citarum + WRF ITERA, lalu publish ke GitHub Pages.
 # Deploy utama harian 21:00 UTC (04:00 WIB). Re-check ITERA (deploy kedua) ada
 # di workflow terpisah deploy-itera.yml, 09:00 UTC (16:00 WIB): khusus menarik
@@ -8,9 +18,12 @@ name: build-and-deploy
 on:
   push:
     branches: [main]
-  schedule:
-    # 04:00 WIB = 21:00 UTC (hari sebelumnya). Sekali sehari.
-    - cron: "0 21 * * *"
+  # JADWAL OTOMATIS SENGAJA DIMATIKAN selama masa penyiapan, supaya repo baru
+  # ini tidak ikut masak tiap subuh sebelum kita siap. Buka lagi kalau sudah
+  # mau terbit.
+  # schedule:
+  #   # 04:00 WIB = 21:00 UTC (hari sebelumnya). Sekali sehari.
+  #   - cron: "0 21 * * *"
   workflow_dispatch:
 
 permissions:
@@ -43,7 +56,7 @@ jobs:
       - name: Hydrate window from live site (retensi -24 jam)
         working-directory: backend/pipeline
         env:
-          SITE_DATA_URL: https://bungakertas-py.github.io/bungakertas-signature/backend/data/output
+          SITE_DATA_URL: https://bungakertas-py.github.io/primeon-atmos/backend/data/output
         run: python hydrate.py || true
 
       - name: Run pipeline (unduh GFS + generate output)
@@ -55,6 +68,7 @@ jobs:
       # Dibiarkan gagal-lunak: kalau server ITB mati, situs GFS tetap terbit,
       # cuma pilihan WRF yang kosong sampai run berikutnya.
       - name: Run pipeline WRF Citarum (model kedua)
+        if: env.MASAK_MODEL_EXTRA == '1'
         working-directory: backend/pipeline
         env:
           WRF_WORKERS: "8"
@@ -66,6 +80,7 @@ jobs:
       # spin-up. Gagal-lunak: kalau release kosong, situs tetap terbit tanpa
       # model ini.
       - name: Run pipeline WRF Indonesia (model ketiga)
+        if: env.MASAK_MODEL_EXTRA == '1'
         working-directory: backend/pipeline
         env:
           WRF_ITERA_TRIM: "6"
@@ -102,17 +117,17 @@ jobs:
           cp -r backend/data/output/. _site/backend/data/output/
           cat > _site/index.html <<'HTML'
           <!doctype html><meta charset="utf-8">
-          <title>Kertas Cuaca — Peta cuaca interaktif Indonesia</title>
+          <title>Primeon Atmos — Peta cuaca interaktif Indonesia</title>
           <meta http-equiv="refresh" content="0; url=./frontend/index.html">
           <meta property="og:type" content="website">
-          <meta property="og:site_name" content="Kertas Cuaca">
-          <meta property="og:title" content="Kertas Cuaca — Peta cuaca interaktif Indonesia">
+          <meta property="og:site_name" content="Primeon Atmos">
+          <meta property="og:title" content="Primeon Atmos — Peta cuaca interaktif Indonesia">
           <meta property="og:description" content="Angin, hujan, suhu, awan, dan tekanan untuk seluruh Indonesia. Klik lokasimu untuk prakiraan detail per jam.">
-          <meta property="og:url" content="https://bungakertas-py.github.io/bungakertas-signature/">
-          <meta property="og:image" content="https://bungakertas-py.github.io/bungakertas-signature/frontend/og-image.png">
+          <meta property="og:url" content="https://bungakertas-py.github.io/primeon-atmos/">
+          <meta property="og:image" content="https://bungakertas-py.github.io/primeon-atmos/frontend/og-image.png">
           <meta name="twitter:card" content="summary_large_image">
-          <meta name="twitter:image" content="https://bungakertas-py.github.io/bungakertas-signature/frontend/og-image.png">
-          <a href="./frontend/index.html">Buka Kertas Cuaca</a>
+          <meta name="twitter:image" content="https://bungakertas-py.github.io/primeon-atmos/frontend/og-image.png">
+          <a href="./frontend/index.html">Buka Primeon Atmos</a>
           HTML
 
       - uses: actions/upload-pages-artifact@v3

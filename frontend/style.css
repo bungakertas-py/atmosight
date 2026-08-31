@@ -721,7 +721,7 @@ html, body {
 .pt-storm { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 .pt-storm-note { font-family: var(--font-ui); font-size: 10px; color: var(--variant); }
 
-/* Layar penuh / immersive: sisakan HANYA brand Kertas Cuaca + tombol fullscreen.
+/* Layar penuh / immersive: sisakan HANYA brand Primeon Atmos + tombol fullscreen.
    Class di #stage (induk #ui & overlay sibling spt #cyc-note/#toast). */
 #stage.immersive #ui .col > *:not(.brand):not(.brand-row):not(#fs-btn),
 #stage.immersive .ui-bottom,
@@ -741,7 +741,7 @@ html, body {
 .brand-info .material-symbols-outlined { font-size: 17px; color: var(--primary); }
 .brand-info:hover .material-symbols-outlined { color: var(--on-lime); }
 
-/* ---- Pindah antar-app (Kertas Cuaca <-> Fenomena): panah di brand buka kontainer saudara ---- */
+/* ---- Pindah antar-app (Primeon Atmos <-> Fenomena): panah di brand buka kontainer saudara ---- */
 /* position:relative jadi jangkar kartu saudara yang MENGAMBANG di sebelahnya.
    Kartu itu TIDAK boleh ikut mengalir, kalau ikut, membukanya menambah tinggi
    brand-row dan panel Parameter di bawahnya terdorong turun. */
