@@ -1318,81 +1318,110 @@ body.model-private #about-card-team { display: flex; }
   }
   .di-ket .cyc-tab, .di-ket .itcz-tab { display: none !important; }
 }
-
 /* ═══════════════════════════════════════════════════════════════════════════
-   KONTROL KANAN: LAMBANG DAN NAMANYA SAJA, KOTAKNYA MUNCUL SAAT DISENTUH
+   YANG MENETAP CUMA LAMBANG DAN NAMANYA, KONTAINERNYA MUNCUL SAAT DISENTUH
    ---------------------------------------------------------------------------
-   Sebelumnya tiap tombol berupa kotak neubrutalist penuh yang selalu tampil,
-   dan namanya baru muncul saat hover. Sekarang dibalik: yang menetap justru
-   LAMBANG dan NAMANYA, sedangkan kotaknya baru menyembul saat disentuh atau
-   sedang menyala.
+   Berlaku untuk kontrol kanan DAN daftar parameter di kiri, supaya keduanya
+   berperilaku sama.
 
-   Ini cuma soal kapan kotaknya tampil. Begitu tampil, kotaknya tetap kotak
-   neubrutalist yang sama, lengkap dengan garis tebal dan bayangan kerasnya.
+   Yang MENETAP:
+     - kotak kecil pembungkus lambang, lengkap dengan garis tebal dan bayangan
+       kerasnya, jadi lambangnya tetap punya rumah
+     - namanya, sebagai teks polos tanpa kotak
+   Yang MUNCUL saat disentuh atau sedang menyala:
+     - kontainer besarnya, yaitu papan putih yang menaungi nama dan lambang
+
+   Jadi peta terlihat lebih lapang saat diam, tapi begitu tangan mendekat
+   kotaknya kembali utuh seperti semula.
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (hover: hover) and (min-width: 641px) {
-  /* ---- Keadaan diam: tanpa kotak ---- */
-  .col.items-end .icon-btn,
-  .col.items-end .zoom,
-  .col.items-end .lang {
-    background: transparent;
-    border-color: transparent;
-    box-shadow: none;
-    transition: none;                /* neubrutalism, perubahannya tegas */
-  }
-  .col.items-end .zoom button { background: transparent; }
-  .col.items-end .zoom button:first-child { border-bottom-color: transparent; }
-  .col.items-end .lang button { background: transparent; }
-  .col.items-end .lang button:first-child { border-right-color: transparent; }
 
-  /* ---- Nama MENETAP di kiri lambang, bukan lagi tooltip saat hover ----
-     Dipakai `::after` sebab aturan tooltip lama memang di situ, dan satu
-     elemen cuma punya satu ::after. Rupanya diubah jadi teks polos. */
+  /* ───────────────────────── KONTROL KANAN ───────────────────────── */
+  /* Kotak lambangnya TIDAK diubah sama sekali, biar tetap seperti aslinya.
+     Yang berubah cuma namanya: dari tooltip yang muncul saat hover, jadi teks
+     polos yang selalu tampil, lalu berubah jadi kontainer gelap saat disentuh.
+
+     Dipakai `::after` yang sudah ada, bukan elemen baru, sebab satu elemen
+     cuma punya satu ::after dan aturan tooltip lama sudah menempati slot itu. */
   .col.items-end [data-tip]::after {
     opacity: 1;
     transform: translateY(-50%);
     background: transparent;
     color: var(--ink);
-    border: none;
+    border-color: transparent;
     box-shadow: none;
-    padding: 0;
     right: calc(100% + 9px);
-    font-size: 10px;
-    letter-spacing: .06em;
-    /* Halo tipis supaya nama tetap terbaca di atas peta yang warnanya bisa
-       apa saja, sebab sekarang tak ada lagi kotak yang menaunginya. */
+    /* Halo tipis warna kertas. Bukan hiasan: tanpa kontainer, tidak ada lagi
+       yang menaungi nama ini dari peta, dan peta bisa berwarna apa saja. */
     text-shadow: 0 0 3px var(--paper), 0 0 6px var(--paper), 0 1px 2px var(--paper);
   }
-  /* Lambangnya juga perlu halo dengan alasan yang sama. */
-  .col.items-end .icon-btn .material-symbols-outlined,
-  .col.items-end .zoom button .material-symbols-outlined {
-    filter: drop-shadow(0 0 3px var(--paper)) drop-shadow(0 0 5px var(--paper));
+  .col.items-end [data-tip]:hover::after {
+    background: var(--ink);
+    color: var(--surface);
+    border-color: var(--ink);
+    box-shadow: var(--shadow-sm);
+    text-shadow: none;
   }
 
-  /* ---- Disentuh atau menyala: kotaknya menyembul ---- */
-  .col.items-end .icon-btn:hover:not(:disabled),
-  .col.items-end .icon-btn.active,
-  .col.items-end .zoom:hover,
-  .col.items-end .lang:hover {
+  /* ───────────────────────── PANEL KIRI ───────────────────────── */
+  /* Papan putihnya yang dilepas, bukan barisnya. */
+  .panel.layers {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+  }
+  .panel.layers .layer-btn {
+    background: transparent;
+    border-bottom-color: transparent;
+    padding-left: 0;
+    text-shadow: 0 0 3px var(--paper), 0 0 6px var(--paper), 0 1px 2px var(--paper);
+  }
+  /* Lambangnya diberi kotak sendiri, meniru kotak lambang di kanan, supaya
+     saat papannya hilang lambangnya tidak menggantung telanjang di atas peta. */
+  .panel.layers .layer-btn .material-symbols-outlined {
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    border: var(--bw) solid var(--ink);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    font-size: 19px;
+  }
+  /* Disentuh atau menyala: papannya kembali. */
+  .panel.layers:hover {
     background: var(--surface);
     border-color: var(--ink);
     box-shadow: var(--shadow);
   }
-  .col.items-end .zoom:hover button,
-  .col.items-end .lang:hover button { background: var(--surface); }
-  .col.items-end .zoom:hover button:first-child { border-bottom-color: var(--ink); }
-  .col.items-end .lang:hover button:first-child { border-right-color: var(--ink); }
-  .col.items-end .lang:hover button.active { background: var(--lime); }
-  .col.items-end .icon-btn.active { background: var(--lime); }
-  /* Begitu kotaknya tampil, lambang dan namanya tak perlu halo lagi. */
-  .col.items-end .icon-btn:hover .material-symbols-outlined,
-  .col.items-end .icon-btn.active .material-symbols-outlined,
-  .col.items-end .zoom:hover button .material-symbols-outlined { filter: none; }
-  .col.items-end [data-tip]:hover::after { text-shadow: none; }
+  .panel.layers:hover .layer-btn {
+    border-bottom-color: var(--ink);
+    padding-left: 18px;
+    text-shadow: none;
+  }
+  .panel.layers:hover .layer-btn:not(.active) { background: var(--surface); }
+  .panel.layers:hover .layer-btn:last-child { border-bottom-color: transparent; }
+  /* Begitu papannya tampil, lambangnya tak perlu kotak sendiri lagi. */
+  .panel.layers:hover .layer-btn .material-symbols-outlined {
+    width: auto; height: auto;
+    border: none; background: transparent; box-shadow: none;
+    font-size: 21px;
+  }
+  /* Yang sedang menyala tetap kelihatan menyala walau papannya sedang hilang. */
+  .panel.layers .layer-btn.active { background: var(--lime); padding-left: 18px; text-shadow: none; }
+  .panel.layers .layer-btn.active .material-symbols-outlined { background: var(--lime); }
 }
 @media (hover: hover) and (min-width: 641px) {
-  /* Pasangan ID/EN ikut kehilangan kotaknya, jadi hurufnya perlu halo juga
-     supaya tetap terbaca di atas peta. */
-  .col.items-end .lang button { text-shadow: 0 0 3px var(--paper), 0 0 6px var(--paper); }
-  .col.items-end .lang:hover button { text-shadow: none; }
+  /* Baris yang menyala dijadikan kepingan utuh saat papannya sedang hilang:
+     diberi garis dan bayangan sendiri, sebab tanpa papan tidak ada lagi yang
+     memberinya tepi. Semua itu dicabut lagi begitu papannya kembali. */
+  .panel.layers .layer-btn.active {
+    border: var(--bw) solid var(--ink);
+    box-shadow: var(--shadow-sm);
+    padding: 6px 18px 6px 16px;
+  }
+  .panel.layers .layer-btn.active .material-symbols-outlined { border: none; box-shadow: none; }
+  .panel.layers:hover .layer-btn.active {
+    border: none; border-bottom: var(--bw) solid var(--ink);
+    box-shadow: none; padding: 8px 18px;
+  }
+  .panel.layers:hover .layer-btn.active:last-child { border-bottom-color: transparent; }
 }
