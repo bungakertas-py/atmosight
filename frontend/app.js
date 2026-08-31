@@ -753,10 +753,14 @@ function renderLegend(layerKey) {
   if (!def || !head || !cells) return;
   head.textContent = def.head;
   cells.classList.toggle("legend-words", !!def.words);   // sel melebar utk label kata
+  // Warna dipindah ke anak `.lg-bar`, BUKAN latar selnya. Dengan begitu lebar
+  // sel ditentukan oleh panjang labelnya sendiri, jadi legenda berlabel kata
+  // (mis. kategori ISPU) tidak saling menabrak seperti waktu lebarnya dipatok.
   cells.innerHTML = def.cells.map(([label, bg, dark]) =>
-    (bg === "transparent"
-      ? `<div class="legend-cell kotak-catur${dark ? " dark" : ""}">${label}</div>`
-      : `<div class="legend-cell${dark ? " dark" : ""}" style="background:${bg}">${label}</div>`)
+    `<div class="legend-cell${dark ? " dark" : ""}">` +
+    `<i class="lg-bar${bg === "transparent" ? " kotak-catur" : ""}"` +
+    (bg === "transparent" ? "" : ` style="background:${bg}"`) + `></i>` +
+    `<span class="lg-lbl">${label}</span></div>`
   ).join("");
 }
 

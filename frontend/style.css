@@ -2060,3 +2060,112 @@ body.model-private .about-card--team { display: flex !important; }
 }
 /* Label peta ikut dinaikkan supaya tak ikut teredup. */
 .leaflet-pane.leaflet-labels-pane, .leaflet-pane.leaflet-cityicons-pane { z-index: 650; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SHAPELESS PENUH — SISA TATA LETAK NEUBRUTALISM DIBUANG
+   ---------------------------------------------------------------------------
+   Yang masih paling kentara berbentuk kotak: bilah legenda, lencana, dan
+   bilah waktu. Ketiganya masih memakai blok warna padat, kepala berlatar,
+   dan pil bergaris. Di sistem ini semuanya diganti pita tipis dan teks polos.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ---- Legenda: dari deretan blok jadi PITA tipis menyambung --------------- */
+.legend-panel {
+  background: transparent !important; border: none !important;
+  align-items: flex-end; gap: 10px;
+}
+.legend-head {
+  background: transparent !important; border: none !important;
+  color: rgba(230,230,230,.62) !important; padding: 0 0 3px !important;
+  font-family: var(--font-mono); font-size: 9px !important; font-weight: 500 !important;
+  letter-spacing: .2em; text-transform: uppercase;
+  text-shadow: 0 0 3px #000, 0 0 6px rgba(0,0,0,.9);
+}
+.legend { align-items: flex-end; }
+/* Sel jadi potongan pita setinggi 4 px, angkanya turun ke bawah pita.
+   Tanpa bingkai, tanpa sekat, jadi terbaca sebagai satu skala menerus. */
+.legend-cell {
+  width: 38px !important; min-height: 0 !important; height: 4px;
+  position: relative; border: none !important; overflow: visible;
+  font-size: 0 !important;
+}
+.legend-cell::after {
+  content: attr(data-lbl);
+  position: absolute; top: 7px; left: 50%; transform: translateX(-50%);
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .06em;
+  color: rgba(230,230,230,.86); white-space: nowrap;
+  text-shadow: 0 0 3px #000, 0 0 6px rgba(0,0,0,.95);
+}
+.legend-words .legend-cell { width: auto !important; min-width: 46px; padding: 0 !important; }
+.legend-words .legend-cell::after { font-size: 8.5px; }
+.legend-col { padding-bottom: 16px; }
+
+/* ---- Lencana: pil bergaris jadi teks polos berpenanda ------------------- */
+.fresh-badge {
+  background: transparent !important; border: none !important;
+  padding: 0 !important; gap: 7px;
+  font-family: var(--font-mono); font-size: 9px; font-weight: 500;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: rgba(230,230,230,.66) !important;
+  text-shadow: 0 0 3px #000, 0 0 7px rgba(0,0,0,.95);
+}
+.fresh-ico { display: none; }
+.fresh-badge::before {
+  content: ""; flex: 0 0 auto; width: 6px; height: 6px; background: var(--alert);
+}
+.acc-badge { color: rgba(230,230,230,.66) !important; }
+.acc-badge::before { background: var(--lime); }
+
+/* ---- Bilah waktu: label waktu jadi teks polos --------------------------- */
+.tl-cur { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em;
+  color: rgba(230,230,230,.9); text-shadow: 0 0 3px #000, 0 0 7px rgba(0,0,0,.95); }
+.tl-tick-lbl, .tl-tick.day .tl-tick-lbl {
+  color: rgba(230,230,230,.55) !important; font-weight: 500 !important;
+  text-shadow: 0 0 3px #000, 0 0 6px rgba(0,0,0,.9);
+}
+.tl-tick-mark { background: rgba(230,230,230,.28) !important; }
+.tl-tick.day .tl-tick-mark { background: rgba(230,230,230,.5) !important; }
+.tl-btn .material-symbols-outlined { filter: drop-shadow(0 0 3px #000); }
+
+/* ---- Legenda: pita warna dan labelnya jadi dua elemen terpisah -----------
+   Sebelumnya warna dipasang sebagai LATAR sel dan labelnya lewat ::after yang
+   melayang, jadi lebar sel harus dipatok angka. Untuk legenda berangka itu
+   cukup, tapi legenda berlabel KATA seperti kategori ISPU langsung tabrakan.
+   Sekarang warnanya di `.lg-bar` dan teksnya di `.lg-lbl`, jadi lebar sel
+   mengikuti panjang labelnya sendiri. */
+.legend-cell {
+  width: auto !important; min-width: 34px; height: auto !important;
+  display: flex !important; flex-direction: column; align-items: stretch;
+  gap: 5px; padding: 0 3px !important; border: none !important;
+  font-size: 0 !important; overflow: visible;
+}
+.legend-cell::after { content: none !important; }
+.lg-bar { display: block; height: 4px; width: 100%; }
+.lg-lbl {
+  display: block; text-align: center;
+  font-family: var(--font-mono); font-size: 9px; font-weight: 500;
+  letter-spacing: .06em; color: rgba(230,230,230,.86); white-space: nowrap;
+  text-shadow: 0 0 3px #000, 0 0 6px rgba(0,0,0,.95);
+}
+.legend-words .lg-lbl, .legend-cell.dua-baris .lg-lbl { font-size: 8.5px; }
+.lg-bar.kotak-catur {
+  background-color: rgba(230,230,230,.9);
+  background-image: linear-gradient(45deg, #6a6a6a 25%, transparent 25%, transparent 75%, #6a6a6a 75%),
+                    linear-gradient(45deg, #6a6a6a 25%, transparent 25%, transparent 75%, #6a6a6a 75%);
+  background-size: 6px 6px; background-position: 0 0, 3px 3px;
+}
+/* Aturan lama menyembunyikan SEMUA <span> di dalam sel legenda, dan itu ikut
+   membunuh `.lg-lbl` yang justru labelnya. Dikecualikan. */
+.legend-cell span.lg-lbl { display: block !important; font-size: 9px !important; }
+.legend-words .lg-lbl, .legend-cell.dua-baris .lg-lbl { font-size: 8.5px !important; }
+/* Sel dipatok min-width 34 px, jadi legenda berlabel KATA panjang seperti
+   kategori ISPU labelnya berdempetan tanpa jarak. Dipakai `max-content`
+   supaya tiap sel selalu selebar labelnya sendiri, plus jarak antar label. */
+.legend-cell { min-width: max-content !important; padding: 0 7px !important; }
+.legend { gap: 0; }
+/* `min-width: max-content` sudah MEMUAT padding-nya, jadi paddingnya justru
+   menjepit label, bukan memberi jarak. Jaraknya dipindah ke wadah sebagai gap.
+   Pita warnanya jadi bersegmen, dan untuk skala berkategori seperti ISPU itu
+   justru lebih jujur daripada satu pita menyambung. */
+.legend-cell { padding: 0 !important; }
+.legend { gap: 11px; }
