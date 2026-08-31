@@ -1321,25 +1321,22 @@ body.model-private #about-card-team { display: flex; }
 /* ═══════════════════════════════════════════════════════════════════════════
    YANG MENETAP CUMA LAMBANG DAN NAMANYA, KONTAINERNYA MUNCUL SAAT DISENTUH
    ---------------------------------------------------------------------------
-   Berlaku untuk kontrol kanan DAN daftar parameter di kiri, supaya keduanya
-   berperilaku sama.
+   Berlaku untuk kontrol kanan DAN daftar parameter di kiri.
 
-   Yang MENETAP:
-     - kotak kecil pembungkus lambang, lengkap dengan garis tebal dan bayangan
-       kerasnya, jadi lambangnya tetap punya rumah
-     - namanya, sebagai teks polos tanpa kotak
-   Yang MUNCUL saat disentuh atau sedang menyala:
-     - kontainer besarnya, yaitu papan putih yang menaungi nama dan lambang
+   Yang MENETAP  kotak kecil pembungkus lambang, lengkap garis tebal dan
+                 bayangan kerasnya, plus namanya sebagai teks polos
+   Yang MUNCUL   kontainer penaung nama, SATU PER SATU sesuai yang disentuh
 
-   Jadi peta terlihat lebih lapang saat diam, tapi begitu tangan mendekat
-   kotaknya kembali utuh seperti semula.
+   Penting: di panel kiri kontainernya muncul PER PARAMETER, bukan sepapan
+   penuh sekaligus. Papan putih .panel.layers memang dilepas seterusnya, dan
+   tiap baris berdiri sendiri sebagai kepingan.
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (hover: hover) and (min-width: 641px) {
 
   /* ───────────────────────── KONTROL KANAN ───────────────────────── */
-  /* Kotak lambangnya TIDAK diubah sama sekali, biar tetap seperti aslinya.
-     Yang berubah cuma namanya: dari tooltip yang muncul saat hover, jadi teks
-     polos yang selalu tampil, lalu berubah jadi kontainer gelap saat disentuh.
+  /* Kotak lambangnya TIDAK diubah sama sekali. Yang berubah cuma namanya:
+     dari tooltip yang muncul saat hover, jadi teks polos yang selalu tampil,
+     lalu berubah jadi kontainer gelap saat disentuh.
 
      Dipakai `::after` yang sudah ada, bukan elemen baru, sebab satu elemen
      cuma punya satu ::after dan aturan tooltip lama sudah menempati slot itu. */
@@ -1363,65 +1360,51 @@ body.model-private #about-card-team { display: flex; }
     text-shadow: none;
   }
 
-  /* ───────────────────────── PANEL KIRI ───────────────────────── */
-  /* Papan putihnya yang dilepas, bukan barisnya. */
+  /* ───────────────────────── PANEL KIRI ─────────────────────────
+     Dibuat mirip panel kanan. Di kanan, kotak lambang MENETAP dan yang
+     berubah cuma namanya: teks polos saat diam, kontainer gelap saat
+     disentuh. Panel kiri sekarang persis begitu, tinggal arah namanya yang
+     berbeda sebab panelnya di tepi kiri layar. */
   .panel.layers {
     background: transparent;
     border-color: transparent;
     box-shadow: none;
+    gap: 4px;                         /* barisnya dirapatkan */
   }
   .panel.layers .layer-btn {
     background: transparent;
-    border-bottom-color: transparent;
-    padding-left: 0;
-    text-shadow: 0 0 3px var(--paper), 0 0 6px var(--paper), 0 1px 2px var(--paper);
+    border: none;
+    padding: 0;                       /* rata dengan tepi kiri panel lain */
+    gap: 9px;                         /* jarak lambang ke nama, sama dengan kanan */
   }
-  /* Lambangnya diberi kotak sendiri, meniru kotak lambang di kanan, supaya
-     saat papannya hilang lambangnya tidak menggantung telanjang di atas peta. */
+  /* Kotak lambangnya MENETAP, meniru .icon-btn di kanan. */
   .panel.layers .layer-btn .material-symbols-outlined {
-    width: 34px; height: 34px;
+    width: 34px; height: 34px; flex: none;
     display: flex; align-items: center; justify-content: center;
     border: var(--bw) solid var(--ink);
     background: var(--surface);
     box-shadow: var(--shadow-sm);
     font-size: 19px;
   }
-  /* Disentuh atau menyala: papannya kembali. */
-  .panel.layers:hover {
-    background: var(--surface);
-    border-color: var(--ink);
-    box-shadow: var(--shadow);
+  /* Menyala: kotak lambangnya yang terisi lime, sama seperti .icon-btn.active
+     di kanan. Bukan sebarisnya. */
+  .panel.layers .layer-btn.active { background: transparent; }
+  .panel.layers .layer-btn.active .material-symbols-outlined { background: var(--lime); }
+
+  /* Namanya: teks polos saat diam, kontainer gelap saat disentuh. Cerminan
+     tooltip di kanan, cuma tanpa perlu ::after sebab di sini namanya sudah
+     punya elemen sendiri. */
+  .panel.layers .lb-txt {
+    padding: 4px 0;
+    /* Halo tipis warna kertas. Bukan hiasan: tanpa kontainer, tak ada lagi
+       yang menaungi nama ini dari peta, dan peta bisa berwarna apa saja. */
+    text-shadow: 0 0 3px var(--paper), 0 0 6px var(--paper), 0 1px 2px var(--paper);
   }
-  .panel.layers:hover .layer-btn {
-    border-bottom-color: var(--ink);
-    padding-left: 18px;
+  .panel.layers .layer-btn:hover:not(.disabled) { background: transparent; }
+  .panel.layers .layer-btn:hover:not(.disabled) .lb-txt {
+    background: var(--ink); color: var(--surface);
+    border: var(--bw) solid var(--ink); box-shadow: var(--shadow-sm);
+    padding: 4px 9px;
     text-shadow: none;
   }
-  .panel.layers:hover .layer-btn:not(.active) { background: var(--surface); }
-  .panel.layers:hover .layer-btn:last-child { border-bottom-color: transparent; }
-  /* Begitu papannya tampil, lambangnya tak perlu kotak sendiri lagi. */
-  .panel.layers:hover .layer-btn .material-symbols-outlined {
-    width: auto; height: auto;
-    border: none; background: transparent; box-shadow: none;
-    font-size: 21px;
-  }
-  /* Yang sedang menyala tetap kelihatan menyala walau papannya sedang hilang. */
-  .panel.layers .layer-btn.active { background: var(--lime); padding-left: 18px; text-shadow: none; }
-  .panel.layers .layer-btn.active .material-symbols-outlined { background: var(--lime); }
-}
-@media (hover: hover) and (min-width: 641px) {
-  /* Baris yang menyala dijadikan kepingan utuh saat papannya sedang hilang:
-     diberi garis dan bayangan sendiri, sebab tanpa papan tidak ada lagi yang
-     memberinya tepi. Semua itu dicabut lagi begitu papannya kembali. */
-  .panel.layers .layer-btn.active {
-    border: var(--bw) solid var(--ink);
-    box-shadow: var(--shadow-sm);
-    padding: 6px 18px 6px 16px;
-  }
-  .panel.layers .layer-btn.active .material-symbols-outlined { border: none; box-shadow: none; }
-  .panel.layers:hover .layer-btn.active {
-    border: none; border-bottom: var(--bw) solid var(--ink);
-    box-shadow: none; padding: 8px 18px;
-  }
-  .panel.layers:hover .layer-btn.active:last-child { border-bottom-color: transparent; }
 }
