@@ -3,19 +3,25 @@
    panel mengambang), gaya visual Atmospheric Brutalism (neubrutalist):
    border ink 3px, hard-shadow 6px tanpa blur, sudut siku 0px.
    ================================================================ */
+/* Palet: NEON PASTEL (NewPalet/DESIGN.md).
+   Cyber Purple #bc13fe sebagai titik fokus, Soft Lavender #e6e6fa untuk
+   permukaan sekunder, Mint Green #aaff00 untuk keadaan aktif. Garis dan teks
+   HITAM MURNI, sesuai panduannya: "Every color is contained by a pure black
+   stroke" dan "All text should be rendered in pure black".
+   Yang diganti HANYA warnanya. Ketebalan garis, bayangan, dan huruf tetap. */
 :root {
-  --ink: #1c1b1b;
-  --paper: #fcf8f8;
-  --surface: #fcf8f8;
-  --surface-low: #f6f3f2;
-  --surface-high: #ebe7e7;
-  --surface-highest: #e5e2e1;
+  --ink: #000000;
+  --paper: #f9f9f9;
+  --surface: #f9f9f9;
+  --surface-low: #f3f3f3;
+  --surface-high: #e6e6fa;
+  --surface-highest: #e2e2e2;
   --white: #ffffff;
-  --primary: #0029d7;
+  --primary: #bc13fe;
   --on-primary: #ffffff;
-  --lime: #d2ed26;
-  --on-lime: #5c6900;
-  --variant: #444656;
+  --lime: #aaff00;
+  --on-lime: #111f00;
+  --variant: #504254;
 
   --bw: 3px;
   --shadow: 6px 6px 0 0 var(--ink);
