@@ -1477,3 +1477,80 @@ body.model-private #about-card-team { display: flex; }
 .panel, .legend-panel, .lang, .zoom { background: rgba(6,6,6,.90); }
 .panel.brand { background: rgba(6,6,6,.90); }
 .panel.timeline { background: rgba(6,6,6,.90); }
+
+/* ---- Modal, tombol dialog, dan kolom isian ------------------------------
+   Bagian ini terlewat di sapuan pertama sebab modal tak muncul di screenshot
+   biasa. Isinya masih gaya lama: tombol blok padat, kolom isian berkotak
+   tebal, dan bayangan keras yang bergeser saat ditekan.
+   DESIGN.md soal tombol: "Default: transparent background, 1px border.
+   On hover, the button fills with the border color and text flips to black."
+   Soal kolom isian: garis bawah 1px, atau kotak 1px, tanpa bayangan. */
+.pw-card, .about-card { background: rgba(6,6,6,.96); border: 1px solid var(--line); box-shadow: none; }
+.pw-title { font-size: 15px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); }
+.pw-note  { font-family: var(--font-ui); font-size: 11px; letter-spacing: .06em; }
+
+.pw-input {
+  background: transparent; border: 1px solid var(--line); box-shadow: none;
+  color: var(--ink); font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em;
+}
+.pw-input:focus { box-shadow: none; border-color: var(--primary); outline: none; }
+.pw-input::placeholder { color: var(--line); }
+
+.pw-btn, .about-close {
+  background: transparent; color: var(--variant);
+  border: 1px solid var(--line); box-shadow: none;
+  font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  transition: background .1s, color .1s, border-color .1s;
+}
+.pw-btn:active, .about-close:active { transform: none; box-shadow: none; }
+.pw-btn:hover, .about-close:hover {
+  background: var(--primary); color: var(--on-primary); border-color: var(--primary);
+}
+/* Tombol utama ditandai GARIS hijau, bukan isi hijau. Terisi cuma saat disentuh. */
+.pw-btn-primary { background: transparent; color: var(--lime); border-color: var(--lime); }
+.pw-btn-primary:hover { background: var(--lime); color: var(--on-lime); border-color: var(--lime); }
+
+/* Chip status: kotak 8px padat di samping teks, bukan lencana terisi penuh. */
+.about-tag {
+  background: transparent; color: var(--lime); border: 1px solid var(--lime);
+  letter-spacing: .16em; padding: 3px 8px;
+}
+/* Selubung modal ikut gelap, tidak lagi memakai sisa warna tinta lama. */
+.about-overlay { background: rgba(0,0,0,.72); }
+
+/* ---- Tombol ekspor: dari balok cyan padat jadi wireframe -----------------
+   Sempat lolos sebab tombolnya cuma muncul di dalam panel detail titik dan
+   panel Skew-T, yang tak ikut terlihat di screenshot biasa. Sesuai bab
+   Components: berongga dulu, terisi cuma saat disentuh. */
+.pt-export, .skt-export {
+  background: transparent; color: var(--primary);
+  border: 1px solid var(--primary); box-shadow: none;
+  font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  transition: background .1s, color .1s;
+}
+.pt-export:hover, .skt-export:hover { background: var(--primary); color: var(--on-primary); }
+.pt-export .material-symbols-outlined, .skt-export .material-symbols-outlined { font-size: 16px; }
+
+/* ---- Sapuan terakhir: bayangan keras dan blok padat yang ditulis MATI -----
+   Token --shadow sudah none, tapi belasan aturan menulis offsetnya langsung
+   (mis. `box-shadow: 3px 3px 0 0 var(--ink)`) jadi lolos dari penukaran token.
+   Sisa inilah yang bikin gaya lama masih terasa: kotak melompat saat ditekan,
+   dan tombol berisi blok warna penuh. DESIGN.md menolak dua duanya, "strictly
+   Flat (2D)" dan "hollow shapes defined by 1px strokes". */
+.phenom-link:hover, .icon-btn:hover:not(:disabled),
+.cc-ico, .cc-ico.cc-cap, .cc-ico.cc-mini, .tl-btn, .pw-btn, .pt-export, .skt-export {
+  box-shadow: none !important;
+}
+/* Lompatan saat disentuh atau ditekan ikut dimatikan, itu bahasa neubrutalism. */
+.phenom-link:hover, .icon-btn:hover:not(:disabled), .icon-btn:active,
+.tl-btn:active, .pw-btn:active { transform: none !important; }
+
+/* Blok warna penuh diganti garis warna. Yang tersisa isi cuma penanda BAHASA
+   aktif dan layer aktif berupa kotak status, sebab dua itu memang harus
+   menonjol sebagai keadaan, bukan sebagai tombol. */
+.phenom-link:hover { background: transparent; color: var(--lime); border-color: var(--lime); }
+.level-btn.active { background: transparent; color: var(--lime); }
+.icon-btn.active  { background: transparent; color: var(--lime); border-color: var(--lime); }
+.tl-btn:hover:not(:disabled) { background: var(--lime); color: var(--on-lime); }
+.select-wrap select:focus { background: transparent; }
+.panel-toggle:hover { background: var(--primary); color: var(--on-primary); }
