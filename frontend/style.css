@@ -1880,3 +1880,79 @@ body.model-private .about-card--team { display: flex !important; }
    ikonnya nyaris hilang di atas peta yang terang. Dinaikkan ke abu netral. */
 .cc-cloud  { color: rgba(224,224,224,.62); }
 .cc-pcloud { color: rgba(224,224,224,.82); }
+
+/* ---- Selubung: tidak lagi setinggi layar, dan gradasinya dihaluskan ------
+   DUA perbaikan.
+
+   1. TINGGI. Sebelumnya membentang penuh dari atas sampai bawah layar,
+      padahal isinya berhenti jauh di atas. Terukur: panel kiri (brand, daftar
+      parameter, MODEL/LEVEL) berakhir di y=490, kolom ikon kanan di y=700.
+      Jadi tingginya dipotong sampai situ, lalu DILUNAKKAN ke bawah pakai
+      mask supaya ujungnya tidak berupa garis potong yang keras.
+
+   2. GRADASI. Empat hentian saja membuat peralihannya patah patah dan pita
+      warnanya kelihatan. Diperbanyak jadi sebelas hentian mengikuti kurva
+      melandai, jadi peralihan dari pekat ke bening terbaca mulus. */
+#ui::before {
+  top: 0; bottom: auto; height: 520px;
+  background: linear-gradient(to right,
+    rgba(0,0,0,.94) 0%,   rgba(0,0,0,.930) 10%, rgba(0,0,0,.905) 20%,
+    rgba(0,0,0,.862) 30%, rgba(0,0,0,.800) 40%, rgba(0,0,0,.718) 50%,
+    rgba(0,0,0,.615) 60%, rgba(0,0,0,.490) 70%, rgba(0,0,0,.345) 80%,
+    rgba(0,0,0,.180) 90%, rgba(0,0,0,0)    100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 76%, rgba(0,0,0,.55) 90%, transparent 100%);
+          mask-image: linear-gradient(to bottom, #000 0%, #000 76%, rgba(0,0,0,.55) 90%, transparent 100%);
+}
+#ui::after {
+  top: 0; bottom: auto; height: 740px;
+  background: linear-gradient(to left,
+    rgba(0,0,0,.75) 0%,   rgba(0,0,0,.742) 10%, rgba(0,0,0,.722) 20%,
+    rgba(0,0,0,.688) 30%, rgba(0,0,0,.638) 40%, rgba(0,0,0,.573) 50%,
+    rgba(0,0,0,.491) 60%, rgba(0,0,0,.391) 70%, rgba(0,0,0,.275) 80%,
+    rgba(0,0,0,.144) 90%, rgba(0,0,0,0)    100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 80%, rgba(0,0,0,.55) 92%, transparent 100%);
+          mask-image: linear-gradient(to bottom, #000 0%, #000 80%, rgba(0,0,0,.55) 92%, transparent 100%);
+}
+
+/* ---- Selubung menempel pada KOLOMNYA, bukan pada #ui ---------------------
+   Tinggi dipatok angka mati ternyata rapuh: isi panel kiri Atmos berakhir di
+   y=490 sedangkan Plume di y=648, dan angkanya masih berubah lagi kalau model
+   tambahan dinyalakan atau layarnya lain ukuran.
+   Kedua kolom sudah memeluk isinya sendiri, jadi selubungnya dipindah ke
+   kolom itu. Tingginya ikut isi dengan sendirinya, tanpa perlu diukur ulang. */
+#ui::before, #ui::after { display: none !important; }
+
+#ui .ui-top > .col { position: relative; }
+#ui .ui-top > .col::before {
+  content: ""; position: absolute; z-index: -1; pointer-events: none;
+  top: -14px; bottom: -46px;
+}
+/* kolom kiri */
+#ui .ui-top > .col:not(.items-end)::before {
+  left: -14px; width: 194px;
+  background: linear-gradient(to right,
+    rgba(0,0,0,.94) 0%,   rgba(0,0,0,.930) 10%, rgba(0,0,0,.905) 20%,
+    rgba(0,0,0,.862) 30%, rgba(0,0,0,.800) 40%, rgba(0,0,0,.718) 50%,
+    rgba(0,0,0,.615) 60%, rgba(0,0,0,.490) 70%, rgba(0,0,0,.345) 80%,
+    rgba(0,0,0,.180) 90%, rgba(0,0,0,0)    100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 72%, rgba(0,0,0,.5) 88%, transparent 100%);
+          mask-image: linear-gradient(to bottom, #000 0%, #000 72%, rgba(0,0,0,.5) 88%, transparent 100%);
+}
+/* kolom kanan */
+#ui .ui-top > .col.items-end::before {
+  right: -14px; width: 187px;
+  background: linear-gradient(to left,
+    rgba(0,0,0,.75) 0%,   rgba(0,0,0,.742) 10%, rgba(0,0,0,.722) 20%,
+    rgba(0,0,0,.688) 30%, rgba(0,0,0,.638) 40%, rgba(0,0,0,.573) 50%,
+    rgba(0,0,0,.491) 60%, rgba(0,0,0,.391) 70%, rgba(0,0,0,.275) 80%,
+    rgba(0,0,0,.144) 90%, rgba(0,0,0,0)    100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 72%, rgba(0,0,0,.5) 88%, transparent 100%);
+          mask-image: linear-gradient(to bottom, #000 0%, #000 72%, rgba(0,0,0,.5) 88%, transparent 100%);
+}
+
+/* Perbaikan susunan lapis. `z-index: -1` pada pseudo di DALAM kolom membuatnya
+   keluar dari tumpukan kolom lalu jatuh di belakang peta, jadi selubungnya
+   lenyap sama sekali. Yang benar: selubung di lapis 0, isi kolom dinaikkan
+   ke lapis 1 supaya duduk di atasnya. */
+#ui .ui-top > .col::before { z-index: 0 !important; }
+#ui .ui-top > .col > * { position: relative; z-index: 1; }
