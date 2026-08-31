@@ -4,53 +4,27 @@
    border ink 3px, hard-shadow 6px tanpa blur, sudut siku 0px.
    ================================================================ */
 :root {
-  /* ============ CYBERMINIMALIST HUD ============
-     Diturunkan dari stitch_neubrutalist_meteorological_map_system/
-     cyberminimalist_hud/DESIGN.md. Nama tokennya SENGAJA dipertahankan sama
-     dengan gaya lama, supaya 1300 baris aturan di bawah tidak perlu disentuh
-     sama sekali dan tata letaknya tetap persis. Yang berubah cuma nilainya. */
-
-  /* Dasar OLED. Makin "high" makin terang, kebalikan dari gaya kertas lama. */
-  --ink: #e0e0e0;               /* telemetry white, sekarang warna DEPAN */
-  --paper: #0e0e0e;             /* surface-container-lowest */
-  --surface: #131313;
-  --surface-low: #1b1b1b;
-  --surface-high: #1f1f1f;
-  --surface-highest: #2a2a2a;
+  --ink: #1c1b1b;
+  --paper: #fcf8f8;
+  --surface: #fcf8f8;
+  --surface-low: #f6f3f2;
+  --surface-high: #ebe7e7;
+  --surface-highest: #e5e2e1;
   --white: #ffffff;
+  --primary: #0029d7;
+  --on-primary: #ffffff;
+  --lime: #d2ed26;
+  --on-lime: #5c6900;
+  --variant: #444656;
 
-  /* Garis struktural 1px. Ini yang dulu menyatu dengan --ink. */
-  --line: #282828;              /* grey-800, dinding antar modul */
-  --line-dim: #1f1f1f;
+  --bw: 3px;
+  --shadow: 6px 6px 0 0 var(--ink);
+  --shadow-sm: 4px 4px 0 0 var(--ink);
 
-  /* Warna fungsional. Bukan hiasan, cuma penanda keadaan. */
-  --primary: #00f0ff;           /* cyber blue, pilihan dan fokus */
-  --on-primary: #001416;
-  --lime: #00ff41;              /* system green, aktif dan "jalan" */
-  --on-lime: #002203;
-  --alert: #ff9100;             /* safety orange, peringatan */
-  --variant: #b9ccb2;           /* teks sekunder */
-
-  /* Rata, tanpa bayangan. DESIGN.md menolak bayangan dan blur secara tegas,
-     kedalaman dinyatakan lewat beda warna isi dan ketegasan garis. */
-  --bw: 1px;
-  --shadow: none;
-  --shadow-sm: none;
-
-  /* JetBrains Mono untuk seluruh antarmuka dan angka, Archivo Narrow khusus
-     kalimat panjang. */
-  --font-display: "JetBrains Mono", ui-monospace, monospace;
-  --font-ui: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "Archivo Black", sans-serif;
+  --font-ui: "Space Grotesk", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --font-prose: "Archivo Narrow", system-ui, sans-serif;
 }
-
-/* Kontrol form TIDAK mewarisi warna teks dari body, dia memakai bawaan
-   browser yang gelap. Di gaya kertas lama itu kebetulan benar, jadi tak
-   pernah ketahuan. Di gaya HUD yang dasarnya hitam, semua tombol dan
-   dropdown jadi hitam di atas hitam alias lenyap. Tombol EN sempat hilang
-   sama sekali gara-gara ini. Aturan yang lebih khusus di bawah tetap menang. */
-button, select, input, textarea, optgroup, option { color: var(--ink); }
 
 * { box-sizing: border-box; }
 html, body {
@@ -87,7 +61,7 @@ html, body {
 
 /* Panel dasar neubrutalist */
 .panel {
-  background: var(--surface); border: var(--bw) solid var(--line);
+  background: var(--surface); border: var(--bw) solid var(--ink);
   box-shadow: var(--shadow); pointer-events: auto;
 }
 
@@ -102,7 +76,7 @@ html, body {
   position: absolute; left: -18px; top: 50%; transform: translateY(-50%);
   width: 18px; height: 46px; padding: 0; cursor: pointer; overflow: hidden;
   display: flex; align-items: center; justify-content: center;
-  background: var(--surface); border: var(--bw) solid var(--line);
+  background: var(--surface); border: var(--bw) solid var(--ink);
   color: var(--primary); pointer-events: auto;
 }
 .panel-toggle:hover { background: var(--primary); color: var(--on-primary); }
@@ -145,7 +119,7 @@ html, body {
 .layer-btn {
   display: flex; align-items: center; gap: 12px;
   padding: 8px 18px; background: var(--surface); color: var(--ink);
-  border: none; border-bottom: var(--bw) solid var(--line);
+  border: none; border-bottom: var(--bw) solid var(--ink);
   font-family: var(--font-ui); font-weight: 700; font-size: 15px;
   text-transform: uppercase; text-align: left; cursor: pointer; transition: background .12s;
 }
@@ -164,7 +138,7 @@ html, body {
 .level-btn {
   display: flex; align-items: center; justify-content: flex-start;
   padding: 11px 16px; background: var(--surface); color: var(--ink);
-  border: none; border-bottom: var(--bw) solid var(--line);
+  border: none; border-bottom: var(--bw) solid var(--ink);
   font-family: var(--font-ui); font-weight: 700; font-size: 13px;
   text-transform: uppercase; letter-spacing: .02em; text-align: left;
   white-space: nowrap; cursor: pointer; pointer-events: auto; transition: background .12s;
@@ -180,7 +154,7 @@ html, body {
 .select-wrap select {
   width: 100%; appearance: none; -webkit-appearance: none;
   background: var(--surface-low); color: var(--ink);
-  border: var(--bw) solid var(--line); padding: 7px 26px 7px 9px;
+  border: var(--bw) solid var(--ink); padding: 7px 26px 7px 9px;
   font-family: var(--font-mono); font-size: 12px; cursor: pointer; outline: none;
 }
 .select-wrap select:focus { background: var(--lime); }
@@ -191,26 +165,26 @@ html, body {
 }
 
 /* ---- Lang toggle / zoom / search (kanan atas) ---- */
-.lang { display: flex; border: var(--bw) solid var(--line); box-shadow: var(--shadow); background: var(--surface); pointer-events: auto; }
+.lang { display: flex; border: var(--bw) solid var(--ink); box-shadow: var(--shadow); background: var(--surface); pointer-events: auto; }
 .lang button {
   padding: 8px 14px; border: none; background: var(--surface);
   font-family: var(--font-ui); font-weight: 700; font-size: 14px; cursor: pointer;
 }
-.lang button:first-child { border-right: var(--bw) solid var(--line); }
+.lang button:first-child { border-right: var(--bw) solid var(--ink); }
 .lang button.active { background: var(--lime); color: var(--on-lime); }
 .lang button:disabled { opacity: .5; cursor: not-allowed; }
 
-.zoom { display: flex; flex-direction: column; border: var(--bw) solid var(--line); box-shadow: var(--shadow); background: var(--surface); pointer-events: auto; }
+.zoom { display: flex; flex-direction: column; border: var(--bw) solid var(--ink); box-shadow: var(--shadow); background: var(--surface); pointer-events: auto; }
 .zoom button {
   width: 46px; height: 46px; display: flex; align-items: center; justify-content: center;
   border: none; background: var(--surface); cursor: pointer; transition: background .12s;
 }
-.zoom button:first-child { border-bottom: var(--bw) solid var(--line); }
+.zoom button:first-child { border-bottom: var(--bw) solid var(--ink); }
 .zoom button:hover { background: var(--surface-high); }
 
 .icon-btn {
   width: 46px; height: 46px; display: flex; align-items: center; justify-content: center;
-  border: var(--bw) solid var(--line); background: var(--surface);
+  border: var(--bw) solid var(--ink); background: var(--surface);
   box-shadow: var(--shadow); cursor: pointer; pointer-events: auto; transition: all .1s ease;
 }
 .icon-btn:hover:not(:disabled) { transform: translate(2px, 2px); box-shadow: 3px 3px 0 0 var(--ink); }
@@ -231,7 +205,7 @@ html, body {
     background: var(--ink); color: var(--surface);
     font-family: var(--font-ui); font-weight: 700; font-size: 11px;
     letter-spacing: .04em; text-transform: uppercase; white-space: nowrap;
-    padding: 5px 9px; border: 1px solid var(--line); box-shadow: var(--shadow-sm);
+    padding: 5px 9px; border: 2px solid var(--ink); box-shadow: var(--shadow-sm);
     opacity: 0; pointer-events: none; transition: opacity .12s ease, transform .12s ease;
     z-index: 60;
   }
@@ -247,7 +221,7 @@ html, body {
     background: var(--ink); color: var(--surface);
     font-family: var(--font-ui); font-weight: 700; font-size: 11px;
     letter-spacing: .02em; white-space: nowrap; text-transform: none;   /* kalimat, bukan teriakan */
-    padding: 5px 9px; border: 1px solid var(--line); box-shadow: var(--shadow-sm);
+    padding: 5px 9px; border: 2px solid var(--ink); box-shadow: var(--shadow-sm);
     opacity: 0; pointer-events: none; transition: opacity .12s ease, transform .12s ease;
     z-index: 60;
   }
@@ -259,7 +233,7 @@ html, body {
 .cc-ico {
   display: flex; align-items: center; justify-content: center;
   width: 30px; height: 30px; box-sizing: border-box;
-  background: var(--surface); border: 1px solid var(--line);
+  background: var(--surface); border: 2px solid var(--ink);
   box-shadow: 2px 2px 0 0 var(--ink);
 }
 .cc-ico .material-symbols-outlined { font-size: 19px; line-height: 1; }
@@ -268,8 +242,8 @@ html, body {
 .cc-sunny  .material-symbols-outlined { color: #f5a91e; }
 .cc-pcloud .material-symbols-outlined { color: #6b7686; }
 .cc-cloud  .material-symbols-outlined { color: #566072; }
-.cc-rain   .material-symbols-outlined { color: var(--primary); }
-.cc-heavy  .material-symbols-outlined { color: var(--alert); }
+.cc-rain   .material-symbols-outlined { color: #2360c8; }
+.cc-heavy  .material-symbols-outlined { color: #e8590c; }
 .cc-storm  .material-symbols-outlined { color: #c81d5a; }
 
 /* Nama kota + nilai parameter aktif, menggantung di bawah ikon. Halo hitam tebal
@@ -323,7 +297,7 @@ html, body {
    dengan kotak pencarian). Dibungkus .city-wrap (position relative). */
 .city-wrap { position: relative; pointer-events: auto; }
 .cond-legend { position: absolute; top: 0; right: 52px; display: none; z-index: 600;
-  border: var(--bw) solid var(--line); background: var(--surface); box-shadow: var(--shadow);
+  border: var(--bw) solid var(--ink); background: var(--surface); box-shadow: var(--shadow);
   pointer-events: auto; white-space: nowrap; }
 .cond-legend.show { display: block; }
 .cl-head { background: var(--ink); color: var(--surface); font-size: 10px; font-weight: 700; letter-spacing: .1em; padding: 4px 8px; }
@@ -351,7 +325,7 @@ html, body {
 .tl-btns { display: flex; gap: 10px; }
 .tl-btn {
   width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
-  border: var(--bw) solid var(--line); background: var(--surface);
+  border: var(--bw) solid var(--ink); background: var(--surface);
   box-shadow: 3px 3px 0 0 var(--ink); cursor: pointer; transition: all .1s ease;
 }
 .tl-btn .material-symbols-outlined { font-size: 20px; }
@@ -362,38 +336,31 @@ html, body {
 
 /* Range input neubrutalist (kecil) */
 #time-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: transparent; cursor: pointer; }
-#time-slider::-webkit-slider-runnable-track { height: 6px; background: var(--surface-highest); border: 1px solid var(--line); }
-#time-slider::-moz-range-track { height: 6px; background: var(--surface-highest); border: 1px solid var(--line); }
+#time-slider::-webkit-slider-runnable-track { height: 6px; background: var(--surface-highest); border: 2px solid var(--ink); }
+#time-slider::-moz-range-track { height: 6px; background: var(--surface-highest); border: 2px solid var(--ink); }
 #time-slider::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none; width: 16px; height: 16px; margin-top: -7px;
-  background: var(--lime); border: 1px solid var(--line); border-radius: 0;
+  background: var(--lime); border: 2px solid var(--ink); border-radius: 0;
 }
 #time-slider::-moz-range-thumb {
-  width: 16px; height: 16px; background: var(--lime); border: 1px solid var(--line); border-radius: 0;
+  width: 16px; height: 16px; background: var(--lime); border: 2px solid var(--ink); border-radius: 0;
 }
 
 /* Legenda horizontal (bottom-right) */
-.legend-panel { display: flex; align-items: stretch; border: var(--bw) solid var(--line); box-shadow: var(--shadow); background: var(--surface); pointer-events: auto; }
+.legend-panel { display: flex; align-items: stretch; border: var(--bw) solid var(--ink); box-shadow: var(--shadow); background: var(--surface); pointer-events: auto; }
 .legend-head {
   display: flex; align-items: center; padding: 0 14px;
   background: var(--ink); color: var(--surface); font-size: 13px; font-weight: 700;
-  letter-spacing: .06em; border-right: var(--bw) solid var(--line);
+  letter-spacing: .06em; border-right: var(--bw) solid var(--ink);
 }
 .legend { display: flex; }
 .legend-cell {
   width: 42px; min-height: 36px; display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-mono); font-size: 13px;
-  border-right: 1px solid rgba(0,0,0,.25);
-  /* SENGAJA angka mati, bukan token. Latar sel legenda itu warna DATA dari
-     palet, bukan permukaan antarmuka, jadi kontrasnya harus dihitung lawan
-     palet dan tidak boleh ikut berubah waktu temanya berganti.
-     Awas namanya menipu: kelas .dark menandai sel yang latarnya GELAP, jadi
-     yang dipakai justru teks TERANG. Waktu token ditukar ke HUD, dua duanya
-     sempat terbalik dan angka 15, 25, 34 jadi tak terbaca. */
-  color: #131313;
+  font-family: var(--font-mono); font-size: 13px; color: var(--ink);
+  border-right: 1px solid rgba(28,27,27,.2);
 }
 .legend-cell:last-child { border-right: none; }
-.legend-cell.dark { color: #e8e8e8; }
+.legend-cell.dark { color: var(--surface); }
 /* Sel legenda 0% tutupan awan. Kotak-kotak catur = konvensi umum untuk
    "transparan", jadi terbaca sebagai tak ada awan, bukan sebagai warna putih. */
 .legend-cell.kotak-catur {
@@ -414,7 +381,7 @@ html, body {
   display: none;   /* default sembunyi — hanya tampil untuk pesan error */
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
   z-index: 2000; background: var(--surface); color: var(--ink);
-  border: var(--bw) solid var(--line); box-shadow: var(--shadow);
+  border: var(--bw) solid var(--ink); box-shadow: var(--shadow);
   padding: 20px 28px; font-family: var(--font-mono); font-size: 14px; max-width: 420px;
 }
 
@@ -473,15 +440,15 @@ html, body {
 /* ===================== POINT DETAIL ===================== */
 #point-panel {
   position: absolute; top: 0; right: 0; bottom: 0; width: 380px; max-width: 92vw;
-  background: var(--surface); border-left: var(--bw) solid var(--line);
+  background: var(--surface); border-left: var(--bw) solid var(--ink);
   display: flex; flex-direction: column; z-index: 1100;
   transform: translateX(101%); transition: transform .25s ease; pointer-events: auto;
 }
 #point-panel.open { transform: translateX(0); }
-.pt-head { padding: 16px 18px; border-bottom: var(--bw) solid var(--line); }
+.pt-head { padding: 16px 18px; border-bottom: var(--bw) solid var(--ink); }
 .pt-head-top { display: flex; justify-content: space-between; align-items: center; }
 .pt-close {
-  width: 34px; height: 34px; border: var(--bw) solid var(--line); background: var(--surface);
+  width: 34px; height: 34px; border: var(--bw) solid var(--ink); background: var(--surface);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
 .pt-close:hover { background: var(--surface-high); }
@@ -501,7 +468,7 @@ html, body {
 .pt-body::-webkit-scrollbar-track,
 .pt-table-wrap::-webkit-scrollbar-track,
 .search-results::-webkit-scrollbar-track,
-.about-card::-webkit-scrollbar-track { background: var(--surface-high); border-left: 1px solid var(--line); }
+.about-card::-webkit-scrollbar-track { background: var(--surface-high); border-left: 2px solid var(--ink); }
 .pt-body::-webkit-scrollbar-thumb,
 .pt-table-wrap::-webkit-scrollbar-thumb,
 .search-results::-webkit-scrollbar-thumb,
@@ -535,7 +502,7 @@ html, body {
 .pt-skewt-head {
   display: flex; align-items: center; gap: 8px; width: 100%;
   margin: 12px 0 0; padding: 10px 12px; cursor: pointer;
-  border: var(--bw) solid var(--line); box-shadow: var(--shadow-sm); background: var(--surface);
+  border: var(--bw) solid var(--ink); box-shadow: var(--shadow-sm); background: var(--surface);
   color: var(--ink); font-family: var(--font-ui); font-weight: 700; font-size: 12px;
   letter-spacing: .04em; text-transform: uppercase; transition: background .12s;
 }
@@ -557,28 +524,28 @@ html, body {
 /* Skeleton loading kartu Skew-T (meniru bentuk plot + indeks) */
 .skt-skel { gap: 8px; }
 .skt-sk-note { height: 12px; width: 82%; }
-.skt-sk-plot { height: 360px; border-radius: 0; border: 1px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink); }
+.skt-sk-plot { height: 360px; border-radius: 0; border: 2px solid var(--ink); box-shadow: 3px 3px 0 0 var(--ink); }
 .skt-sk-exp { height: 30px; width: 128px; }
 .skt-sk-idx { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px; }
-.skt-sk-idx .sk-bar { height: 40px; border-radius: 0; border: 1px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink); }
-.pt-skewt-wrap svg { border: 1px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink); background: #fff; display: block; }
+.skt-sk-idx .sk-bar { height: 40px; border-radius: 0; border: 2px solid var(--ink); box-shadow: 2px 2px 0 0 var(--ink); }
+.pt-skewt-wrap svg { border: 2px solid var(--ink); box-shadow: 3px 3px 0 0 var(--ink); background: #fff; display: block; }
 .skt-idx { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
 .skt-cell {
-  border: 1px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink); background: var(--surface);
+  border: 2px solid var(--ink); box-shadow: 2px 2px 0 0 var(--ink); background: var(--surface);
   padding: 5px 7px; display: flex; flex-direction: column; gap: 1px;
 }
 .skt-k { font-size: 9px; letter-spacing: .04em; color: var(--variant); font-family: var(--font-mono); }
 .skt-v { font-size: 13px; font-weight: 700; font-family: var(--font-mono); }
 .skt-legend {
   display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px;
-  margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line);
+  margin-top: 8px; padding-top: 8px; border-top: 2px solid var(--ink);
 }
 .skt-lg { display: flex; align-items: center; gap: 6px; font-size: 10px; font-family: var(--font-mono); color: var(--ink); }
 .skt-lg svg { flex: none; }
 .skt-exp-row { display: flex; justify-content: flex-end; margin-top: 8px; }
 .skt-export {
   display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px;
-  border: var(--bw) solid var(--line); background: var(--primary); color: var(--on-primary);
+  border: var(--bw) solid var(--ink); background: var(--primary); color: #fff;
   font-family: var(--font-ui); font-weight: 700; font-size: 12px; cursor: pointer; box-shadow: var(--shadow-sm);
 }
 .skt-export:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 0 var(--ink); }
@@ -586,31 +553,31 @@ html, body {
 
 /* Ringkasan bahasa manusia + saran aktivitas + kartu 3 hari (awam) */
 .pt-summary { font-size: 13.5px; line-height: 1.55; padding: 11px 13px; margin-bottom: 11px;
-  border: 1px solid var(--line); background: var(--surface-low); }
+  border: 2px solid var(--ink); background: var(--surface-low); }
 .pt-summary b { font-weight: 700; }
-.pt-summary .feels { color: var(--alert); font-weight: 700; white-space: nowrap; }
+.pt-summary .feels { color: #e8590c; font-weight: 700; white-space: nowrap; }
 .pt-advice { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
 .adv-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700;
-  padding: 4px 8px; border: 1px solid var(--line); background: var(--surface); box-shadow: 2px 2px 0 0 var(--ink); }
+  padding: 4px 8px; border: 2px solid var(--ink); background: var(--surface); box-shadow: 2px 2px 0 0 var(--ink); }
 .adv-chip .material-symbols-outlined { font-size: 15px; }
 .fc-cards { display: flex; gap: 8px; margin-bottom: 18px; }
 .fc-card { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
-  padding: 9px 4px; border: 1px solid var(--line); background: var(--surface); }
+  padding: 9px 4px; border: 2px solid var(--ink); background: var(--surface); }
 .fc-day { font-size: 11px; font-weight: 700; text-align: center; line-height: 1.15; }
 .fc-day span { display: block; font-size: 9px; font-weight: 500; color: var(--variant); }
 .fc-temp { font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 2px; }
-.fc-temp .ft-ico { font-size: 15px; color: var(--alert); margin-right: -1px; }
-.fc-temp .t-max { color: var(--alert); }
-.fc-temp .t-min { color: var(--primary); }
+.fc-temp .ft-ico { font-size: 15px; color: #e8590c; margin-right: -1px; }
+.fc-temp .t-max { color: #e8590c; }
+.fc-temp .t-min { color: #2360c8; }
 .fc-temp .t-min::before { content: "/"; color: var(--variant); font-weight: 500; margin: 0 1px; }
-.fc-rain { font-size: 10px; color: var(--primary); font-weight: 700; }
+.fc-rain { font-size: 10px; color: #2360c8; font-weight: 700; }
 .pt-meteo { display: block; margin-bottom: 4px; }
 .chart-legend { display: flex; gap: 18px; justify-content: center; margin: 0 0 18px;
   font-size: 11px; font-weight: 600; color: var(--ink); }
 .chl-key { display: inline-flex; align-items: center; gap: 5px; }
 .chl-key i { font-style: italic; }
-.pt-ax { font-family: var(--font-mono); font-size: 9px; fill: var(--variant); }
-.pt-table-wrap { max-height: 300px; overflow-y: auto; border: var(--bw) solid var(--line); }
+.pt-ax { font-family: var(--font-mono); font-size: 9px; fill: #444; }
+.pt-table-wrap { max-height: 300px; overflow-y: auto; border: var(--bw) solid var(--ink); }
 .pt-table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 11px; }
 .pt-table th {
   position: sticky; top: 0; background: var(--ink); color: var(--surface);
@@ -618,10 +585,10 @@ html, body {
 }
 .pt-table td { padding: 4px; border-bottom: 1px solid rgba(28,27,27,.12); white-space: nowrap; }
 .pt-table tbody tr:hover { background: var(--surface-high); }
-.pt-foot { padding: 14px 18px; border-top: var(--bw) solid var(--line); }
+.pt-foot { padding: 14px 18px; border-top: var(--bw) solid var(--ink); }
 .pt-export {
   width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 12px; border: var(--bw) solid var(--line); background: var(--primary); color: var(--on-primary);
+  padding: 12px; border: var(--bw) solid var(--ink); background: var(--primary); color: #fff;
   font-family: var(--font-ui); font-weight: 700; cursor: pointer; box-shadow: var(--shadow-sm);
 }
 .pt-export:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 0 var(--ink); }
@@ -639,7 +606,7 @@ html, body {
   position: absolute; bottom: calc(100% + 8px); right: 0; z-index: 5;
   display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
   padding: 5px 10px 5px 8px; background: #e8342c; color: #fff;
-  border: 1px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink);
+  border: 2px solid var(--ink); box-shadow: 3px 3px 0 0 var(--ink);
   font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: .02em;
   pointer-events: auto;
 }
@@ -652,8 +619,8 @@ html, body {
 .fresh-chev { display: none; font-size: 15px; line-height: 1; }   /* kontrol tutup, HP saja */
 .toast {
   position: absolute; left: 50%; bottom: 96px; transform: translate(-50%, 12px);
-  background: var(--ink); color: var(--surface); font-family: var(--font-ui); font-size: 13px; font-weight: 700;
-  padding: 10px 16px; border: var(--bw) solid var(--line); box-shadow: var(--shadow-sm);
+  background: var(--ink); color: #fff; font-family: var(--font-ui); font-size: 13px; font-weight: 700;
+  padding: 10px 16px; border: var(--bw) solid var(--ink); box-shadow: var(--shadow-sm);
   opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; z-index: 2000;
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
@@ -675,7 +642,7 @@ html, body {
 .cyc-note {
   position: relative;
   display: none; flex-direction: column; max-width: 92vw; width: max-content;
-  border: 1px solid var(--line); box-shadow: var(--shadow-sm); background: var(--surface);
+  border: 2px solid var(--ink); box-shadow: var(--shadow-sm); background: var(--surface);
   pointer-events: auto;
 }
 .cyc-note.show { display: flex; }
@@ -690,7 +657,7 @@ html, body {
 .cyc-tab {
   position: absolute; left: 50%; bottom: -15px; transform: translateX(-50%); z-index: -1;
   width: 38px; height: 17px; display: flex; align-items: center; justify-content: center;
-  background: var(--surface); border: 1px solid var(--line); border-top: none;
+  background: var(--surface); border: 2px solid var(--ink); border-top: none;
   cursor: pointer; padding: 0;
 }
 .cyc-caret { position: relative; top: 2px; font-size: 18px; line-height: 1; color: #d61f1f; transition: transform .15s ease; }
@@ -710,7 +677,7 @@ html, body {
 .itcz-note .cyc-caret { color: #c1116e; }
 .itcz-lead { font-family: var(--font-ui); font-size: 10px; line-height: 1.4;
   max-width: 240px; color: var(--ink); }
-.itcz-sw { width: 18px; height: 12px; flex: none; border: 1px solid var(--line); }
+.itcz-sw { width: 18px; height: 12px; flex: none; border: 1px solid var(--ink); }
 .itcz-sw-line { height: 0; border: none; border-top: 3px dashed #ff2ea6; }
 .itcz-sw-band { background: rgba(255,46,166,.28); }
 
@@ -721,7 +688,7 @@ html, body {
 .phenom-panel {
   position: absolute; top: 0; right: 52px; display: none; z-index: 600;
   width: max-content; max-width: 300px;
-  border: var(--bw) solid var(--line); background: var(--surface); box-shadow: var(--shadow);
+  border: var(--bw) solid var(--ink); background: var(--surface); box-shadow: var(--shadow);
 }
 .phenom-panel.show { display: block; }
 .ph-head { background: var(--ink); color: var(--surface); font-family: var(--font-mono);
@@ -731,7 +698,7 @@ html, body {
 .ph-row:first-of-type { border-top: none; }
 .ph-row.ph-off { opacity: .5; }               /* belum terjadi → redup */
 .ph-dot { width: 11px; height: 11px; flex: none; border-radius: 50%; margin-top: 2px;
-  border: 1.5px solid var(--line); }
+  border: 1.5px solid var(--ink); }
 .ph-dot.on { background: #39ff14; box-shadow: 0 0 6px 1px #39ff14; }   /* hijau neon = aktif */
 .ph-dot.off { background: #ff2d2d; box-shadow: 0 0 5px 1px #ff2d2d; }  /* merah menyala = belum */
 .ph-txt { display: flex; flex-direction: column; gap: 1px; }
@@ -768,7 +735,7 @@ html, body {
 
 /* Tombol info kecil di brand → buka kartu Tentang */
 .brand-info { flex: none; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
-  background: var(--surface); border: 1px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink);
+  background: var(--surface); border: 2px solid var(--ink); box-shadow: 2px 2px 0 0 var(--ink);
   cursor: pointer; pointer-events: auto; margin-left: 2px; }
 .brand-info:hover { background: var(--lime); }
 .brand-info .material-symbols-outlined { font-size: 17px; color: var(--primary); }
@@ -780,7 +747,7 @@ html, body {
    brand-row dan panel Parameter di bawahnya terdorong turun. */
 .brand-row { position: relative; display: flex; align-items: flex-start; gap: 10px; }
 .nav-arrow { flex: none; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
-  background: var(--surface); border: 1px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink);
+  background: var(--surface); border: 2px solid var(--ink); box-shadow: 2px 2px 0 0 var(--ink);
   cursor: pointer; pointer-events: auto; margin-left: 2px; }
 .nav-arrow:hover { background: var(--lime); }
 .nav-arrow .material-symbols-outlined { font-size: 18px; color: var(--primary); transition: transform .25s ease; }
@@ -819,25 +786,25 @@ html, body {
   padding: 20px; background: rgba(28, 27, 27, .5); pointer-events: auto; }
 .about-overlay.show { display: flex; }
 .about-card { position: relative; display: flex; width: 100%; max-width: 600px;
-  background: var(--surface); border: var(--bw) solid var(--line); box-shadow: var(--shadow); }
+  background: var(--surface); border: var(--bw) solid var(--ink); box-shadow: var(--shadow); }
 .about-close { position: absolute; top: 8px; right: 8px; z-index: 2; width: 30px; height: 30px;
   display: flex; align-items: center; justify-content: center; background: var(--surface);
-  border: 1px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink); cursor: pointer; }
+  border: 2px solid var(--ink); box-shadow: 2px 2px 0 0 var(--ink); cursor: pointer; }
 .about-close .material-symbols-outlined { font-size: 18px; }
-.about-photo { flex: 0 0 42%; background: var(--lime); border-right: var(--bw) solid var(--line);
+.about-photo { flex: 0 0 42%; background: var(--lime); border-right: var(--bw) solid var(--ink);
   display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
 .about-photo img { width: 100%; height: auto; display: block; }
 .about-body { flex: 1; min-width: 0; padding: 22px 20px 24px; display: flex; flex-direction: column; gap: 12px; }
 .about-tag { align-self: flex-start; font-family: var(--font-mono); font-size: 10px; font-weight: 700;
-  letter-spacing: .08em; background: var(--lime); color: var(--on-lime); border: 1px solid var(--line);
+  letter-spacing: .08em; background: var(--lime); color: var(--on-lime); border: 2px solid var(--ink);
   box-shadow: 2px 2px 0 0 var(--ink); padding: 3px 8px; }
 .about-name { font-family: var(--font-display); font-size: 26px; letter-spacing: -.01em; line-height: 1; }
 .about-intro { font-family: var(--font-ui); font-size: 13px; line-height: 1.5; color: var(--ink); }
 .about-quote { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--ink);
-  background: var(--lime); border: 1px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink); padding: 9px 11px; margin-top: 2px; }
+  background: var(--lime); border: 2px solid var(--ink); box-shadow: 3px 3px 0 0 var(--ink); padding: 9px 11px; margin-top: 2px; }
 @media (max-width: 560px) {
   .about-card { flex-direction: column; max-width: 320px; max-height: 88vh; overflow-y: auto; }
-  .about-photo { flex: none; border-right: none; border-bottom: var(--bw) solid var(--line); }
+  .about-photo { flex: none; border-right: none; border-bottom: var(--bw) solid var(--ink); }
   .about-body { padding: 16px; }
   .about-name { font-size: 22px; }
 }
@@ -857,13 +824,13 @@ body.model-private #about-card-team { display: flex; }
 .tm-row { display: flex; align-items: flex-end; justify-content: center; gap: 0;
   padding-top: 28px; }
 .tm { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; margin: 0; }
-.tm-photo { border: var(--bw) solid var(--line); background: var(--paper);
+.tm-photo { border: var(--bw) solid var(--ink); background: var(--paper);
   overflow: hidden; aspect-ratio: 4 / 5; }
 .tm-photo img { width: 100%; height: 100%; object-fit: cover; display: block;
   filter: grayscale(1) contrast(1.03); }
 .tm-name { font-family: var(--font-mono); font-weight: 700; font-size: 10px;
   letter-spacing: .01em; text-align: center; color: var(--ink); background: var(--lime);
-  border: var(--bw) solid var(--line); border-top: none; padding: 6px 4px; line-height: 1.15;
+  border: var(--bw) solid var(--ink); border-top: none; padding: 6px 4px; line-height: 1.15;
   min-height: 2.7em; display: flex; align-items: center; justify-content: center; }
 
 /* samping: kecil, miring, menyelip ke belakang tengah */
@@ -892,8 +859,8 @@ body.model-private #about-card-team { display: flex; }
 /* Penanda "kamu di sini" (geolokasi) — badge bulat neubrutalist. */
 .pm-me {
   display: grid; place-items: center; width: 32px; height: 32px;
-  background: var(--primary); color: var(--on-primary);
-  border: 1px solid var(--line); border-radius: 50%;
+  background: var(--primary); color: #fff;
+  border: 2.5px solid var(--ink); border-radius: 50%;
   box-shadow: var(--shadow-sm);
 }
 .pm-me .material-symbols-outlined { font-size: 20px; line-height: 1; }
@@ -903,8 +870,8 @@ body.model-private #about-card-team { display: flex; }
 #point-panel.hidden { transform: translateX(101%); }
 #pt-reopen {
   position: absolute; top: 50%; right: 0; transform: translateY(-50%);
-  width: 30px; height: 56px; border: var(--bw) solid var(--line); border-right: none;
-  background: var(--primary); color: var(--on-primary); cursor: pointer; z-index: 1100;
+  width: 30px; height: 56px; border: var(--bw) solid var(--ink); border-right: none;
+  background: var(--primary); color: #fff; cursor: pointer; z-index: 1100;
   display: none; align-items: center; justify-content: center;
 }
 #pt-reopen.show { display: flex; }
@@ -913,12 +880,12 @@ body.model-private #about-card-team { display: flex; }
 .search-wrap { position: relative; pointer-events: auto; }
 .search-box {
   position: absolute; top: 0; right: 52px; width: 262px;
-  border: var(--bw) solid var(--line); background: var(--surface); box-shadow: var(--shadow);
+  border: var(--bw) solid var(--ink); background: var(--surface); box-shadow: var(--shadow);
   display: none;
 }
 .search-box.open { display: block; }
 .search-box input {
-  width: 100%; border: none; border-bottom: var(--bw) solid var(--line);
+  width: 100%; border: none; border-bottom: var(--bw) solid var(--ink);
   padding: 12px 14px; font-family: var(--font-ui); font-size: 14px; outline: none;
   background: var(--surface); color: var(--ink);
 }
@@ -972,7 +939,7 @@ body.model-private #about-card-team { display: flex; }
   #ctrl-toggle {
     display: flex; align-items: center; justify-content: center; gap: 1px;
     height: 40px; padding: 0 8px;
-    border: var(--bw) solid var(--line); background: var(--surface); box-shadow: var(--shadow-sm);
+    border: var(--bw) solid var(--ink); background: var(--surface); box-shadow: var(--shadow-sm);
     cursor: pointer; pointer-events: auto;
   }
   #ctrl-toggle .material-symbols-outlined { font-size: 20px; }
@@ -1012,7 +979,7 @@ body.model-private #about-card-team { display: flex; }
   .param-toggle {
     display: flex; align-items: center; gap: 6px;
     height: 40px; padding: 0 12px 0 10px;
-    border: var(--bw) solid var(--line); background: var(--surface); box-shadow: var(--shadow-sm);
+    border: var(--bw) solid var(--ink); background: var(--surface); box-shadow: var(--shadow-sm);
     font-family: var(--font-ui); font-weight: 700; font-size: 13px; letter-spacing: .02em;
     text-transform: uppercase; color: var(--ink); cursor: pointer; pointer-events: auto;
   }
@@ -1027,7 +994,7 @@ body.model-private #about-card-team { display: flex; }
   .layer-bar.param-open .layers { display: flex; }
   .layer-btn {
     flex: 0 0 auto; justify-content: center; width: 48px; gap: 0;
-    padding: 10px; border-right: none; border-bottom: var(--bw) solid var(--line);
+    padding: 10px; border-right: none; border-bottom: var(--bw) solid var(--ink);
   }
   .layer-btn:last-child { border-bottom: none; }
   .layer-btn .material-symbols-outlined { font-size: 22px; }
@@ -1086,7 +1053,7 @@ body.model-private #about-card-team { display: flex; }
 .pos-mark {
   display: grid; place-items: center; width: 18px; height: 18px;
   background: var(--lime); color: var(--ink);
-  border: 1px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink);
+  border: 2px solid var(--ink); box-shadow: 2px 2px 0 0 var(--ink);
 }
 .pos-mark .material-symbols-outlined {
   font-size: 12px; line-height: 1;
@@ -1094,7 +1061,7 @@ body.model-private #about-card-team { display: flex; }
 }
 .leaflet-tooltip.pos-tip {
   background: var(--surface); color: var(--ink);
-  border: 1px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink);
+  border: 2px solid var(--ink); box-shadow: 3px 3px 0 0 var(--ink);
   border-radius: 0; font-family: var(--font-ui); font-size: 11px; font-weight: 600;
   padding: 6px 8px;
 }
@@ -1104,14 +1071,14 @@ body.model-private #about-card-team { display: flex; }
 .pw-card {
   position: relative; width: 100%; max-width: 360px; padding: 20px;
   display: flex; flex-direction: column; gap: 10px; align-items: flex-start;
-  background: var(--surface); border: var(--bw) solid var(--line); box-shadow: var(--shadow);
+  background: var(--surface); border: var(--bw) solid var(--ink); box-shadow: var(--shadow);
 }
 .pw-title { font-family: var(--font-display); font-size: 20px; margin: 2px 0 0; }
 .pw-note { font-family: var(--font-ui); font-size: 13px; color: var(--variant); margin: 0; }
 .pw-input {
   width: 100%; padding: 10px 12px; font-family: var(--font-mono); font-size: 14px;
   color: var(--ink); background: var(--surface-high);
-  border: 1px solid var(--line); border-radius: 0; outline: none;
+  border: 2px solid var(--ink); border-radius: 0; outline: none;
 }
 .pw-input:focus { box-shadow: 3px 3px 0 0 var(--ink); }
 .pw-err { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: #e8342c; }
@@ -1120,7 +1087,7 @@ body.model-private #about-card-team { display: flex; }
 .pw-btn {
   padding: 8px 14px; font-family: var(--font-ui); font-size: 13px; font-weight: 700;
   background: var(--surface); color: var(--ink);
-  border: 1px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink); cursor: pointer;
+  border: 2px solid var(--ink); box-shadow: 3px 3px 0 0 var(--ink); cursor: pointer;
 }
 .pw-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 0 var(--ink); }
 .pw-btn-primary { background: var(--lime); color: var(--on-lime); }
@@ -1144,7 +1111,7 @@ body.model-private #about-card-team { display: flex; }
     position: fixed; left: 50%; bottom: 0; transform: translateX(-50%);
     z-index: 1400; width: 76px; height: 30px; padding: 0;
     background: var(--surface); color: var(--ink);
-    border: var(--bw) solid var(--line); border-bottom: none;
+    border: var(--bw) solid var(--ink); border-bottom: none;
     box-shadow: 0 -3px 0 0 var(--ink); cursor: pointer;
   }
   .lowbar-handle .material-symbols-outlined { font-size: 22px; }
@@ -1157,7 +1124,7 @@ body.model-private #about-card-team { display: flex; }
     /* Saat terbuka, bilah MENGISI tepat ruang sisa di bawah peta 4:3. Kalau
        cuma dipatok di bawah, isinya yang pendek menyisakan celah hitam. */
     padding: 10px 12px 16px;
-    background: var(--surface); border-top: var(--bw) solid var(--line);
+    background: var(--surface); border-top: var(--bw) solid var(--ink);
     /* Ciut = digeser penuh ke bawah luar bingkai. Muncul dengan naik + memudar. */
     transform: translateY(100%); opacity: 0; pointer-events: none;
     transition: transform .26s ease, opacity .2s ease;
@@ -1191,7 +1158,7 @@ body.model-private #about-card-team { display: flex; }
     min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     padding: 7px 8px; font-family: var(--font-ui); font-size: 11px; font-weight: 700;
     color: var(--ink); background: var(--surface-high);
-    border: 1px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink); cursor: pointer;
+    border: 2px solid var(--ink); box-shadow: 2px 2px 0 0 var(--ink); cursor: pointer;
   }
   .lb-btn .material-symbols-outlined { font-size: 15px; flex: 0 0 auto; }
   .lb-btn.active { background: var(--lime); color: var(--on-lime); }
@@ -1236,7 +1203,7 @@ body.model-private #about-card-team { display: flex; }
     z-index: 1200; padding: 6px 10px; white-space: nowrap; max-width: 60vw;
     overflow: hidden; text-overflow: ellipsis;
     background: var(--surface); color: var(--ink);
-    border: var(--bw) solid var(--line); box-shadow: 3px 3px 0 0 var(--ink);
+    border: var(--bw) solid var(--ink); box-shadow: 3px 3px 0 0 var(--ink);
     font-family: var(--font-display); font-size: 12px;
   }
   .par-chip[hidden] { display: none; }
@@ -1283,7 +1250,7 @@ body.model-private #about-card-team { display: flex; }
     order: 99;                    /* dengan column-reverse, ini jatuh ke BAWAH */
     flex: 0 0 auto;
     padding: 5px 6px; text-align: center; font-size: 9px;
-    border-right: none; border-top: var(--bw) solid var(--line);
+    border-right: none; border-top: var(--bw) solid var(--ink);
   }
 
   /* ---- badge akurasi: DI ATAS slider, bukan menempel di dalamnya ---- */
@@ -1307,14 +1274,14 @@ body.model-private #about-card-team { display: flex; }
     max-height: 40vh; overflow-y: auto;
     display: flex; flex-direction: column; gap: 6px;
     padding: 8px; background: var(--surface);
-    border: var(--bw) solid var(--line); border-left: none;
+    border: var(--bw) solid var(--ink); border-left: none;
     box-shadow: 3px 3px 0 0 var(--ink);
   }
   .ket-toggle {
     flex: 0 0 auto; width: 26px; height: 46px; padding: 0; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     background: var(--lime); color: var(--on-lime);
-    border: var(--bw) solid var(--line); border-left: none;
+    border: var(--bw) solid var(--ink); border-left: none;
     box-shadow: 3px 3px 0 0 var(--ink);
   }
   .ket-toggle .material-symbols-outlined { font-size: 20px; transition: transform .2s ease; }
@@ -1347,852 +1314,178 @@ body.model-private #about-card-team { display: flex; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   CYBERMINIMALIST HUD — LAPIS BENTUK
+   GEOMETRIC ATMOSPHERE (BAUHAUS)
    ---------------------------------------------------------------------------
-   Blok ini SENGAJA ditaruh di ujung berkas supaya menang tanpa perlu menyentuh
-   satu pun aturan tata letak di atas. Posisi, ukuran kolom, dan urutan elemen
-   TIDAK diubah. Yang diganti WUJUDNYA.
+   Diturunkan dari NewStyle/.../geometric_atmosphere/DESIGN.md.
 
-   Penukaran token saja ternyata belum cukup. Hasilnya masih neubrutalism yang
-   sekadar dicat hitam: kotak tebal, blok padat, tombol aktif berupa balok
-   warna. Kalimat kunci dari layar Design System rujukan:
+   Arah ini KEBALIKAN dari Cyberminimalist HUD yang sempat dipakai, dan justru
+   lebih dekat ke gaya asli app ini. Temanya TERANG di atas kertas, bentuknya
+   dipertahankan (kotak itu memang bahasanya, "Squares and Rectangles... 0px
+   corner radius"), yang berubah proporsi, warna, dan hurufnya.
 
-     "Containers are obsolete. Interactions are defined by color shift and
-      text-decoration, maintaining the zero-gravity wireframe aesthetic."
-
-   Jadi kotaknya DIHAPUS, bukan dihitamkan. Yang tersisa garis rambut, teks
-   mono huruf besar berjarak, dan kotak status 8px.
+   Prinsip yang dipegang:
+   - "Form follows function", tanpa hiasan sama sekali
+   - Garis rambut 1 px hitam memisahkan seluruh bagian, tiap wadah terasa
+     DIBANGUN dari garis itu
+   - Rata, tanpa gradien dan tanpa blur. Bayangan HANYA dipakai pada elemen
+     yang memang harus menyembul, dan bentuknya offset keras 4 px
+   - Warna dipakai sebagai blok padat, bukan sapuan
    ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* Kertas, bukan putih murni. DESIGN.md: mengurangi lelah mata dan memberi
+     kesan kertas pada datanya. */
+  --paper: #fff8f7;
+  --surface: #fff8f7;
+  --surface-low: #fff0ef;
+  --surface-high: #ffe9e8;
+  --surface-highest: #f9dcda;
+  --white: #ffffff;
+  --ink: #271717;
+  --variant: #5b403f;
+  --outline: #8f6f6e;
+  --outline-var: #e4bebc;
 
-/* ---- Wadah: dari kotak jadi selubung tipis --------------------------------
-   Peta kita terang (hijau, biru), beda dengan rujukan yang petanya gelap. Tapi
-   rujukan itu sendiri memasang veil `bg-surface/40` di atas petanya, dan
-   DESIGN.md menyebut "a thin, digital veil over raw atmospheric telemetry".
-   Jadi selubung gelap tembus pandang memang bagian bahasa desainnya, bukan
-   tambalan. Tanpa blur, sebab blur ditolak tegas. */
-.panel, .legend-panel, .lang, .zoom {
-  background: rgba(8, 8, 8, .80);
-  border: none;
+  /* Triad. Merah untuk bahaya dan panas, biru untuk air dan keadaan
+     interaktif, kuning untuk peringatan sekunder dan data surya. */
+  --primary: #b7102a;
+  --on-primary: #ffffff;
+  --biru: #485f84;
+  --on-biru: #ffffff;
+  --kuning: #e0a500;
+  --on-kuning: #271717;
+  --lime: #485f84;            /* nama lama dipertahankan, isinya jadi biru */
+  --on-lime: #ffffff;
+  --alert: #b7102a;
+
+  /* Garis rambut 1 px sebagai pemisah struktur. */
+  --bw: 1px;
+  /* Rata. Bayangan dihidupkan lagi HANYA untuk yang menyembul, lihat di bawah. */
+  --shadow: none;
+  --shadow-sm: none;
+
+  --font-display: "Archivo Narrow", system-ui, sans-serif;
+  --font-ui: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* ---- Wadah: dibangun dari garis, bukan dari kotak berbayang -------------- */
+.panel, .legend-panel, .lang, .zoom, .icon-btn {
+  border: 1px solid var(--ink);
   box-shadow: none;
-}
-.panel.layers { padding: 10px 0; }
-.panel.brand  { background: transparent; padding: 6px 4px; }
-
-/* ---- Merek: kotak dibuang, tinggal teks ---- */
-.brand-text strong {
-  font-size: 15px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
-  color: var(--lime);
-}
-.brand-text span { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
-.brand-logo { opacity: .85; }
-
-/* ---- Tombol layer: dari balok jadi baris telemetri ---- */
-.layer-btn {
-  background: transparent; border: none; border-bottom: none;
-  color: var(--variant);
-  font-size: 11.5px; font-weight: 500; letter-spacing: .13em;
-  padding: 6px 16px; gap: 9px;
-}
-/* Kotak status 8px, tanda khas sistem ini: padat kalau menyala, berongga
-   kalau mati. Menggantikan latar blok yang dulu dipakai buat menandai aktif. */
-.layer-btn::before {
-  content: ""; flex: 0 0 auto; width: 8px; height: 8px;
-  border: 1px solid var(--line); background: transparent;
-}
-.layer-btn .material-symbols-outlined { font-size: 15px; color: var(--line); }
-.layer-btn.active { background: transparent; color: var(--lime); }
-.layer-btn.active::before { background: var(--lime); border-color: var(--lime); }
-.layer-btn.active .material-symbols-outlined { color: var(--lime); }
-.layer-btn:hover:not(.active):not(.disabled) { background: transparent; color: var(--primary); }
-.layer-btn:hover:not(.active):not(.disabled)::before { border-color: var(--primary); }
-.layer-btn:hover:not(.active):not(.disabled) .material-symbols-outlined { color: var(--primary); }
-
-/* ---- Tombol ikon, zoom, bahasa: berongga, terisi saat disentuh ------------
-   DESIGN.md: "Default: transparent background, 1px Grey-800 border. On hover,
-   the button fills with the border color and text flips to OLED Black." */
-.icon-btn, .zoom button, .lang button {
-  background: transparent; color: var(--variant);
-  border: 1px solid var(--line);
-  font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
-  transition: background .1s, color .1s, border-color .1s;
-}
-.icon-btn { box-shadow: none; }
-.icon-btn .material-symbols-outlined, .zoom button .material-symbols-outlined { font-size: 18px; }
-.icon-btn:hover, .zoom button:hover, .lang button:hover:not(.active):not(:disabled) {
-  background: var(--primary); color: var(--on-primary); border-color: var(--primary);
-}
-.icon-btn.active { background: transparent; color: var(--lime); border-color: var(--lime); }
-.lang button.active { background: var(--lime); color: var(--on-lime); border-color: var(--lime); }
-.zoom { gap: 0; }
-.zoom button { border-top: none; border-left: none; border-right: none; }
-.zoom button:first-child { border: none; border-bottom: 1px solid var(--line); }
-
-/* ---- Dropdown: garis bawah saja, bukan kotak penuh ---- */
-.select-wrap select {
-  background: transparent; border: none; border-bottom: 1px solid var(--line);
-  color: var(--ink); font-size: 11.5px; letter-spacing: .1em;
-}
-.select-wrap select:focus { background: transparent; border-bottom-color: var(--primary); color: var(--primary); }
-.label-caps { color: var(--variant); font-size: 9.5px; letter-spacing: .18em; }
-
-/* ---- Bilah waktu ---- */
-.panel.timeline { background: rgba(8,8,8,.82); }
-
-/* ---- Legenda: sel datanya tetap, cuma rangkanya dibuang ---- */
-.legend-panel { border: 1px solid var(--line); }
-.legend-head { background: transparent; color: var(--variant); font-size: 9.5px; letter-spacing: .18em; }
-
-/* ---- Merek perlu selubung juga ------------------------------------------
-   Sempat dibikin bening penuh dan hasilnya tak terbaca di atas peta hijau
-   terang. Rujukan pun memasang veil di atas petanya, jadi ini bukan tambalan. */
-.panel.brand { background: rgba(8,8,8,.80); padding: 8px 14px 8px 10px; }
-
-/* ---- Ikon layer ikut warna barisnya ---------------------------------------
-   Sempat dipatok ke --line dan hasilnya nyaris tak kelihatan, menyisakan
-   celah kosong di tiap baris. Diikutkan currentColor supaya senyawa dengan
-   keadaan barisnya: redup saat mati, hijau saat menyala, biru saat disentuh. */
-.layer-btn .material-symbols-outlined { color: currentColor; opacity: .75; font-size: 15px; }
-.layer-btn.active .material-symbols-outlined { color: currentColor; opacity: 1; }
-
-/* ---- Lencana: dari balok merah jadi wireframe --------------------------- */
-/* Gaya lama: latar merah padat, garis 2px, bayangan keras 3px. Di bahasa HUD
-   peringatan itu safety orange berongga, bukan blok. */
-.fresh-badge {
-  background: rgba(8,8,8,.86); color: var(--alert);
-  border: 1px solid var(--alert); box-shadow: none;
-  font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase;
-  padding: 4px 9px 4px 7px;
-}
-.fresh-ico { font-size: 13px; }
-.acc-badge { color: var(--lime); border-color: var(--lime); }
-
-/* ---- Penyesuaian kontras garis dan selubung -------------------------------
-   DESIGN.md memakai grey-800 (#282828) buat garis rambut, dan itu pas di atas
-   hitam pekat seperti rujukannya. Peta kita TERANG, dan panelnya cuma selubung
-   tembus pandang, jadi garis segelap itu tersapu habis: sekat antar segmen dan
-   kotak status yang berongga sama sekali tak kelihatan.
-   Selubung ditebalkan dan garisnya dinaikkan sedikit supaya kesan "tipis"-nya
-   tetap sama seperti rujukan, tapi kali ini betul terlihat. */
-:root { --line: #3c3c3c; }
-.panel, .legend-panel, .lang, .zoom { background: rgba(6,6,6,.90); }
-.panel.brand { background: rgba(6,6,6,.90); }
-.panel.timeline { background: rgba(6,6,6,.90); }
-
-/* ---- Modal, tombol dialog, dan kolom isian ------------------------------
-   Bagian ini terlewat di sapuan pertama sebab modal tak muncul di screenshot
-   biasa. Isinya masih gaya lama: tombol blok padat, kolom isian berkotak
-   tebal, dan bayangan keras yang bergeser saat ditekan.
-   DESIGN.md soal tombol: "Default: transparent background, 1px border.
-   On hover, the button fills with the border color and text flips to black."
-   Soal kolom isian: garis bawah 1px, atau kotak 1px, tanpa bayangan. */
-.pw-card, .about-card { background: rgba(6,6,6,.96); border: 1px solid var(--line); box-shadow: none; }
-.pw-title { font-size: 15px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); }
-.pw-note  { font-family: var(--font-ui); font-size: 11px; letter-spacing: .06em; }
-
-.pw-input {
-  background: transparent; border: 1px solid var(--line); box-shadow: none;
-  color: var(--ink); font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em;
-}
-.pw-input:focus { box-shadow: none; border-color: var(--primary); outline: none; }
-.pw-input::placeholder { color: var(--line); }
-
-.pw-btn, .about-close {
-  background: transparent; color: var(--variant);
-  border: 1px solid var(--line); box-shadow: none;
-  font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
-  transition: background .1s, color .1s, border-color .1s;
-}
-.pw-btn:active, .about-close:active { transform: none; box-shadow: none; }
-.pw-btn:hover, .about-close:hover {
-  background: var(--primary); color: var(--on-primary); border-color: var(--primary);
-}
-/* Tombol utama ditandai GARIS hijau, bukan isi hijau. Terisi cuma saat disentuh. */
-.pw-btn-primary { background: transparent; color: var(--lime); border-color: var(--lime); }
-.pw-btn-primary:hover { background: var(--lime); color: var(--on-lime); border-color: var(--lime); }
-
-/* Chip status: kotak 8px padat di samping teks, bukan lencana terisi penuh. */
-.about-tag {
-  background: transparent; color: var(--lime); border: 1px solid var(--lime);
-  letter-spacing: .16em; padding: 3px 8px;
-}
-/* Selubung modal ikut gelap, tidak lagi memakai sisa warna tinta lama. */
-.about-overlay { background: rgba(0,0,0,.72); }
-
-/* ---- Tombol ekspor: dari balok cyan padat jadi wireframe -----------------
-   Sempat lolos sebab tombolnya cuma muncul di dalam panel detail titik dan
-   panel Skew-T, yang tak ikut terlihat di screenshot biasa. Sesuai bab
-   Components: berongga dulu, terisi cuma saat disentuh. */
-.pt-export, .skt-export {
-  background: transparent; color: var(--primary);
-  border: 1px solid var(--primary); box-shadow: none;
-  font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
-  transition: background .1s, color .1s;
-}
-.pt-export:hover, .skt-export:hover { background: var(--primary); color: var(--on-primary); }
-.pt-export .material-symbols-outlined, .skt-export .material-symbols-outlined { font-size: 16px; }
-
-/* ---- Sapuan terakhir: bayangan keras dan blok padat yang ditulis MATI -----
-   Token --shadow sudah none, tapi belasan aturan menulis offsetnya langsung
-   (mis. `box-shadow: 3px 3px 0 0 var(--ink)`) jadi lolos dari penukaran token.
-   Sisa inilah yang bikin gaya lama masih terasa: kotak melompat saat ditekan,
-   dan tombol berisi blok warna penuh. DESIGN.md menolak dua duanya, "strictly
-   Flat (2D)" dan "hollow shapes defined by 1px strokes". */
-.phenom-link:hover, .icon-btn:hover:not(:disabled),
-.cc-ico, .cc-ico.cc-cap, .cc-ico.cc-mini, .tl-btn, .pw-btn, .pt-export, .skt-export {
-  box-shadow: none !important;
-}
-/* Lompatan saat disentuh atau ditekan ikut dimatikan, itu bahasa neubrutalism. */
-.phenom-link:hover, .icon-btn:hover:not(:disabled), .icon-btn:active,
-.tl-btn:active, .pw-btn:active { transform: none !important; }
-
-/* Blok warna penuh diganti garis warna. Yang tersisa isi cuma penanda BAHASA
-   aktif dan layer aktif berupa kotak status, sebab dua itu memang harus
-   menonjol sebagai keadaan, bukan sebagai tombol. */
-.phenom-link:hover { background: transparent; color: var(--lime); border-color: var(--lime); }
-.level-btn.active { background: transparent; color: var(--lime); }
-.icon-btn.active  { background: transparent; color: var(--lime); border-color: var(--lime); }
-.tl-btn:hover:not(:disabled) { background: var(--lime); color: var(--on-lime); }
-.select-wrap select:focus { background: transparent; }
-.panel-toggle:hover { background: var(--primary); color: var(--on-primary); }
-
-/* ---- BAYANGAN DIBUNUH MENYELURUH ----------------------------------------
-   Mengejarnya satu per satu sudah terbukti bocor terus. Token --shadow sudah
-   none, tapi belasan aturan menulis offsetnya langsung dan tiap kali ada saja
-   yang terlewat, terakhir chip saran di panel titik.
-   DESIGN.md menutup perkara ini: sistemnya "strictly Flat (2D)" dan
-   "explicitly rejects shadows, blurs, and skeuomorphism". Jadi TIDAK ADA satu
-   pun bayangan yang sah di sini, dan menyapunya sekaligus itu benar. */
-*, *::before, *::after { box-shadow: none !important; }
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   ULTRAMINIMAL, LAPIS KETIGA — KOTAKNYA DIBUANG SUNGGUHAN
-   ---------------------------------------------------------------------------
-   Dua lapis sebelumnya masih memelihara kotak, cuma kotaknya dihitamkan lalu
-   digaris tipis. Rujukan point_detail tidak punya kotak SAMA SEKALI: yang ada
-   cuma garis rambut sebagai sekat sel, label kecil huruf besar di pojok, dan
-   angka sebagai fokus. Wadahnya sendiri tak terlihat.
-
-   Panel kiri diminta MEMUDAR dari kiri ke kanan, bukan berupa kotak. Itu juga
-   lebih jujur pada peta yang terang, sebab selubung penuh selalu terbaca
-   sebagai kotak walau tak bergaris.
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ---- Selubung MEMUDAR, menggantikan kotak panel ---- */
-#ui::before {
-  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 400px;
-  background: linear-gradient(to right,
-    rgba(0,0,0,.94) 0%, rgba(0,0,0,.88) 30%, rgba(0,0,0,.55) 68%, rgba(0,0,0,0) 100%);
-  pointer-events: none; z-index: -1;
+  background: var(--paper);
 }
 
-
-/* ---- Wadah jadi TAK TERLIHAT ---- */
-.panel, .panel.brand, .panel.layers, .panel.timeline,
-.legend-panel, .lang, .zoom, .selects, .levels {
-  background: transparent !important;
-  border: none !important;
-}
-.panel.timeline { background: rgba(0,0,0,.72) !important; }   /* bilah bawah tetap perlu alas tipis */
-.legend-panel   { background: rgba(0,0,0,.72) !important; }
-
-/* ---- Panel kanan: kotak dalam dibuang, diganti sekat garis rambut ---- */
-#point-panel { background: transparent; border-left: 1px solid var(--line); }
-.pt-head { border-bottom: 1px solid var(--line); }
-.pt-summary, .fc-card, .adv-chip, .pt-storm-chip, .pt-skewt-head, .skt-box,
-.pt-table-wrap, .pt-chart, .chart-wrap {
-  background: transparent !important; border: none !important; padding-left: 0; padding-right: 0;
-}
-/* Sekat antar bagian pakai garis rambut, bukan bingkai. */
-.pt-summary { border-bottom: 1px solid var(--line) !important; padding-bottom: 12px; margin-bottom: 12px; }
-.fc-cards { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
-.fc-card + .fc-card { border-left: 1px solid var(--line) !important; }
-
-/* Chip: bingkai dibuang, tinggal kotak status 8px + teks. */
-.adv-chip, .pt-storm-chip {
-  padding: 0; gap: 7px; font-size: 10.5px; font-weight: 500;
-  letter-spacing: .12em; text-transform: uppercase; color: var(--variant);
-}
-.adv-chip::before, .pt-storm-chip::before {
-  content: ""; flex: 0 0 auto; width: 8px; height: 8px; background: var(--lime);
-}
-.adv-chip .material-symbols-outlined, .pt-storm-chip .material-symbols-outlined { display: none; }
-.pt-advice { gap: 14px; margin-bottom: 14px; }
-
-/* Judul bagian: label kecil huruf besar berjarak, seperti rujukan. */
-.pt-sec, .pt-body h4, .pt-body .lbl, .skt-title {
-  font-size: 9.5px !important; letter-spacing: .2em !important;
-  text-transform: uppercase; color: var(--variant) !important; font-weight: 500 !important;
+/* Judul modul: label-caps di pojok kiri atas, digarisbawahi selebar modulnya.
+   Ini aturan eksplisit di bab Cards & Modules. */
+.label-caps, .legend-head {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ink);
 }
 
-/* Tabel: sekat BARIS saja, tanpa bingkai sel. */
-.pt-table { border: none; }
-.pt-table th, .pt-table td {
-  border: none !important; border-bottom: 1px solid var(--line-dim) !important;
-  font-size: 10.5px; padding: 5px 6px;
+/* ---- Tombol: blok padat, hover berubah kuning, TANPA transisi ------------
+   DESIGN.md: "solid blocks of Primary Blue or Ink Black... On hover, shift to
+   Primary Yellow fill with Black text. No transition animations; the state
+   change should be instantaneous and mechanical." */
+.layer-btn, .level-btn, .lang button, .zoom button, .icon-btn, .tl-btn, .pw-btn {
+  transition: none !important;
+  font-family: var(--font-mono); letter-spacing: .06em;
 }
-.pt-table th { color: var(--variant); font-weight: 500; letter-spacing: .12em; text-transform: uppercase; }
-
-/* ---- Selubung panel kanan, jadi background panelnya sendiri --------------
-   Bukan pseudo-element. Memudar dari kanan ke kiri, senada dengan panel kiri
-   yang memudar dari kiri ke kanan, jadi dua duanya menyatu ke peta. */
-#point-panel {
-  background: linear-gradient(to left,
-    rgba(0,0,0,.96) 0%, rgba(0,0,0,.93) 62%, rgba(0,0,0,.82) 100%) !important;
-  border-left: 1px solid var(--line) !important;
-}
-.pt-summary {
-  background: transparent !important; border: none !important;
-  border-bottom: 1px solid var(--line) !important;
-  padding: 0 0 12px !important; margin-bottom: 14px !important;
-  font-size: 12px; line-height: 1.6;
-}
-.pt-meteo, .pt-table-wrap { background: transparent !important; border: none !important; }
-.pt-sec { font-size: 9.5px !important; letter-spacing: .2em !important;
-  text-transform: uppercase; color: var(--variant) !important; font-weight: 500 !important; }
-.pt-storm-note { font-size: 9.5px; letter-spacing: .08em; }
-
-/* ---- Kaki panel kanan perlu alas pekat ------------------------------------
-   Panelnya memudar ke arah kiri, dan di dasar layar tombol ekspor kebetulan
-   duduk tepat di atas legenda. Waktu wadahnya dibikin bening, legenda tembus
-   ke belakang tombol. Kakinya diberi alas rata, bukan gradien. */
-.pt-foot {
-  background: rgba(0,0,0,.96); border-top: 1px solid var(--line) !important;
-  padding: 12px 18px;
-}
-/* Kartu prakiraan: sekat tegak tipis, tanpa kotak. */
-.fc-cards { gap: 0; }
-.fc-card { padding: 10px 8px; }
-
-/* ---- Selubung kanan, cerminan yang kiri ----------------------------------
-   Waktu alas panel dibuang, tombol zoom dan ID/EN di kanan atas nyaris lenyap
-   di atas peta terang. Ditambah selubung memudar dari kanan, jadi kedua tepi
-   layar sama sama meredup ke tengah dan kontrolnya terbaca tanpa perlu kotak. */
-#ui::after {
-  content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 132px;
-  background: linear-gradient(to left,
-    rgba(0,0,0,.90) 0%, rgba(0,0,0,.74) 45%, rgba(0,0,0,0) 100%);
-  pointer-events: none; z-index: -1;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   REVISI 1-3
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ---- 1. Panel kiri: kotak status dibuang, hover dimatikan, fade dipersempit
-   Kotak 8px itu tetap sebuah SHAPE, dan yang diminta memang tanpa bentuk sama
-   sekali. Keadaan aktif cukup dinyatakan warna teks. Hover juga dimatikan,
-   sebab perubahan warna saat lewat kursor itu dekorasi yang tak diminta.
-   Fade sebelumnya 400 px, hampir sampai tengah layar. Tepi kanan teks
-   parameter terpanjang terukur di 275 px, jadi selubungnya dipangkas ke situ. */
-.layer-btn::before { display: none !important; }
-.layer-btn { padding-left: 0; gap: 10px; }
 .layer-btn:hover:not(.active):not(.disabled),
-.layer-btn:hover:not(.active):not(.disabled) .material-symbols-outlined {
-  color: var(--variant) !important;
+.level-btn:hover:not(.active),
+.icon-btn:hover:not(:disabled),
+.zoom button:hover,
+.tl-btn:hover:not(:disabled),
+.lang button:hover:not(.active):not(:disabled) {
+  background: var(--kuning); color: var(--on-kuning); transform: none;
 }
-#ui::before {
-  width: 290px;
-  background: linear-gradient(to right,
-    rgba(0,0,0,.94) 0%, rgba(0,0,0,.92) 62%, rgba(0,0,0,.58) 86%, rgba(0,0,0,0) 100%);
+.layer-btn.active, .level-btn.active, .lang button.active, .icon-btn.active {
+  background: var(--ink); color: var(--paper);
+}
+.layer-btn.active .material-symbols-outlined,
+.icon-btn.active .material-symbols-outlined { color: var(--paper); }
+
+/* ---- Kolom isian: garis bawah saja, menebal jadi 3 px saat difokus ------- */
+.select-wrap select, .pw-input {
+  background: transparent; border: none; border-bottom: 1px solid var(--ink);
+  font-family: var(--font-mono); color: var(--ink); box-shadow: none;
+}
+.select-wrap select:focus, .pw-input:focus {
+  border-bottom-width: 3px; background: transparent; box-shadow: none; outline: none;
 }
 
-/* ---- 2. Kolom ikon kanan: kontainer dibuang, namanya ditampilkan tetap ----
-   Tombolnya tak lagi berupa kotak, tinggal lambangnya saja. Namanya dipasang
-   PERMANEN di kiri lambang, bukan muncul saat hover, supaya tak perlu ditebak.
-   Dipakai `::after` sebab aturan tooltip lama memang di situ, dan satu elemen
-   cuma punya satu ::after. Selubung kanan dibatasi 75 persen. */
-.icon-btn {
-  width: auto; height: 34px; padding: 0 2px 0 0;
-  border: none !important; background: transparent !important;
-  justify-content: flex-end;
-}
-.icon-btn .material-symbols-outlined { font-size: 20px; color: var(--variant); }
-.icon-btn:hover:not(:disabled) .material-symbols-outlined { color: var(--primary); }
-.icon-btn.active .material-symbols-outlined { color: var(--lime); }
-.zoom { flex-direction: column; }
-.zoom button { border: none !important; background: transparent !important; width: 34px; height: 30px; }
-.zoom button .material-symbols-outlined { color: var(--variant); }
-.zoom button:hover .material-symbols-outlined { color: var(--primary); }
+/* ---- Angka besar: Archivo Narrow, merah untuk nilai utama ---------------- */
+.pt-coords { font-family: var(--font-display); font-weight: 800; letter-spacing: -.02em; }
 
-@media (hover: hover) and (min-width: 641px) {
-  /* Label TETAP terlihat, bukan cuma saat hover. */
-  .col.items-end [data-tip]::after {
-    content: attr(data-tip);
-    position: absolute; right: calc(100% + 8px); top: 50%;
-    transform: translateY(-50%) !important;
-    background: transparent !important; color: var(--variant) !important;
-    font-family: var(--font-mono) !important; font-weight: 500 !important;
-    font-size: 9.5px !important; letter-spacing: .16em; text-transform: uppercase;
-    white-space: nowrap; opacity: 1 !important; pointer-events: none;
-    border: none !important; padding: 0 !important;
-  }
-  .col.items-end [data-tip]:hover::after { color: var(--primary) !important; }
-  .col.items-end .icon-btn.active[data-tip]::after { color: var(--lime) !important; }
-}
-#ui::after {
-  width: 210px;
-  background: linear-gradient(to left,
-    rgba(0,0,0,.75) 0%, rgba(0,0,0,.62) 48%, rgba(0,0,0,0) 100%);
+/* ---- Yang MENYEMBUL: garis tebal + bayangan offset keras ----------------
+   Satu satunya tempat bayangan dibolehkan, dan bentuknya persis seperti
+   dicetak offset: "thick 2px or 4px solid black border with a 4px offset
+   solid black shadow". */
+.pw-card, .about-card, #point-panel, .cyc-note, .toast {
+  border: 2px solid var(--ink) !important;
+  box-shadow: 4px 4px 0 0 var(--ink) !important;
+  background: var(--paper) !important;
 }
 
-/* ---- 3. Slider: kontainer dibuang, isian jadi cairan hijau neon ---------- */
-.panel.timeline { background: transparent !important; padding: 8px 14px; }
-.tl-tick-mark { background: var(--line); width: 1px; }
-.tl-tick.day .tl-tick-mark { background: var(--variant); }
-.tl-tick-lbl { color: var(--variant); }
-.tl-tick.day .tl-tick-lbl { color: var(--ink); font-weight: 500; }
-.tl-btn { border: none !important; background: transparent !important; }
-.tl-btn .material-symbols-outlined { color: var(--lime); }
+/* ---- Grafik: tanpa sampah, garis 2 px ------------------------------------ */
+.pt-meteo path { stroke-width: 2; }
 
-#time-slider { height: 10px; }
-/* Batangnya saja, tanpa bingkai. Bagian terlewati terisi hijau neon, dan
-   UJUNG isian itulah penanda waktunya, menggantikan kotak hijau yang dibuang. */
+/* ---- Merek: Archivo Narrow tebal, digarisbawahi ------------------------- */
+.brand-text strong {
+  font-family: var(--font-display); font-weight: 800; font-size: 22px;
+  letter-spacing: -.01em; text-transform: uppercase; color: var(--ink);
+  border-bottom: 1px solid var(--ink); padding-bottom: 3px;
+}
+.brand-text span {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 400;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--variant); margin-top: 6px;
+}
+
+/* ---- Judul modul digarisbawahi selebar modulnya -------------------------
+   Aturan eksplisit di bab Cards & Modules: "Every module must have its title
+   in the top-left corner, set in label-caps and underlined with a 1px line
+   that spans the full width of the module." */
+.selects .label-caps, .dtw-sec, .pt-sec {
+  display: block; border-bottom: 1px solid var(--ink);
+  padding-bottom: 4px; margin-bottom: 7px;
+}
+
+/* ---- Slider: blok warna padat, bukan gradien --------------------------- */
+#time-slider { height: 14px; }
 #time-slider::-webkit-slider-runnable-track {
-  height: 10px; border: none;
-  background: linear-gradient(to right,
-    var(--lime) 0 var(--tl-isi, 0%), rgba(224,224,224,.14) var(--tl-isi, 0%) 100%);
+  height: 14px; border: 1px solid var(--ink); background: var(--paper);
+  background-image: linear-gradient(to right, var(--biru) 0 var(--tl-isi, 0%), transparent var(--tl-isi, 0%));
 }
 #time-slider::-moz-range-track {
-  height: 10px; border: none;
-  background: linear-gradient(to right,
-    var(--lime) 0 var(--tl-isi, 0%), rgba(224,224,224,.14) var(--tl-isi, 0%) 100%);
+  height: 14px; border: 1px solid var(--ink); background: var(--paper);
+  background-image: linear-gradient(to right, var(--biru) 0 var(--tl-isi, 0%), transparent var(--tl-isi, 0%));
 }
-/* Kenop DIHAPUS wujudnya. Tetap ada supaya bisa diseret, tapi tak terlihat. */
+/* Kenop segitiga. DESIGN.md menyisakan segitiga khusus untuk data berarah,
+   tapi di sini dipakai sebagai penunjuk posisi, bentuk paling Euclidean yang
+   tidak bertabrakan dengan kotak dan lingkaran. */
 #time-slider::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
-  width: 2px; height: 14px; margin-top: -2px;
-  background: var(--lime); border: none; border-radius: 0;
+  width: 0; height: 0; margin-top: -6px; background: transparent; border-radius: 0;
+  border-left: 7px solid transparent; border-right: 7px solid transparent;
+  border-top: 10px solid var(--ink);
 }
 #time-slider::-moz-range-thumb {
-  width: 2px; height: 14px; background: var(--lime); border: none; border-radius: 0;
+  width: 0; height: 0; background: transparent; border: none; border-radius: 0;
+  border-left: 7px solid transparent; border-right: 7px solid transparent;
+  border-top: 10px solid var(--ink);
 }
+.tl-tick-mark { background: var(--ink); width: 1px; }
+.tl-tick-lbl { font-family: var(--font-mono); color: var(--variant); }
+.tl-cur { font-family: var(--font-mono); color: var(--ink); }
 
-/* ---- 4. Kartu Tentang: perorangan dibuang, tim jadi satu satunya ---------
-   Ini sudah proyek tim, jadi kartu nama perorangan tak berlaku lagi. Kartu tim
-   yang dulu khusus Private Model dinaikkan jadi kartu Tentang untuk semua
-   model, dan nama perorangan di tagline merek ikut dibuang.
-   Isinya juga dibikin SHAPELESS: bingkai foto, alas limau, dan kotak kutipan
-   itu semua bahasa neubrutalism yang tersisa. */
-.about-card:not(.about-card--team) { display: none !important; }
-.about-card--team { display: flex !important; }
-body.model-private .about-card--team { display: flex !important; }
+/* ---- Legenda: blok warna rapat, tanpa sekat --------------------------- */
+.legend-panel { border: 1px solid var(--ink); }
+.legend-head { background: var(--ink); color: var(--paper); border-right: 1px solid var(--ink); }
+.legend-cell { border-right: none; font-family: var(--font-mono); }
 
-.about-card--team {
-  background: rgba(0,0,0,.96) !important; border: none !important;
-  border-left: 1px solid var(--lime) !important;   /* satu garis penanda, bukan bingkai */
-  padding: 26px 34px 30px;
-}
-.about-tag {
-  background: transparent !important; border: none !important;
-  color: var(--lime) !important; padding: 0 !important;
-  font-size: 9.5px; letter-spacing: .22em; font-weight: 500;
-}
-.about-name {
-  font-family: var(--font-display); font-size: 17px !important;
-  letter-spacing: .14em; text-transform: uppercase; color: var(--ink);
-}
-.about-intro { font-family: var(--font-prose); font-size: 12.5px; color: var(--variant); line-height: 1.7; }
-
-/* Foto tim: bingkai dan alas dibuang, tinggal fotonya sendiri. */
-.tm-photo { border: none !important; background: transparent !important; }
-.tm-photo img { filter: grayscale(1) contrast(1.05); }
-.tm-name {
-  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--variant); border: none !important;
-  background: transparent !important; padding: 6px 0 0 !important;
-}
-.tm-row { border: none !important; }
-.about-close { border: none !important; background: transparent !important; }
-.about-close .material-symbols-outlined { color: var(--variant); }
-.about-close:hover .material-symbols-outlined { color: var(--primary); }
-
-/* ---- Fade dipersempit ke 3/4 tulisan, bukan diskalakan ------------------
-   Salah tangkap sebelumnya: kupersempit lebarnya tapi bagian pekatnya tetap
-   panjang, jadi kesannya cuma mengecil. Yang diminta beda, selubungnya tetap
-   MULAI dari tepi layar lalu MEMUDAR HABIS tepat di 3/4 tulisan terpanjang,
-   sesudah itu betul betul bening.
-
-   Terukur lewat Range pada glyph-nya, bukan kotak elemen sebab span teks ikut
-   melar mengikuti tombol:
-     kiri  : teks parameter terpanjang berakhir di 241 px -> 3/4 = 180 px
-     kanan : label ikon membentang 231 px dari tepi -> 3/4 = 173 px */
-#ui::before {
-  width: 180px;
-  background: linear-gradient(to right,
-    rgba(0,0,0,.94) 0%, rgba(0,0,0,.80) 45%, rgba(0,0,0,.40) 78%, rgba(0,0,0,0) 100%);
-}
-#ui::after {
-  width: 173px;
-  background: linear-gradient(to left,
-    rgba(0,0,0,.75) 0%, rgba(0,0,0,.60) 45%, rgba(0,0,0,.28) 78%, rgba(0,0,0,0) 100%);
-}
-
-/* ---- 5. Ikon siklon dan kondisi cuaca: dari blok jadi wireframe ----------
-   Dua duanya masih memakai bahasa neubrutalism: kotak berisi, garis tebal
-   3 px, dan bayangan keras. DESIGN.md meminta sebaliknya, "hollow shapes
-   defined by 1px strokes" dan penanda status berupa kotak padat kecil.
-
-   Ikon kondisi kota sekarang berupa lingkaran berongga bergaris 1 px, isinya
-   bening supaya petanya tetap terbaca di belakangnya. Yang menyatakan
-   keadaan cuma WARNA garis dan lambangnya, bukan kotak berisi. */
-.cc-ico {
-  width: 26px; height: 26px;
-  background: transparent !important;
-  border: 1px solid currentColor !important;
-  border-radius: 50%;
-  color: var(--variant);
-}
-.cc-ico .material-symbols-outlined { font-size: 15px; }
-.cc-ico.cc-cap { width: 30px; height: 30px; border-width: 1px !important; }
-.cc-ico.cc-cap .material-symbols-outlined { font-size: 17px; }
-.cc-ico.cc-mini { width: 18px; height: 18px; border-width: 1px !important; }
-/* Garis lingkaran ikut warna lambangnya, jadi tingkat cuaca terbaca dari
-   tepinya juga, bukan cuma dari ikon di tengah. */
-.cc-sunny  { color: var(--alert); }
-.cc-pcloud { color: var(--variant); }
-.cc-cloud  { color: var(--line); }
-.cc-rain   { color: var(--primary); }
-.cc-heavy  { color: var(--alert); }
-.cc-storm  { color: #ff2d2d; }
-.cc-sunny .material-symbols-outlined,  .cc-pcloud .material-symbols-outlined,
-.cc-cloud .material-symbols-outlined,  .cc-rain .material-symbols-outlined,
-.cc-heavy .material-symbols-outlined,  .cc-storm .material-symbols-outlined { color: currentColor; }
-
-/* Lambang siklon: dari cakram penuh jadi guratan. */
-.cyc-spin .material-symbols-outlined {
-  font-variation-settings: "FILL" 0, "wght" 400 !important;
-  font-size: 26px !important;
-}
-
-/* Banner siklon: kepala merah padat jadi wireframe oranye. */
-.cyc-note { background: rgba(0,0,0,.90) !important; border: 1px solid var(--alert) !important; }
-.cyc-note-top {
-  background: transparent !important; color: var(--alert) !important;
-  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase;
-}
-.cyc-tab { background: rgba(0,0,0,.90) !important; border: none !important; }
-.cyc-caret { color: var(--alert) !important; }
-.cyc-detail { background: transparent !important; border-top: 1px solid var(--line) !important; }
-.cyc-th { color: var(--variant); font-family: var(--font-mono); font-size: 9px; letter-spacing: .1em; }
-/* Keping legenda siklon jadi kotak status 8px, sesuai bab Chips di DESIGN.md. */
-.cyc-chip { width: 8px !important; height: 8px !important; border: none !important; border-radius: 0 !important; }
-/* Mendung sempat dipatok ke --line (#3c3c3c) dan itu terlalu gelap, lingkaran
-   ikonnya nyaris hilang di atas peta yang terang. Dinaikkan ke abu netral. */
-.cc-cloud  { color: rgba(224,224,224,.62); }
-.cc-pcloud { color: rgba(224,224,224,.82); }
-
-/* ---- Selubung: tidak lagi setinggi layar, dan gradasinya dihaluskan ------
-   DUA perbaikan.
-
-   1. TINGGI. Sebelumnya membentang penuh dari atas sampai bawah layar,
-      padahal isinya berhenti jauh di atas. Terukur: panel kiri (brand, daftar
-      parameter, MODEL/LEVEL) berakhir di y=490, kolom ikon kanan di y=700.
-      Jadi tingginya dipotong sampai situ, lalu DILUNAKKAN ke bawah pakai
-      mask supaya ujungnya tidak berupa garis potong yang keras.
-
-   2. GRADASI. Empat hentian saja membuat peralihannya patah patah dan pita
-      warnanya kelihatan. Diperbanyak jadi sebelas hentian mengikuti kurva
-      melandai, jadi peralihan dari pekat ke bening terbaca mulus. */
-#ui::before {
-  top: 0; bottom: auto; height: 520px;
-  background: linear-gradient(to right,
-    rgba(0,0,0,.94) 0%,   rgba(0,0,0,.930) 10%, rgba(0,0,0,.905) 20%,
-    rgba(0,0,0,.862) 30%, rgba(0,0,0,.800) 40%, rgba(0,0,0,.718) 50%,
-    rgba(0,0,0,.615) 60%, rgba(0,0,0,.490) 70%, rgba(0,0,0,.345) 80%,
-    rgba(0,0,0,.180) 90%, rgba(0,0,0,0)    100%);
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 76%, rgba(0,0,0,.55) 90%, transparent 100%);
-          mask-image: linear-gradient(to bottom, #000 0%, #000 76%, rgba(0,0,0,.55) 90%, transparent 100%);
-}
-#ui::after {
-  top: 0; bottom: auto; height: 740px;
-  background: linear-gradient(to left,
-    rgba(0,0,0,.75) 0%,   rgba(0,0,0,.742) 10%, rgba(0,0,0,.722) 20%,
-    rgba(0,0,0,.688) 30%, rgba(0,0,0,.638) 40%, rgba(0,0,0,.573) 50%,
-    rgba(0,0,0,.491) 60%, rgba(0,0,0,.391) 70%, rgba(0,0,0,.275) 80%,
-    rgba(0,0,0,.144) 90%, rgba(0,0,0,0)    100%);
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 80%, rgba(0,0,0,.55) 92%, transparent 100%);
-          mask-image: linear-gradient(to bottom, #000 0%, #000 80%, rgba(0,0,0,.55) 92%, transparent 100%);
-}
-
-/* ---- Selubung menempel pada KOLOMNYA, bukan pada #ui ---------------------
-   Tinggi dipatok angka mati ternyata rapuh: isi panel kiri Atmos berakhir di
-   y=490 sedangkan Plume di y=648, dan angkanya masih berubah lagi kalau model
-   tambahan dinyalakan atau layarnya lain ukuran.
-   Kedua kolom sudah memeluk isinya sendiri, jadi selubungnya dipindah ke
-   kolom itu. Tingginya ikut isi dengan sendirinya, tanpa perlu diukur ulang. */
-#ui::before, #ui::after { display: none !important; }
-
-#ui .ui-top > .col { position: relative; }
-#ui .ui-top > .col::before {
-  content: ""; position: absolute; z-index: -1; pointer-events: none;
-  top: -14px; bottom: -46px;
-}
-/* kolom kiri */
-#ui .ui-top > .col:not(.items-end)::before {
-  left: -14px; width: 194px;
-  background: linear-gradient(to right,
-    rgba(0,0,0,.94) 0%,   rgba(0,0,0,.930) 10%, rgba(0,0,0,.905) 20%,
-    rgba(0,0,0,.862) 30%, rgba(0,0,0,.800) 40%, rgba(0,0,0,.718) 50%,
-    rgba(0,0,0,.615) 60%, rgba(0,0,0,.490) 70%, rgba(0,0,0,.345) 80%,
-    rgba(0,0,0,.180) 90%, rgba(0,0,0,0)    100%);
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 72%, rgba(0,0,0,.5) 88%, transparent 100%);
-          mask-image: linear-gradient(to bottom, #000 0%, #000 72%, rgba(0,0,0,.5) 88%, transparent 100%);
-}
-/* kolom kanan */
-#ui .ui-top > .col.items-end::before {
-  right: -14px; width: 187px;
-  background: linear-gradient(to left,
-    rgba(0,0,0,.75) 0%,   rgba(0,0,0,.742) 10%, rgba(0,0,0,.722) 20%,
-    rgba(0,0,0,.688) 30%, rgba(0,0,0,.638) 40%, rgba(0,0,0,.573) 50%,
-    rgba(0,0,0,.491) 60%, rgba(0,0,0,.391) 70%, rgba(0,0,0,.275) 80%,
-    rgba(0,0,0,.144) 90%, rgba(0,0,0,0)    100%);
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 72%, rgba(0,0,0,.5) 88%, transparent 100%);
-          mask-image: linear-gradient(to bottom, #000 0%, #000 72%, rgba(0,0,0,.5) 88%, transparent 100%);
-}
-
-/* Perbaikan susunan lapis. `z-index: -1` pada pseudo di DALAM kolom membuatnya
-   keluar dari tumpukan kolom lalu jatuh di belakang peta, jadi selubungnya
-   lenyap sama sekali. Yang benar: selubung di lapis 0, isi kolom dinaikkan
-   ke lapis 1 supaya duduk di atasnya. */
-#ui .ui-top > .col::before { z-index: 0 !important; }
-#ui .ui-top > .col > * { position: relative; z-index: 1; }
-
-/* ---- Tepi selubung dirapatkan ke tepi layar ------------------------------
-   Terukur di baris y=300: piksel x=0..5 masih peta terang, baru dari x=6
-   selubungnya mulai. Jadi ada strip 6 px yang bocor dan tepinya kelihatan
-   sebagai garis. Sebabnya kolom itu sendiri sudah menjorok ke dalam mengikuti
-   padding #ui, dan geseran -14 px belum cukup menutupinya.
-
-   Selubungnya digeser jauh KELUAR layar, lalu seluruh hentian gradien
-   dihitung ulang supaya bagian yang TERLIHAT tetap punya ramp yang sama:
-   60 px pertama (25 persen) dibuat pekat rata sebagai bagian yang menjorok
-   keluar, sisanya baru melandai. */
-#ui .ui-top > .col:not(.items-end)::before {
-  left: -74px; width: 254px;
-  background: linear-gradient(to right,
-    rgba(0,0,0,.94) 0%,   rgba(0,0,0,.94) 25%,  rgba(0,0,0,.930) 32.5%,
-    rgba(0,0,0,.905) 40%, rgba(0,0,0,.862) 47.5%, rgba(0,0,0,.800) 55%,
-    rgba(0,0,0,.718) 62.5%, rgba(0,0,0,.615) 70%, rgba(0,0,0,.490) 77.5%,
-    rgba(0,0,0,.345) 85%, rgba(0,0,0,.180) 92.5%, rgba(0,0,0,0) 100%);
-}
-#ui .ui-top > .col.items-end::before {
-  right: -74px; width: 247px;
-  background: linear-gradient(to left,
-    rgba(0,0,0,.75) 0%,   rgba(0,0,0,.75) 25%,  rgba(0,0,0,.742) 32.5%,
-    rgba(0,0,0,.722) 40%, rgba(0,0,0,.688) 47.5%, rgba(0,0,0,.638) 55%,
-    rgba(0,0,0,.573) 62.5%, rgba(0,0,0,.491) 70%, rgba(0,0,0,.391) 77.5%,
-    rgba(0,0,0,.275) 85%, rgba(0,0,0,.144) 92.5%, rgba(0,0,0,0) 100%);
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   SELUBUNG DIBUANG, DIGANTI HALO PADA TEKSNYA
-   ---------------------------------------------------------------------------
-   Selubung gelap di atas peta TERANG selalu terbaca sebagai noda. Rujukannya
-   bisa memakai selubung karena petanya sendiri gelap. Peta kita hijau menyala,
-   jadi gradien hitam di pojok cuma kelihatan seperti cat tumpah, dan makin
-   dihaluskan makin kelihatan seperti smudge.
-
-   Cara yang benar untuk HUD di atas citra terang: tidak ada selubung sama
-   sekali, teksnya yang diberi halo gelap tipis supaya tetap tajam di atas
-   warna apa pun. App ini sudah memakai pola itu untuk label kota di peta.
-   ═══════════════════════════════════════════════════════════════════════════ */
-#ui .ui-top > .col::before { display: none !important; }
-
-#ui .ui-top > .col,
-#ui .ui-top > .col * {
-  text-shadow: 0 0 3px rgba(0,0,0,.95), 0 0 7px rgba(0,0,0,.85), 0 1px 2px rgba(0,0,0,.9);
-}
-/* Lambang ikon bukan teks, jadi haloya lewat drop-shadow. */
-#ui .ui-top > .col .material-symbols-outlined,
-#ui .ui-top > .col svg {
-  filter: drop-shadow(0 0 3px rgba(0,0,0,.95)) drop-shadow(0 0 6px rgba(0,0,0,.8));
-}
-/* Garis bawah dropdown ikut dipertegas, tanpa halo dia hilang di atas peta. */
-.select-wrap select { border-bottom-color: rgba(224,224,224,.45) !important; }
-.dd-row, .layer-split, .layer-btn.dd-btn, .layer-btn--half {
-  border-bottom-color: rgba(224,224,224,.35) !important;
-}
-
-/* ---- Teks HUD dicerahkan, halo dipertegas --------------------------------
-   Tanpa selubung, warna teks jadi satu satunya yang menahan keterbacaan.
-   --variant itu abu KEHIJAUAN (#b9ccb2), dan di atas peta hijau dia lenyap.
-   Teks non-aktif dinaikkan ke putih telemetri, dan halonya dipertebal supaya
-   tetap tajam di atas warna apa pun, termasuk kuning dan hijau menyala. */
-#ui .ui-top > .col,
-#ui .ui-top > .col *,
-#ui .ui-top > .col .label-caps,
-#ui .ui-top > .col .brand-text span {
-  text-shadow:
-    0 0 2px rgba(0,0,0,1), 0 0 4px rgba(0,0,0,.95),
-    0 0 9px rgba(0,0,0,.85), 0 1px 2px rgba(0,0,0,1);
-}
-.layer-btn { color: rgba(230,230,230,.92); }
-.layer-btn .material-symbols-outlined { color: rgba(230,230,230,.78); }
-.layer-btn.active, .layer-btn.active .material-symbols-outlined { color: var(--lime); }
-.icon-btn .material-symbols-outlined,
-.zoom button .material-symbols-outlined { color: rgba(230,230,230,.9); }
-.label-caps, .brand-text span { color: rgba(230,230,230,.72) !important; }
-.select-wrap select { color: rgba(235,235,235,.95); }
-@media (hover: hover) and (min-width: 641px) {
-  .col.items-end [data-tip]::after { color: rgba(230,230,230,.82) !important; }
-}
-#ui .ui-top > .col .material-symbols-outlined,
-#ui .ui-top > .col svg {
-  filter: drop-shadow(0 0 2px rgba(0,0,0,1)) drop-shadow(0 0 5px rgba(0,0,0,.9));
-}
-
-/* ---- Peta diredupkan MENYELURUH, sesuai rujukan -------------------------
-   Ini kunci yang kulewatkan. Layar map_explorer rujukan memasang veil gelap
-   di ATAS SELURUH peta, bukan cuma di pojok:
-       <div class="absolute inset-0 bg-surface/40 pointer-events-none">
-   Itu sebabnya di sana teks tipis dan garis rambut bisa terbaca tanpa
-   selubung pojok, dan itu juga yang membuat DESIGN.md menyebutnya "a thin,
-   digital veil over raw atmospheric telemetry".
-
-   Tanpa ini, peta kita menyala terang dan apa pun yang ditaruh di atasnya
-   akan berkelahi dengannya: selubung pojok jadi noda, teks polos jadi tak
-   terbaca. Diredupkan di sini, bukan di data, jadi warnanya tak berubah arti,
-   cuma turun terangnya. */
-.leaflet-container::after {
-  content: ""; position: absolute; inset: 0; z-index: 400;
-  background: rgba(6, 10, 8, .42);
-  pointer-events: none;
-}
-/* Label peta ikut dinaikkan supaya tak ikut teredup. */
-.leaflet-pane.leaflet-labels-pane, .leaflet-pane.leaflet-cityicons-pane { z-index: 650; }
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   SHAPELESS PENUH — SISA TATA LETAK NEUBRUTALISM DIBUANG
-   ---------------------------------------------------------------------------
-   Yang masih paling kentara berbentuk kotak: bilah legenda, lencana, dan
-   bilah waktu. Ketiganya masih memakai blok warna padat, kepala berlatar,
-   dan pil bergaris. Di sistem ini semuanya diganti pita tipis dan teks polos.
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ---- Legenda: dari deretan blok jadi PITA tipis menyambung --------------- */
-.legend-panel {
-  background: transparent !important; border: none !important;
-  align-items: flex-end; gap: 10px;
-}
-.legend-head {
-  background: transparent !important; border: none !important;
-  color: rgba(230,230,230,.62) !important; padding: 0 0 3px !important;
-  font-family: var(--font-mono); font-size: 9px !important; font-weight: 500 !important;
-  letter-spacing: .2em; text-transform: uppercase;
-  text-shadow: 0 0 3px #000, 0 0 6px rgba(0,0,0,.9);
-}
-.legend { align-items: flex-end; }
-/* Sel jadi potongan pita setinggi 4 px, angkanya turun ke bawah pita.
-   Tanpa bingkai, tanpa sekat, jadi terbaca sebagai satu skala menerus. */
-.legend-cell {
-  width: 38px !important; min-height: 0 !important; height: 4px;
-  position: relative; border: none !important; overflow: visible;
-  font-size: 0 !important;
-}
-.legend-cell::after {
-  content: attr(data-lbl);
-  position: absolute; top: 7px; left: 50%; transform: translateX(-50%);
-  font-family: var(--font-mono); font-size: 9px; letter-spacing: .06em;
-  color: rgba(230,230,230,.86); white-space: nowrap;
-  text-shadow: 0 0 3px #000, 0 0 6px rgba(0,0,0,.95);
-}
-.legend-words .legend-cell { width: auto !important; min-width: 46px; padding: 0 !important; }
-.legend-words .legend-cell::after { font-size: 8.5px; }
-.legend-col { padding-bottom: 16px; }
-
-/* ---- Lencana: pil bergaris jadi teks polos berpenanda ------------------- */
+/* ---- Lencana: blok padat, bukan pil ----------------------------------- */
 .fresh-badge {
-  background: transparent !important; border: none !important;
-  padding: 0 !important; gap: 7px;
-  font-family: var(--font-mono); font-size: 9px; font-weight: 500;
-  letter-spacing: .14em; text-transform: uppercase;
-  color: rgba(230,230,230,.66) !important;
-  text-shadow: 0 0 3px #000, 0 0 7px rgba(0,0,0,.95);
+  background: var(--primary); color: var(--on-primary);
+  border: 1px solid var(--ink); box-shadow: none;
+  font-family: var(--font-mono); letter-spacing: .04em;
 }
-.fresh-ico { display: none; }
-.fresh-badge::before {
-  content: ""; flex: 0 0 auto; width: 6px; height: 6px; background: var(--alert);
-}
-.acc-badge { color: rgba(230,230,230,.66) !important; }
-.acc-badge::before { background: var(--lime); }
-
-/* ---- Bilah waktu: label waktu jadi teks polos --------------------------- */
-.tl-cur { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em;
-  color: rgba(230,230,230,.9); text-shadow: 0 0 3px #000, 0 0 7px rgba(0,0,0,.95); }
-.tl-tick-lbl, .tl-tick.day .tl-tick-lbl {
-  color: rgba(230,230,230,.55) !important; font-weight: 500 !important;
-  text-shadow: 0 0 3px #000, 0 0 6px rgba(0,0,0,.9);
-}
-.tl-tick-mark { background: rgba(230,230,230,.28) !important; }
-.tl-tick.day .tl-tick-mark { background: rgba(230,230,230,.5) !important; }
-.tl-btn .material-symbols-outlined { filter: drop-shadow(0 0 3px #000); }
-
-/* ---- Legenda: pita warna dan labelnya jadi dua elemen terpisah -----------
-   Sebelumnya warna dipasang sebagai LATAR sel dan labelnya lewat ::after yang
-   melayang, jadi lebar sel harus dipatok angka. Untuk legenda berangka itu
-   cukup, tapi legenda berlabel KATA seperti kategori ISPU langsung tabrakan.
-   Sekarang warnanya di `.lg-bar` dan teksnya di `.lg-lbl`, jadi lebar sel
-   mengikuti panjang labelnya sendiri. */
-.legend-cell {
-  width: auto !important; min-width: 34px; height: auto !important;
-  display: flex !important; flex-direction: column; align-items: stretch;
-  gap: 5px; padding: 0 3px !important; border: none !important;
-  font-size: 0 !important; overflow: visible;
-}
-.legend-cell::after { content: none !important; }
-.lg-bar { display: block; height: 4px; width: 100%; }
-.lg-lbl {
-  display: block; text-align: center;
-  font-family: var(--font-mono); font-size: 9px; font-weight: 500;
-  letter-spacing: .06em; color: rgba(230,230,230,.86); white-space: nowrap;
-  text-shadow: 0 0 3px #000, 0 0 6px rgba(0,0,0,.95);
-}
-.legend-words .lg-lbl, .legend-cell.dua-baris .lg-lbl { font-size: 8.5px; }
-.lg-bar.kotak-catur {
-  background-color: rgba(230,230,230,.9);
-  background-image: linear-gradient(45deg, #6a6a6a 25%, transparent 25%, transparent 75%, #6a6a6a 75%),
-                    linear-gradient(45deg, #6a6a6a 25%, transparent 25%, transparent 75%, #6a6a6a 75%);
-  background-size: 6px 6px; background-position: 0 0, 3px 3px;
-}
-/* Aturan lama menyembunyikan SEMUA <span> di dalam sel legenda, dan itu ikut
-   membunuh `.lg-lbl` yang justru labelnya. Dikecualikan. */
-.legend-cell span.lg-lbl { display: block !important; font-size: 9px !important; }
-.legend-words .lg-lbl, .legend-cell.dua-baris .lg-lbl { font-size: 8.5px !important; }
-/* Sel dipatok min-width 34 px, jadi legenda berlabel KATA panjang seperti
-   kategori ISPU labelnya berdempetan tanpa jarak. Dipakai `max-content`
-   supaya tiap sel selalu selebar labelnya sendiri, plus jarak antar label. */
-.legend-cell { min-width: max-content !important; padding: 0 7px !important; }
-.legend { gap: 0; }
-/* `min-width: max-content` sudah MEMUAT padding-nya, jadi paddingnya justru
-   menjepit label, bukan memberi jarak. Jaraknya dipindah ke wadah sebagai gap.
-   Pita warnanya jadi bersegmen, dan untuk skala berkategori seperti ISPU itu
-   justru lebih jujur daripada satu pita menyambung. */
-.legend-cell { padding: 0 !important; }
-.legend { gap: 11px; }
-
-/* ---- Peredup peta DIBATALKAN --------------------------------------------
-   Sempat kupasang veil gelap 42 persen menyeluruh meniru rujukan. Rujukan
-   memang begitu, TAPI petanya sendiri gelap dan datanya jarang. Peta kita
-   isinya justru data warna penuh satu layar, jadi meredupkannya berarti
-   meredupkan barang utamanya. Layar jadi gelap semua dan itu bukan yang
-   diminta. Dibatalkan, keterbacaan teks tetap dijaga halo. */
-.leaflet-container::after { display: none !important; }
-
-/* ---- Halo diteruskan ke bilah bawah -------------------------------------
-   Aturan halo sebelumnya cuma menjangkau `#ui .ui-top > .col`, sedangkan
-   legenda, lencana, dan bilah waktu duduk di `.ui-bottom`. Tanpa peredup peta,
-   ketiganya pudar di atas peta terang. */
-.ui-bottom, .ui-bottom * {
-  text-shadow:
-    0 0 2px rgba(0,0,0,1), 0 0 4px rgba(0,0,0,.95),
-    0 0 9px rgba(0,0,0,.85), 0 1px 2px rgba(0,0,0,1);
-}
-.ui-bottom .material-symbols-outlined {
-  filter: drop-shadow(0 0 2px rgba(0,0,0,1)) drop-shadow(0 0 5px rgba(0,0,0,.9));
-}
-.fresh-badge, .acc-badge { color: rgba(235,235,235,.86) !important; }
-.lg-lbl, .legend-head { color: rgba(235,235,235,.92) !important; }
-.tl-cur { color: rgba(240,240,240,.96) !important; }
-.tl-tick-lbl, .tl-tick.day .tl-tick-lbl { color: rgba(235,235,235,.7) !important; }
-/* Sel legenda dan pitanya jangan ikut berhalo, halo pada blok warna bikin kotor. */
-.lg-bar { text-shadow: none; }
+.acc-badge { background: var(--biru); color: var(--on-biru); }
