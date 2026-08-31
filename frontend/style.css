@@ -1956,3 +1956,30 @@ body.model-private .about-card--team { display: flex !important; }
    ke lapis 1 supaya duduk di atasnya. */
 #ui .ui-top > .col::before { z-index: 0 !important; }
 #ui .ui-top > .col > * { position: relative; z-index: 1; }
+
+/* ---- Tepi selubung dirapatkan ke tepi layar ------------------------------
+   Terukur di baris y=300: piksel x=0..5 masih peta terang, baru dari x=6
+   selubungnya mulai. Jadi ada strip 6 px yang bocor dan tepinya kelihatan
+   sebagai garis. Sebabnya kolom itu sendiri sudah menjorok ke dalam mengikuti
+   padding #ui, dan geseran -14 px belum cukup menutupinya.
+
+   Selubungnya digeser jauh KELUAR layar, lalu seluruh hentian gradien
+   dihitung ulang supaya bagian yang TERLIHAT tetap punya ramp yang sama:
+   60 px pertama (25 persen) dibuat pekat rata sebagai bagian yang menjorok
+   keluar, sisanya baru melandai. */
+#ui .ui-top > .col:not(.items-end)::before {
+  left: -74px; width: 254px;
+  background: linear-gradient(to right,
+    rgba(0,0,0,.94) 0%,   rgba(0,0,0,.94) 25%,  rgba(0,0,0,.930) 32.5%,
+    rgba(0,0,0,.905) 40%, rgba(0,0,0,.862) 47.5%, rgba(0,0,0,.800) 55%,
+    rgba(0,0,0,.718) 62.5%, rgba(0,0,0,.615) 70%, rgba(0,0,0,.490) 77.5%,
+    rgba(0,0,0,.345) 85%, rgba(0,0,0,.180) 92.5%, rgba(0,0,0,0) 100%);
+}
+#ui .ui-top > .col.items-end::before {
+  right: -74px; width: 247px;
+  background: linear-gradient(to left,
+    rgba(0,0,0,.75) 0%,   rgba(0,0,0,.75) 25%,  rgba(0,0,0,.742) 32.5%,
+    rgba(0,0,0,.722) 40%, rgba(0,0,0,.688) 47.5%, rgba(0,0,0,.638) 55%,
+    rgba(0,0,0,.573) 62.5%, rgba(0,0,0,.491) 70%, rgba(0,0,0,.391) 77.5%,
+    rgba(0,0,0,.275) 85%, rgba(0,0,0,.144) 92.5%, rgba(0,0,0,0) 100%);
+}
