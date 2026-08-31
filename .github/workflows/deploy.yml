@@ -16,8 +16,12 @@ env:
 # nc ITERA yang mungkin mendarat terlambat, TANPA menjalankan GFS/Citarum lagi
 # (pakai output yang disimpan ke cache di sini).
 on:
-  push:
-    branches: [main]
+  # PEMICU PUSH JUGA DIMATIKAN selama masa penyiapan. Tanpa ini tiap commit
+  # penggayaan ulang memicu masak 10 sampai 15 menit yang ujungnya gagal,
+  # sebab GitHub Pages di repo ini belum disetel. Buang waktu dan bikin email
+  # gagal beruntun. Buka lagi kalau sudah siap terbit.
+  # push:
+  #   branches: [main]
   # JADWAL OTOMATIS SENGAJA DIMATIKAN selama masa penyiapan, supaya repo baru
   # ini tidak ikut masak tiap subuh sebelum kita siap. Buka lagi kalau sudah
   # mau terbit.
