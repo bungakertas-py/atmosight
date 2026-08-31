@@ -1673,3 +1673,210 @@ body.model-private #about-card-team { display: flex; }
     rgba(0,0,0,.90) 0%, rgba(0,0,0,.74) 45%, rgba(0,0,0,0) 100%);
   pointer-events: none; z-index: -1;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REVISI 1-3
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ---- 1. Panel kiri: kotak status dibuang, hover dimatikan, fade dipersempit
+   Kotak 8px itu tetap sebuah SHAPE, dan yang diminta memang tanpa bentuk sama
+   sekali. Keadaan aktif cukup dinyatakan warna teks. Hover juga dimatikan,
+   sebab perubahan warna saat lewat kursor itu dekorasi yang tak diminta.
+   Fade sebelumnya 400 px, hampir sampai tengah layar. Tepi kanan teks
+   parameter terpanjang terukur di 275 px, jadi selubungnya dipangkas ke situ. */
+.layer-btn::before { display: none !important; }
+.layer-btn { padding-left: 0; gap: 10px; }
+.layer-btn:hover:not(.active):not(.disabled),
+.layer-btn:hover:not(.active):not(.disabled) .material-symbols-outlined {
+  color: var(--variant) !important;
+}
+#ui::before {
+  width: 290px;
+  background: linear-gradient(to right,
+    rgba(0,0,0,.94) 0%, rgba(0,0,0,.92) 62%, rgba(0,0,0,.58) 86%, rgba(0,0,0,0) 100%);
+}
+
+/* ---- 2. Kolom ikon kanan: kontainer dibuang, namanya ditampilkan tetap ----
+   Tombolnya tak lagi berupa kotak, tinggal lambangnya saja. Namanya dipasang
+   PERMANEN di kiri lambang, bukan muncul saat hover, supaya tak perlu ditebak.
+   Dipakai `::after` sebab aturan tooltip lama memang di situ, dan satu elemen
+   cuma punya satu ::after. Selubung kanan dibatasi 75 persen. */
+.icon-btn {
+  width: auto; height: 34px; padding: 0 2px 0 0;
+  border: none !important; background: transparent !important;
+  justify-content: flex-end;
+}
+.icon-btn .material-symbols-outlined { font-size: 20px; color: var(--variant); }
+.icon-btn:hover:not(:disabled) .material-symbols-outlined { color: var(--primary); }
+.icon-btn.active .material-symbols-outlined { color: var(--lime); }
+.zoom { flex-direction: column; }
+.zoom button { border: none !important; background: transparent !important; width: 34px; height: 30px; }
+.zoom button .material-symbols-outlined { color: var(--variant); }
+.zoom button:hover .material-symbols-outlined { color: var(--primary); }
+
+@media (hover: hover) and (min-width: 641px) {
+  /* Label TETAP terlihat, bukan cuma saat hover. */
+  .col.items-end [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute; right: calc(100% + 8px); top: 50%;
+    transform: translateY(-50%) !important;
+    background: transparent !important; color: var(--variant) !important;
+    font-family: var(--font-mono) !important; font-weight: 500 !important;
+    font-size: 9.5px !important; letter-spacing: .16em; text-transform: uppercase;
+    white-space: nowrap; opacity: 1 !important; pointer-events: none;
+    border: none !important; padding: 0 !important;
+  }
+  .col.items-end [data-tip]:hover::after { color: var(--primary) !important; }
+  .col.items-end .icon-btn.active[data-tip]::after { color: var(--lime) !important; }
+}
+#ui::after {
+  width: 210px;
+  background: linear-gradient(to left,
+    rgba(0,0,0,.75) 0%, rgba(0,0,0,.62) 48%, rgba(0,0,0,0) 100%);
+}
+
+/* ---- 3. Slider: kontainer dibuang, isian jadi cairan hijau neon ---------- */
+.panel.timeline { background: transparent !important; padding: 8px 14px; }
+.tl-tick-mark { background: var(--line); width: 1px; }
+.tl-tick.day .tl-tick-mark { background: var(--variant); }
+.tl-tick-lbl { color: var(--variant); }
+.tl-tick.day .tl-tick-lbl { color: var(--ink); font-weight: 500; }
+.tl-btn { border: none !important; background: transparent !important; }
+.tl-btn .material-symbols-outlined { color: var(--lime); }
+
+#time-slider { height: 10px; }
+/* Batangnya saja, tanpa bingkai. Bagian terlewati terisi hijau neon, dan
+   UJUNG isian itulah penanda waktunya, menggantikan kotak hijau yang dibuang. */
+#time-slider::-webkit-slider-runnable-track {
+  height: 10px; border: none;
+  background: linear-gradient(to right,
+    var(--lime) 0 var(--tl-isi, 0%), rgba(224,224,224,.14) var(--tl-isi, 0%) 100%);
+}
+#time-slider::-moz-range-track {
+  height: 10px; border: none;
+  background: linear-gradient(to right,
+    var(--lime) 0 var(--tl-isi, 0%), rgba(224,224,224,.14) var(--tl-isi, 0%) 100%);
+}
+/* Kenop DIHAPUS wujudnya. Tetap ada supaya bisa diseret, tapi tak terlihat. */
+#time-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 2px; height: 14px; margin-top: -2px;
+  background: var(--lime); border: none; border-radius: 0;
+}
+#time-slider::-moz-range-thumb {
+  width: 2px; height: 14px; background: var(--lime); border: none; border-radius: 0;
+}
+
+/* ---- 4. Kartu Tentang: perorangan dibuang, tim jadi satu satunya ---------
+   Ini sudah proyek tim, jadi kartu nama perorangan tak berlaku lagi. Kartu tim
+   yang dulu khusus Private Model dinaikkan jadi kartu Tentang untuk semua
+   model, dan nama perorangan di tagline merek ikut dibuang.
+   Isinya juga dibikin SHAPELESS: bingkai foto, alas limau, dan kotak kutipan
+   itu semua bahasa neubrutalism yang tersisa. */
+.about-card:not(.about-card--team) { display: none !important; }
+.about-card--team { display: flex !important; }
+body.model-private .about-card--team { display: flex !important; }
+
+.about-card--team {
+  background: rgba(0,0,0,.96) !important; border: none !important;
+  border-left: 1px solid var(--lime) !important;   /* satu garis penanda, bukan bingkai */
+  padding: 26px 34px 30px;
+}
+.about-tag {
+  background: transparent !important; border: none !important;
+  color: var(--lime) !important; padding: 0 !important;
+  font-size: 9.5px; letter-spacing: .22em; font-weight: 500;
+}
+.about-name {
+  font-family: var(--font-display); font-size: 17px !important;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--ink);
+}
+.about-intro { font-family: var(--font-prose); font-size: 12.5px; color: var(--variant); line-height: 1.7; }
+
+/* Foto tim: bingkai dan alas dibuang, tinggal fotonya sendiri. */
+.tm-photo { border: none !important; background: transparent !important; }
+.tm-photo img { filter: grayscale(1) contrast(1.05); }
+.tm-name {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--variant); border: none !important;
+  background: transparent !important; padding: 6px 0 0 !important;
+}
+.tm-row { border: none !important; }
+.about-close { border: none !important; background: transparent !important; }
+.about-close .material-symbols-outlined { color: var(--variant); }
+.about-close:hover .material-symbols-outlined { color: var(--primary); }
+
+/* ---- Fade dipersempit ke 3/4 tulisan, bukan diskalakan ------------------
+   Salah tangkap sebelumnya: kupersempit lebarnya tapi bagian pekatnya tetap
+   panjang, jadi kesannya cuma mengecil. Yang diminta beda, selubungnya tetap
+   MULAI dari tepi layar lalu MEMUDAR HABIS tepat di 3/4 tulisan terpanjang,
+   sesudah itu betul betul bening.
+
+   Terukur lewat Range pada glyph-nya, bukan kotak elemen sebab span teks ikut
+   melar mengikuti tombol:
+     kiri  : teks parameter terpanjang berakhir di 241 px -> 3/4 = 180 px
+     kanan : label ikon membentang 231 px dari tepi -> 3/4 = 173 px */
+#ui::before {
+  width: 180px;
+  background: linear-gradient(to right,
+    rgba(0,0,0,.94) 0%, rgba(0,0,0,.80) 45%, rgba(0,0,0,.40) 78%, rgba(0,0,0,0) 100%);
+}
+#ui::after {
+  width: 173px;
+  background: linear-gradient(to left,
+    rgba(0,0,0,.75) 0%, rgba(0,0,0,.60) 45%, rgba(0,0,0,.28) 78%, rgba(0,0,0,0) 100%);
+}
+
+/* ---- 5. Ikon siklon dan kondisi cuaca: dari blok jadi wireframe ----------
+   Dua duanya masih memakai bahasa neubrutalism: kotak berisi, garis tebal
+   3 px, dan bayangan keras. DESIGN.md meminta sebaliknya, "hollow shapes
+   defined by 1px strokes" dan penanda status berupa kotak padat kecil.
+
+   Ikon kondisi kota sekarang berupa lingkaran berongga bergaris 1 px, isinya
+   bening supaya petanya tetap terbaca di belakangnya. Yang menyatakan
+   keadaan cuma WARNA garis dan lambangnya, bukan kotak berisi. */
+.cc-ico {
+  width: 26px; height: 26px;
+  background: transparent !important;
+  border: 1px solid currentColor !important;
+  border-radius: 50%;
+  color: var(--variant);
+}
+.cc-ico .material-symbols-outlined { font-size: 15px; }
+.cc-ico.cc-cap { width: 30px; height: 30px; border-width: 1px !important; }
+.cc-ico.cc-cap .material-symbols-outlined { font-size: 17px; }
+.cc-ico.cc-mini { width: 18px; height: 18px; border-width: 1px !important; }
+/* Garis lingkaran ikut warna lambangnya, jadi tingkat cuaca terbaca dari
+   tepinya juga, bukan cuma dari ikon di tengah. */
+.cc-sunny  { color: var(--alert); }
+.cc-pcloud { color: var(--variant); }
+.cc-cloud  { color: var(--line); }
+.cc-rain   { color: var(--primary); }
+.cc-heavy  { color: var(--alert); }
+.cc-storm  { color: #ff2d2d; }
+.cc-sunny .material-symbols-outlined,  .cc-pcloud .material-symbols-outlined,
+.cc-cloud .material-symbols-outlined,  .cc-rain .material-symbols-outlined,
+.cc-heavy .material-symbols-outlined,  .cc-storm .material-symbols-outlined { color: currentColor; }
+
+/* Lambang siklon: dari cakram penuh jadi guratan. */
+.cyc-spin .material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400 !important;
+  font-size: 26px !important;
+}
+
+/* Banner siklon: kepala merah padat jadi wireframe oranye. */
+.cyc-note { background: rgba(0,0,0,.90) !important; border: 1px solid var(--alert) !important; }
+.cyc-note-top {
+  background: transparent !important; color: var(--alert) !important;
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase;
+}
+.cyc-tab { background: rgba(0,0,0,.90) !important; border: none !important; }
+.cyc-caret { color: var(--alert) !important; }
+.cyc-detail { background: transparent !important; border-top: 1px solid var(--line) !important; }
+.cyc-th { color: var(--variant); font-family: var(--font-mono); font-size: 9px; letter-spacing: .1em; }
+/* Keping legenda siklon jadi kotak status 8px, sesuai bab Chips di DESIGN.md. */
+.cyc-chip { width: 8px !important; height: 8px !important; border: none !important; border-radius: 0 !important; }
+/* Mendung sempat dipatok ke --line (#3c3c3c) dan itu terlalu gelap, lingkaran
+   ikonnya nyaris hilang di atas peta yang terang. Dinaikkan ke abu netral. */
+.cc-cloud  { color: rgba(224,224,224,.62); }
+.cc-pcloud { color: rgba(224,224,224,.82); }

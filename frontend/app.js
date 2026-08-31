@@ -833,7 +833,16 @@ async function showFrame(i) {
 
   const vt = $("valid-time");
   if (vt) vt.textContent = DAILY_LAYERS.has(activeLayer) ? fmtDay(frame.valid_time) : fmtValid(frame.valid_time);
-  const ts = $("time-slider"); if (ts) ts.value = String(current);
+  const ts = $("time-slider");
+  if (ts) {
+    ts.value = String(current);
+    // Isian "cairan" slider. Kotak hijau penanda jam sekarang sudah dibuang,
+    // penggantinya justru isian ini: bagian yang sudah terlewati diwarnai
+    // hijau neon dan ujungnya BERHENTI di waktu yang sedang dipilih. Posisinya
+    // ditulis ke custom property, gradiennya digambar CSS.
+    const maks = Math.max(1, (parseInt(ts.max, 10) || 1));
+    ts.style.setProperty("--tl-isi", ((current / maks) * 100).toFixed(2) + "%");
+  }
   refreshCityIcons();                    // label kota (+ikon bila aktif) ikut waktu aktif
   if (cyclonesOn) refreshCyclones();     // siklon + jalur ikut waktu aktif
   if (itczOn) refreshItcz();             // zona ITCZ ikut waktu aktif
@@ -1956,10 +1965,14 @@ async function loadCyclones() {
 // Warna ikut TINGKAT: Siklon Lintang Tinggi (UNGU), Siklon Tropis (MERAH),
 // Bibit Siklon (ORANYE), Sirkulasi Siklonik (HIJAU TUA). Kunci legenda identifikasi.
 function cycloneColor(tier, cat) {
-  if (tier === "EXTRA") return "#7a1fa2";              // Siklon Lintang Tinggi — ungu
-  if (tier === "SEED") return "#f59f00";              // Bibit Siklon — oranye
-  if (tier === "CIRC") return "#1b7a3d";              // Sirkulasi Siklonik — hijau tua
-  return cat >= 3 ? "#a11010" : "#d61f1f";            // Siklon Tropis — merah
+  // Warna dipetakan ke palet fungsional Cyberminimalist HUD, bukan warna
+  // dekoratif. Sistem ini cuma punya tiga isyarat: hijau untuk keadaan normal,
+  // biru untuk sesuatu yang menarik perhatian, oranye untuk peringatan. Makin
+  // berbahaya makin condong ke oranye lalu merah.
+  if (tier === "CIRC") return "#00ff41";              // Sirkulasi Siklonik, paling lemah
+  if (tier === "EXTRA") return "#00f0ff";             // Siklon Lintang Tinggi
+  if (tier === "SEED") return "#ff9100";              // Bibit Siklon, mulai diawasi
+  return cat >= 3 ? "#ff2d2d" : "#ff6a00";            // Siklon Tropis
 }
 function refreshCyclones() {
   if (!cycloneGroup) return;
