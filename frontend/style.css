@@ -1345,3 +1345,135 @@ body.model-private #about-card-team { display: flex; }
   }
   .di-ket .cyc-tab, .di-ket .itcz-tab { display: none !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CYBERMINIMALIST HUD — LAPIS BENTUK
+   ---------------------------------------------------------------------------
+   Blok ini SENGAJA ditaruh di ujung berkas supaya menang tanpa perlu menyentuh
+   satu pun aturan tata letak di atas. Posisi, ukuran kolom, dan urutan elemen
+   TIDAK diubah. Yang diganti WUJUDNYA.
+
+   Penukaran token saja ternyata belum cukup. Hasilnya masih neubrutalism yang
+   sekadar dicat hitam: kotak tebal, blok padat, tombol aktif berupa balok
+   warna. Kalimat kunci dari layar Design System rujukan:
+
+     "Containers are obsolete. Interactions are defined by color shift and
+      text-decoration, maintaining the zero-gravity wireframe aesthetic."
+
+   Jadi kotaknya DIHAPUS, bukan dihitamkan. Yang tersisa garis rambut, teks
+   mono huruf besar berjarak, dan kotak status 8px.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ---- Wadah: dari kotak jadi selubung tipis --------------------------------
+   Peta kita terang (hijau, biru), beda dengan rujukan yang petanya gelap. Tapi
+   rujukan itu sendiri memasang veil `bg-surface/40` di atas petanya, dan
+   DESIGN.md menyebut "a thin, digital veil over raw atmospheric telemetry".
+   Jadi selubung gelap tembus pandang memang bagian bahasa desainnya, bukan
+   tambalan. Tanpa blur, sebab blur ditolak tegas. */
+.panel, .legend-panel, .lang, .zoom {
+  background: rgba(8, 8, 8, .80);
+  border: none;
+  box-shadow: none;
+}
+.panel.layers { padding: 10px 0; }
+.panel.brand  { background: transparent; padding: 6px 4px; }
+
+/* ---- Merek: kotak dibuang, tinggal teks ---- */
+.brand-text strong {
+  font-size: 15px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--lime);
+}
+.brand-text span { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
+.brand-logo { opacity: .85; }
+
+/* ---- Tombol layer: dari balok jadi baris telemetri ---- */
+.layer-btn {
+  background: transparent; border: none; border-bottom: none;
+  color: var(--variant);
+  font-size: 11.5px; font-weight: 500; letter-spacing: .13em;
+  padding: 6px 16px; gap: 9px;
+}
+/* Kotak status 8px, tanda khas sistem ini: padat kalau menyala, berongga
+   kalau mati. Menggantikan latar blok yang dulu dipakai buat menandai aktif. */
+.layer-btn::before {
+  content: ""; flex: 0 0 auto; width: 8px; height: 8px;
+  border: 1px solid var(--line); background: transparent;
+}
+.layer-btn .material-symbols-outlined { font-size: 15px; color: var(--line); }
+.layer-btn.active { background: transparent; color: var(--lime); }
+.layer-btn.active::before { background: var(--lime); border-color: var(--lime); }
+.layer-btn.active .material-symbols-outlined { color: var(--lime); }
+.layer-btn:hover:not(.active):not(.disabled) { background: transparent; color: var(--primary); }
+.layer-btn:hover:not(.active):not(.disabled)::before { border-color: var(--primary); }
+.layer-btn:hover:not(.active):not(.disabled) .material-symbols-outlined { color: var(--primary); }
+
+/* ---- Tombol ikon, zoom, bahasa: berongga, terisi saat disentuh ------------
+   DESIGN.md: "Default: transparent background, 1px Grey-800 border. On hover,
+   the button fills with the border color and text flips to OLED Black." */
+.icon-btn, .zoom button, .lang button {
+  background: transparent; color: var(--variant);
+  border: 1px solid var(--line);
+  font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  transition: background .1s, color .1s, border-color .1s;
+}
+.icon-btn { box-shadow: none; }
+.icon-btn .material-symbols-outlined, .zoom button .material-symbols-outlined { font-size: 18px; }
+.icon-btn:hover, .zoom button:hover, .lang button:hover:not(.active):not(:disabled) {
+  background: var(--primary); color: var(--on-primary); border-color: var(--primary);
+}
+.icon-btn.active { background: transparent; color: var(--lime); border-color: var(--lime); }
+.lang button.active { background: var(--lime); color: var(--on-lime); border-color: var(--lime); }
+.zoom { gap: 0; }
+.zoom button { border-top: none; border-left: none; border-right: none; }
+.zoom button:first-child { border: none; border-bottom: 1px solid var(--line); }
+
+/* ---- Dropdown: garis bawah saja, bukan kotak penuh ---- */
+.select-wrap select {
+  background: transparent; border: none; border-bottom: 1px solid var(--line);
+  color: var(--ink); font-size: 11.5px; letter-spacing: .1em;
+}
+.select-wrap select:focus { background: transparent; border-bottom-color: var(--primary); color: var(--primary); }
+.label-caps { color: var(--variant); font-size: 9.5px; letter-spacing: .18em; }
+
+/* ---- Bilah waktu ---- */
+.panel.timeline { background: rgba(8,8,8,.82); }
+
+/* ---- Legenda: sel datanya tetap, cuma rangkanya dibuang ---- */
+.legend-panel { border: 1px solid var(--line); }
+.legend-head { background: transparent; color: var(--variant); font-size: 9.5px; letter-spacing: .18em; }
+
+/* ---- Merek perlu selubung juga ------------------------------------------
+   Sempat dibikin bening penuh dan hasilnya tak terbaca di atas peta hijau
+   terang. Rujukan pun memasang veil di atas petanya, jadi ini bukan tambalan. */
+.panel.brand { background: rgba(8,8,8,.80); padding: 8px 14px 8px 10px; }
+
+/* ---- Ikon layer ikut warna barisnya ---------------------------------------
+   Sempat dipatok ke --line dan hasilnya nyaris tak kelihatan, menyisakan
+   celah kosong di tiap baris. Diikutkan currentColor supaya senyawa dengan
+   keadaan barisnya: redup saat mati, hijau saat menyala, biru saat disentuh. */
+.layer-btn .material-symbols-outlined { color: currentColor; opacity: .75; font-size: 15px; }
+.layer-btn.active .material-symbols-outlined { color: currentColor; opacity: 1; }
+
+/* ---- Lencana: dari balok merah jadi wireframe --------------------------- */
+/* Gaya lama: latar merah padat, garis 2px, bayangan keras 3px. Di bahasa HUD
+   peringatan itu safety orange berongga, bukan blok. */
+.fresh-badge {
+  background: rgba(8,8,8,.86); color: var(--alert);
+  border: 1px solid var(--alert); box-shadow: none;
+  font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase;
+  padding: 4px 9px 4px 7px;
+}
+.fresh-ico { font-size: 13px; }
+.acc-badge { color: var(--lime); border-color: var(--lime); }
+
+/* ---- Penyesuaian kontras garis dan selubung -------------------------------
+   DESIGN.md memakai grey-800 (#282828) buat garis rambut, dan itu pas di atas
+   hitam pekat seperti rujukannya. Peta kita TERANG, dan panelnya cuma selubung
+   tembus pandang, jadi garis segelap itu tersapu habis: sekat antar segmen dan
+   kotak status yang berongga sama sekali tak kelihatan.
+   Selubung ditebalkan dan garisnya dinaikkan sedikit supaya kesan "tipis"-nya
+   tetap sama seperti rujukan, tapi kali ini betul terlihat. */
+:root { --line: #3c3c3c; }
+.panel, .legend-panel, .lang, .zoom { background: rgba(6,6,6,.90); }
+.panel.brand { background: rgba(6,6,6,.90); }
+.panel.timeline { background: rgba(6,6,6,.90); }
