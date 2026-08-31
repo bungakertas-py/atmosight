@@ -753,9 +753,6 @@ function renderLegend(layerKey) {
   if (!def || !head || !cells) return;
   head.textContent = def.head;
   cells.classList.toggle("legend-words", !!def.words);   // sel melebar utk label kata
-  // Warna dipindah ke anak `.lg-bar`, BUKAN latar selnya. Dengan begitu lebar
-  // sel ditentukan oleh panjang labelnya sendiri, jadi legenda berlabel kata
-  // (mis. kategori ISPU) tidak saling menabrak seperti waktu lebarnya dipatok.
   cells.innerHTML = def.cells.map(([label, bg, dark]) =>
     (bg === "transparent"
       ? `<div class="legend-cell kotak-catur${dark ? " dark" : ""}">${label}</div>`
@@ -836,16 +833,7 @@ async function showFrame(i) {
 
   const vt = $("valid-time");
   if (vt) vt.textContent = DAILY_LAYERS.has(activeLayer) ? fmtDay(frame.valid_time) : fmtValid(frame.valid_time);
-  const ts = $("time-slider");
-  if (ts) {
-    ts.value = String(current);
-    // Isian "cairan" slider. Kotak hijau penanda jam sekarang sudah dibuang,
-    // penggantinya justru isian ini: bagian yang sudah terlewati diwarnai
-    // hijau neon dan ujungnya BERHENTI di waktu yang sedang dipilih. Posisinya
-    // ditulis ke custom property, gradiennya digambar CSS.
-    const maks = Math.max(1, (parseInt(ts.max, 10) || 1));
-    ts.style.setProperty("--tl-isi", ((current / maks) * 100).toFixed(2) + "%");
-  }
+  const ts = $("time-slider"); if (ts) ts.value = String(current);
   refreshCityIcons();                    // label kota (+ikon bila aktif) ikut waktu aktif
   if (cyclonesOn) refreshCyclones();     // siklon + jalur ikut waktu aktif
   if (itczOn) refreshItcz();             // zona ITCZ ikut waktu aktif
@@ -1220,7 +1208,7 @@ function chartSVG(spec) {
   }
 
   // ---- sumbu X & Y + tick label (tanpa grid) ----
-  const AX = `stroke="#271717" stroke-width="1.4"`;
+  const AX = `stroke="#1c1b1b" stroke-width="1.4"`;
   let axes = `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${y0}" ${AX}/>` +
              `<line x1="${padL}" y1="${y0}" x2="${padL + plotW}" y2="${y0}" ${AX}/>`;
   for (const tv of [hi, (lo + hi) / 2, lo]) {
@@ -1248,6 +1236,7 @@ function chartSVG(spec) {
   }
 
   return `<svg class="pt-meteo" viewBox="0 0 ${W} ${H}" width="100%">` +
+    `<rect x="1" y="1" width="${W - 2}" height="${H - 2}" fill="#ffffff" stroke="#1c1b1b" stroke-width="2"/>` +
     axes + body + `</svg>`;
 }
 
@@ -1968,12 +1957,10 @@ async function loadCyclones() {
 // Warna ikut TINGKAT: Siklon Lintang Tinggi (UNGU), Siklon Tropis (MERAH),
 // Bibit Siklon (ORANYE), Sirkulasi Siklonik (HIJAU TUA). Kunci legenda identifikasi.
 function cycloneColor(tier, cat) {
-  // Triad Bauhaus: merah untuk bahaya, biru untuk perairan dan keadaan
-  // interaktif, kuning untuk peringatan sekunder. Tanpa warna dekoratif.
-  if (tier === "CIRC") return "#485f84";              // Sirkulasi Siklonik, paling lemah
-  if (tier === "EXTRA") return "#5b403f";             // Siklon Lintang Tinggi
-  if (tier === "SEED") return "#e0a500";              // Bibit Siklon, peringatan
-  return cat >= 3 ? "#7d0a1c" : "#b7102a";            // Siklon Tropis, merah utama
+  if (tier === "EXTRA") return "#7a1fa2";              // Siklon Lintang Tinggi — ungu
+  if (tier === "SEED") return "#f59f00";              // Bibit Siklon — oranye
+  if (tier === "CIRC") return "#1b7a3d";              // Sirkulasi Siklonik — hijau tua
+  return cat >= 3 ? "#a11010" : "#d61f1f";            // Siklon Tropis — merah
 }
 function refreshCyclones() {
   if (!cycloneGroup) return;
