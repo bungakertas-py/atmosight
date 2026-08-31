@@ -34,6 +34,15 @@ const MODEL_AKTIF = {
 };
 const modelHidup = (id) => !!MODELS[id] && MODEL_AKTIF[id] === true;
 
+// Model PAJANGAN. Sengaja cuma dipamerkan di dropdown supaya rencananya
+// kelihatan, tapi MATI dan tidak bisa dipilih. Tidak ada pipeline, tidak ada
+// data, tidak ada base path. Kalau nanti salah satunya betul betul digarap,
+// pindahkan dia ke MODELS di atas lalu nyalakan lewat MODEL_AKTIF.
+const MODEL_PAJANGAN = [
+  { label: "WRF - 3 km" },
+  { label: "WRFDA - 3 km" },
+];
+
 const _mp = new URLSearchParams(location.search).get("model");
 // Dijaga juga di sini, bukan cuma di dropdown. Kalau tidak, model yang sudah
 // dimatikan masih bisa dibuka orang cuma dengan mengetik ?model=wrf di alamat.
@@ -295,15 +304,26 @@ function setupModelSelect() {
     o.textContent = m.label;
     sel.appendChild(o);
   }
+  // Model pajangan ditempel di ekor, mati dan tak bisa dipilih.
+  for (const m of MODEL_PAJANGAN) {
+    const o = document.createElement("option");
+    o.textContent = m.label;
+    o.disabled = true;
+    sel.appendChild(o);
+  }
   sel.value = MODEL_ID;
-  // Kalau cuma satu model yang hidup, dropdown-nya tak ada gunanya. Yang
-  // disembunyikan HARUS seluruh .field, bukan cuma .select-wrap, sebab label
-  // "MODEL" ada di luar select-wrap. Salah sasaran bikin labelnya nongol
-  // sendirian tanpa kotak pilihan di bawahnya, dan itu kelihatan rusak.
-  if (hidup.length < 2) {
+  // Dropdown disembunyikan HANYA kalau isinya betul betul cuma satu baris.
+  // Yang dihitung isi seluruh dropdown, bukan cuma yang hidup, sebab model
+  // pajangan pun tetap perlu kelihatan. Yang disembunyikan HARUS seluruh
+  // .field, bukan cuma .select-wrap, sebab label "MODEL" ada di luar
+  // select-wrap dan kalau salah sasaran dia nongol sendirian tanpa kotak
+  // pilihan di bawahnya.
+  if (hidup.length + MODEL_PAJANGAN.length < 2) {
     (sel.closest(".field") || sel.closest(".select-wrap") || sel).style.display = "none";
     return;
   }
+  // Pindah model cuma boleh ke yang hidup. Option pajangan sudah disabled,
+  // tapi penjagaan di bawah tetap diperlukan buat jalur lain.
   sel.addEventListener("change", async () => {
     const id = sel.value;
     if (id === MODEL_ID) return;
