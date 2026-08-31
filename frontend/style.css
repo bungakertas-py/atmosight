@@ -1318,3 +1318,81 @@ body.model-private #about-card-team { display: flex; }
   }
   .di-ket .cyc-tab, .di-ket .itcz-tab { display: none !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   KONTROL KANAN: LAMBANG DAN NAMANYA SAJA, KOTAKNYA MUNCUL SAAT DISENTUH
+   ---------------------------------------------------------------------------
+   Sebelumnya tiap tombol berupa kotak neubrutalist penuh yang selalu tampil,
+   dan namanya baru muncul saat hover. Sekarang dibalik: yang menetap justru
+   LAMBANG dan NAMANYA, sedangkan kotaknya baru menyembul saat disentuh atau
+   sedang menyala.
+
+   Ini cuma soal kapan kotaknya tampil. Begitu tampil, kotaknya tetap kotak
+   neubrutalist yang sama, lengkap dengan garis tebal dan bayangan kerasnya.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (hover: hover) and (min-width: 641px) {
+  /* ---- Keadaan diam: tanpa kotak ---- */
+  .col.items-end .icon-btn,
+  .col.items-end .zoom,
+  .col.items-end .lang {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    transition: none;                /* neubrutalism, perubahannya tegas */
+  }
+  .col.items-end .zoom button { background: transparent; }
+  .col.items-end .zoom button:first-child { border-bottom-color: transparent; }
+  .col.items-end .lang button { background: transparent; }
+  .col.items-end .lang button:first-child { border-right-color: transparent; }
+
+  /* ---- Nama MENETAP di kiri lambang, bukan lagi tooltip saat hover ----
+     Dipakai `::after` sebab aturan tooltip lama memang di situ, dan satu
+     elemen cuma punya satu ::after. Rupanya diubah jadi teks polos. */
+  .col.items-end [data-tip]::after {
+    opacity: 1;
+    transform: translateY(-50%);
+    background: transparent;
+    color: var(--ink);
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    right: calc(100% + 9px);
+    font-size: 10px;
+    letter-spacing: .06em;
+    /* Halo tipis supaya nama tetap terbaca di atas peta yang warnanya bisa
+       apa saja, sebab sekarang tak ada lagi kotak yang menaunginya. */
+    text-shadow: 0 0 3px var(--paper), 0 0 6px var(--paper), 0 1px 2px var(--paper);
+  }
+  /* Lambangnya juga perlu halo dengan alasan yang sama. */
+  .col.items-end .icon-btn .material-symbols-outlined,
+  .col.items-end .zoom button .material-symbols-outlined {
+    filter: drop-shadow(0 0 3px var(--paper)) drop-shadow(0 0 5px var(--paper));
+  }
+
+  /* ---- Disentuh atau menyala: kotaknya menyembul ---- */
+  .col.items-end .icon-btn:hover:not(:disabled),
+  .col.items-end .icon-btn.active,
+  .col.items-end .zoom:hover,
+  .col.items-end .lang:hover {
+    background: var(--surface);
+    border-color: var(--ink);
+    box-shadow: var(--shadow);
+  }
+  .col.items-end .zoom:hover button,
+  .col.items-end .lang:hover button { background: var(--surface); }
+  .col.items-end .zoom:hover button:first-child { border-bottom-color: var(--ink); }
+  .col.items-end .lang:hover button:first-child { border-right-color: var(--ink); }
+  .col.items-end .lang:hover button.active { background: var(--lime); }
+  .col.items-end .icon-btn.active { background: var(--lime); }
+  /* Begitu kotaknya tampil, lambang dan namanya tak perlu halo lagi. */
+  .col.items-end .icon-btn:hover .material-symbols-outlined,
+  .col.items-end .icon-btn.active .material-symbols-outlined,
+  .col.items-end .zoom:hover button .material-symbols-outlined { filter: none; }
+  .col.items-end [data-tip]:hover::after { text-shadow: none; }
+}
+@media (hover: hover) and (min-width: 641px) {
+  /* Pasangan ID/EN ikut kehilangan kotaknya, jadi hurufnya perlu halo juga
+     supaya tetap terbaca di atas peta. */
+  .col.items-end .lang button { text-shadow: 0 0 3px var(--paper), 0 0 6px var(--paper); }
+  .col.items-end .lang:hover button { text-shadow: none; }
+}
