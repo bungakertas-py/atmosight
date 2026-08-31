@@ -9,6 +9,12 @@ __pycache__/
 # Data transien & output — di-generate pipeline / GitHub Actions, jangan di-commit
 backend/data/raw/
 backend/data/output/
+# Tanpa garis miring juga, sebab waktu uji lokal folder ini sering dibikin
+# SYMLINK ke data repo sebelah (biar tak makan disk). Aturan bergaris miring
+# cuma cocok untuk folder betulan, jadi symlink-nya lolos dan hampir ikut
+# ter-commit sebagai penunjuk ke path yang cuma ada di satu mesin.
+backend/data/output
+backend/data/raw
 
 # Aset referensi/desain (besar) — hapus baris ini kalau mau ikut dipublish
 Patokan.png

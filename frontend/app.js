@@ -296,11 +296,12 @@ function setupModelSelect() {
     sel.appendChild(o);
   }
   sel.value = MODEL_ID;
-  // Kalau cuma satu model yang hidup, dropdown-nya tak ada gunanya. Disembunyikan
-  // berikut labelnya, daripada memajang kotak pilihan yang cuma berisi satu isi.
+  // Kalau cuma satu model yang hidup, dropdown-nya tak ada gunanya. Yang
+  // disembunyikan HARUS seluruh .field, bukan cuma .select-wrap, sebab label
+  // "MODEL" ada di luar select-wrap. Salah sasaran bikin labelnya nongol
+  // sendirian tanpa kotak pilihan di bawahnya, dan itu kelihatan rusak.
   if (hidup.length < 2) {
-    const bungkus = sel.closest("label, .ctl, .kontrol, div") || sel;
-    bungkus.style.display = "none";
+    (sel.closest(".field") || sel.closest(".select-wrap") || sel).style.display = "none";
     return;
   }
   sel.addEventListener("change", async () => {
