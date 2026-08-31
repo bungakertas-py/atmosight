@@ -1489,3 +1489,100 @@ body.model-private #about-card-team { display: flex; }
   font-family: var(--font-mono); letter-spacing: .04em;
 }
 .acc-badge { background: var(--biru); color: var(--on-biru); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STRUKTUR BAUHAUS: TULANG PUNGGUNG KIRI
+   ---------------------------------------------------------------------------
+   Sampai di sini gayanya masih terasa neubrutalism, dan sebabnya bukan warna
+   melainkan SUSUNANNYA: tiap panel masih kotak berdiri sendiri, dan tiap baris
+   parameter masih punya kotaknya masing masing.
+
+   Rujukan map_explorer_bauhaus susunannya lain. Ada satu SPINE di kiri,
+   setinggi layar, berlatar kertas, dipisahkan dari peta oleh SATU garis
+   rambut tegak. Di dalamnya merek di atas, lalu daftar navigasi berupa baris
+   POLOS tanpa kotak, yang aktif ditandai blok hitam penuh.
+   DESIGN.md: "Desktop (> 1024px): Full 12-column grid with a fixed-width
+   left-aligned navigation spine."
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 1025px) {
+  #ui .ui-top > .col:not(.items-end) {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 268px; padding: 22px 0 0;
+    background: var(--paper);
+    border-right: 1px solid var(--ink);
+    align-items: stretch; gap: 0;
+    overflow-y: auto; pointer-events: auto;
+  }
+  /* Panel di dalam spine bukan lagi kotak berdiri sendiri. */
+  #ui .ui-top > .col:not(.items-end) .panel {
+    border: none !important; background: transparent !important; box-shadow: none !important;
+  }
+  .brand-row { padding: 0 22px 18px; }
+  .panel.layers { padding: 0 !important; }
+  .panel.selects { padding: 20px 22px 0 !important; }
+
+  /* Baris navigasi: polos, dipisah garis rambut, bukan kotak per item. */
+  .layer-btn {
+    padding: 11px 22px; gap: 12px;
+    border: none; border-bottom: 1px solid var(--outline-var);
+    font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--ink);
+  }
+  .layer-btn:first-child { border-top: 1px solid var(--ink); }
+  .layer-btn:last-child { border-bottom: 1px solid var(--ink); }
+  .layer-btn .material-symbols-outlined { font-size: 17px; color: var(--variant); }
+  .layer-btn.active { background: var(--ink); color: var(--paper); }
+  .layer-btn.active .material-symbols-outlined { color: var(--paper); }
+
+  /* Nomor versi di kaki spine, seperti "V.2.0.4 - BAUHAUS" di rujukan. */
+  #ui .ui-top > .col:not(.items-end)::after {
+    content: "PRIMEON · GEOMETRIC ATMOSPHERE";
+    position: absolute; left: 22px; bottom: 18px;
+    font-family: var(--font-mono); font-size: 8.5px; font-weight: 400;
+    letter-spacing: .16em; color: var(--outline);
+  }
+
+  /* Kolom kanan berdiri sendiri di atas peta, tanpa kotak pembungkus. */
+  #ui .ui-top > .col.items-end { gap: 0; }
+  .icon-btn, .zoom, .lang {
+    border: 1px solid var(--ink) !important; background: var(--paper) !important;
+  }
+  .zoom button { border: none; }
+  .zoom button:first-child { border-bottom: 1px solid var(--ink); }
+
+  /* Bilah bawah digeser supaya tak masuk ke bawah spine. */
+  .ui-bottom { padding-left: 288px; }
+}
+
+/* Kolom kiri diangkat jadi absolute, jadi kolom KANAN kehilangan penahannya di
+   dalam flex .ui-top lalu ikut jatuh ke kiri dan menimpa daftar parameter.
+   Yang kanan dipaku ke kanan juga. */
+@media (min-width: 1025px) {
+  #ui .ui-top > .col.items-end {
+    position: absolute; right: 20px; top: 20px;
+    align-items: flex-end; gap: 10px;
+  }
+  #ui .ui-top { position: relative; min-height: 0; }
+  /* Merek jangan terjepit lebar spine. */
+  .brand-row { align-items: flex-start; gap: 8px; }
+  .brand { padding: 0 !important; gap: 10px; }
+  .brand-text strong { font-size: 19px; white-space: nowrap; }
+  .brand-info, .sib-arrow { flex: none; }
+}
+
+/* KOREKSI. `#ui` sudah `position:absolute; inset:0; padding:20px`, jadi dia
+   memang acuan yang benar. Menambah `position: relative` di `.ui-top` justru
+   menjadikannya acuan, padahal tingginya NOL setelah kedua kolomnya diangkat
+   keluar aliran, sehingga `bottom: 0` tak punya sandaran dan spine-nya lenyap.
+   Acuannya dikembalikan ke `#ui`, dan padding 20 px-nya dibatalkan lewat
+   offset negatif supaya spine betul menempel tepi layar. */
+@media (min-width: 1025px) {
+  #ui .ui-top { position: static; }
+  #ui .ui-top > .col:not(.items-end) {
+    left: -20px; top: -20px; bottom: -20px; width: 288px;
+    padding: 42px 0 0;
+  }
+  #ui .ui-top > .col.items-end { right: 0; top: 0; }
+  .brand-row { padding: 0 22px 18px; }
+  #ui .ui-top > .col:not(.items-end)::after { left: 22px; bottom: 22px; }
+}
