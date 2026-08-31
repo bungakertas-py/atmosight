@@ -2169,3 +2169,30 @@ body.model-private .about-card--team { display: flex !important; }
    justru lebih jujur daripada satu pita menyambung. */
 .legend-cell { padding: 0 !important; }
 .legend { gap: 11px; }
+
+/* ---- Peredup peta DIBATALKAN --------------------------------------------
+   Sempat kupasang veil gelap 42 persen menyeluruh meniru rujukan. Rujukan
+   memang begitu, TAPI petanya sendiri gelap dan datanya jarang. Peta kita
+   isinya justru data warna penuh satu layar, jadi meredupkannya berarti
+   meredupkan barang utamanya. Layar jadi gelap semua dan itu bukan yang
+   diminta. Dibatalkan, keterbacaan teks tetap dijaga halo. */
+.leaflet-container::after { display: none !important; }
+
+/* ---- Halo diteruskan ke bilah bawah -------------------------------------
+   Aturan halo sebelumnya cuma menjangkau `#ui .ui-top > .col`, sedangkan
+   legenda, lencana, dan bilah waktu duduk di `.ui-bottom`. Tanpa peredup peta,
+   ketiganya pudar di atas peta terang. */
+.ui-bottom, .ui-bottom * {
+  text-shadow:
+    0 0 2px rgba(0,0,0,1), 0 0 4px rgba(0,0,0,.95),
+    0 0 9px rgba(0,0,0,.85), 0 1px 2px rgba(0,0,0,1);
+}
+.ui-bottom .material-symbols-outlined {
+  filter: drop-shadow(0 0 2px rgba(0,0,0,1)) drop-shadow(0 0 5px rgba(0,0,0,.9));
+}
+.fresh-badge, .acc-badge { color: rgba(235,235,235,.86) !important; }
+.lg-lbl, .legend-head { color: rgba(235,235,235,.92) !important; }
+.tl-cur { color: rgba(240,240,240,.96) !important; }
+.tl-tick-lbl, .tl-tick.day .tl-tick-lbl { color: rgba(235,235,235,.7) !important; }
+/* Sel legenda dan pitanya jangan ikut berhalo, halo pada blok warna bikin kotor. */
+.lg-bar { text-shadow: none; }
