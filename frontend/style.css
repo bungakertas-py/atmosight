@@ -1983,3 +1983,80 @@ body.model-private .about-card--team { display: flex !important; }
     rgba(0,0,0,.573) 62.5%, rgba(0,0,0,.491) 70%, rgba(0,0,0,.391) 77.5%,
     rgba(0,0,0,.275) 85%, rgba(0,0,0,.144) 92.5%, rgba(0,0,0,0) 100%);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SELUBUNG DIBUANG, DIGANTI HALO PADA TEKSNYA
+   ---------------------------------------------------------------------------
+   Selubung gelap di atas peta TERANG selalu terbaca sebagai noda. Rujukannya
+   bisa memakai selubung karena petanya sendiri gelap. Peta kita hijau menyala,
+   jadi gradien hitam di pojok cuma kelihatan seperti cat tumpah, dan makin
+   dihaluskan makin kelihatan seperti smudge.
+
+   Cara yang benar untuk HUD di atas citra terang: tidak ada selubung sama
+   sekali, teksnya yang diberi halo gelap tipis supaya tetap tajam di atas
+   warna apa pun. App ini sudah memakai pola itu untuk label kota di peta.
+   ═══════════════════════════════════════════════════════════════════════════ */
+#ui .ui-top > .col::before { display: none !important; }
+
+#ui .ui-top > .col,
+#ui .ui-top > .col * {
+  text-shadow: 0 0 3px rgba(0,0,0,.95), 0 0 7px rgba(0,0,0,.85), 0 1px 2px rgba(0,0,0,.9);
+}
+/* Lambang ikon bukan teks, jadi haloya lewat drop-shadow. */
+#ui .ui-top > .col .material-symbols-outlined,
+#ui .ui-top > .col svg {
+  filter: drop-shadow(0 0 3px rgba(0,0,0,.95)) drop-shadow(0 0 6px rgba(0,0,0,.8));
+}
+/* Garis bawah dropdown ikut dipertegas, tanpa halo dia hilang di atas peta. */
+.select-wrap select { border-bottom-color: rgba(224,224,224,.45) !important; }
+.dd-row, .layer-split, .layer-btn.dd-btn, .layer-btn--half {
+  border-bottom-color: rgba(224,224,224,.35) !important;
+}
+
+/* ---- Teks HUD dicerahkan, halo dipertegas --------------------------------
+   Tanpa selubung, warna teks jadi satu satunya yang menahan keterbacaan.
+   --variant itu abu KEHIJAUAN (#b9ccb2), dan di atas peta hijau dia lenyap.
+   Teks non-aktif dinaikkan ke putih telemetri, dan halonya dipertebal supaya
+   tetap tajam di atas warna apa pun, termasuk kuning dan hijau menyala. */
+#ui .ui-top > .col,
+#ui .ui-top > .col *,
+#ui .ui-top > .col .label-caps,
+#ui .ui-top > .col .brand-text span {
+  text-shadow:
+    0 0 2px rgba(0,0,0,1), 0 0 4px rgba(0,0,0,.95),
+    0 0 9px rgba(0,0,0,.85), 0 1px 2px rgba(0,0,0,1);
+}
+.layer-btn { color: rgba(230,230,230,.92); }
+.layer-btn .material-symbols-outlined { color: rgba(230,230,230,.78); }
+.layer-btn.active, .layer-btn.active .material-symbols-outlined { color: var(--lime); }
+.icon-btn .material-symbols-outlined,
+.zoom button .material-symbols-outlined { color: rgba(230,230,230,.9); }
+.label-caps, .brand-text span { color: rgba(230,230,230,.72) !important; }
+.select-wrap select { color: rgba(235,235,235,.95); }
+@media (hover: hover) and (min-width: 641px) {
+  .col.items-end [data-tip]::after { color: rgba(230,230,230,.82) !important; }
+}
+#ui .ui-top > .col .material-symbols-outlined,
+#ui .ui-top > .col svg {
+  filter: drop-shadow(0 0 2px rgba(0,0,0,1)) drop-shadow(0 0 5px rgba(0,0,0,.9));
+}
+
+/* ---- Peta diredupkan MENYELURUH, sesuai rujukan -------------------------
+   Ini kunci yang kulewatkan. Layar map_explorer rujukan memasang veil gelap
+   di ATAS SELURUH peta, bukan cuma di pojok:
+       <div class="absolute inset-0 bg-surface/40 pointer-events-none">
+   Itu sebabnya di sana teks tipis dan garis rambut bisa terbaca tanpa
+   selubung pojok, dan itu juga yang membuat DESIGN.md menyebutnya "a thin,
+   digital veil over raw atmospheric telemetry".
+
+   Tanpa ini, peta kita menyala terang dan apa pun yang ditaruh di atasnya
+   akan berkelahi dengannya: selubung pojok jadi noda, teks polos jadi tak
+   terbaca. Diredupkan di sini, bukan di data, jadi warnanya tak berubah arti,
+   cuma turun terangnya. */
+.leaflet-container::after {
+  content: ""; position: absolute; inset: 0; z-index: 400;
+  background: rgba(6, 10, 8, .42);
+  pointer-events: none;
+}
+/* Label peta ikut dinaikkan supaya tak ikut teredup. */
+.leaflet-pane.leaflet-labels-pane, .leaflet-pane.leaflet-cityicons-pane { z-index: 650; }
