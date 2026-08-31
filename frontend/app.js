@@ -1208,7 +1208,7 @@ function chartSVG(spec) {
   }
 
   // ---- sumbu X & Y + tick label (tanpa grid) ----
-  const AX = `stroke="#1c1b1b" stroke-width="1.4"`;
+  const AX = `stroke="#3c3c3c" stroke-width="1"`;
   let axes = `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${y0}" ${AX}/>` +
              `<line x1="${padL}" y1="${y0}" x2="${padL + plotW}" y2="${y0}" ${AX}/>`;
   for (const tv of [hi, (lo + hi) / 2, lo]) {
@@ -1236,7 +1236,6 @@ function chartSVG(spec) {
   }
 
   return `<svg class="pt-meteo" viewBox="0 0 ${W} ${H}" width="100%">` +
-    `<rect x="1" y="1" width="${W - 2}" height="${H - 2}" fill="#ffffff" stroke="#1c1b1b" stroke-width="2"/>` +
     axes + body + `</svg>`;
 }
 

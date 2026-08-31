@@ -231,7 +231,7 @@ html, body {
     background: var(--ink); color: var(--surface);
     font-family: var(--font-ui); font-weight: 700; font-size: 11px;
     letter-spacing: .04em; text-transform: uppercase; white-space: nowrap;
-    padding: 5px 9px; border: 2px solid var(--line); box-shadow: var(--shadow-sm);
+    padding: 5px 9px; border: 1px solid var(--line); box-shadow: var(--shadow-sm);
     opacity: 0; pointer-events: none; transition: opacity .12s ease, transform .12s ease;
     z-index: 60;
   }
@@ -247,7 +247,7 @@ html, body {
     background: var(--ink); color: var(--surface);
     font-family: var(--font-ui); font-weight: 700; font-size: 11px;
     letter-spacing: .02em; white-space: nowrap; text-transform: none;   /* kalimat, bukan teriakan */
-    padding: 5px 9px; border: 2px solid var(--line); box-shadow: var(--shadow-sm);
+    padding: 5px 9px; border: 1px solid var(--line); box-shadow: var(--shadow-sm);
     opacity: 0; pointer-events: none; transition: opacity .12s ease, transform .12s ease;
     z-index: 60;
   }
@@ -259,7 +259,7 @@ html, body {
 .cc-ico {
   display: flex; align-items: center; justify-content: center;
   width: 30px; height: 30px; box-sizing: border-box;
-  background: var(--surface); border: 2px solid var(--line);
+  background: var(--surface); border: 1px solid var(--line);
   box-shadow: 2px 2px 0 0 var(--ink);
 }
 .cc-ico .material-symbols-outlined { font-size: 19px; line-height: 1; }
@@ -268,8 +268,8 @@ html, body {
 .cc-sunny  .material-symbols-outlined { color: #f5a91e; }
 .cc-pcloud .material-symbols-outlined { color: #6b7686; }
 .cc-cloud  .material-symbols-outlined { color: #566072; }
-.cc-rain   .material-symbols-outlined { color: #2360c8; }
-.cc-heavy  .material-symbols-outlined { color: #e8590c; }
+.cc-rain   .material-symbols-outlined { color: var(--primary); }
+.cc-heavy  .material-symbols-outlined { color: var(--alert); }
 .cc-storm  .material-symbols-outlined { color: #c81d5a; }
 
 /* Nama kota + nilai parameter aktif, menggantung di bawah ikon. Halo hitam tebal
@@ -362,14 +362,14 @@ html, body {
 
 /* Range input neubrutalist (kecil) */
 #time-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: transparent; cursor: pointer; }
-#time-slider::-webkit-slider-runnable-track { height: 6px; background: var(--surface-highest); border: 2px solid var(--line); }
-#time-slider::-moz-range-track { height: 6px; background: var(--surface-highest); border: 2px solid var(--line); }
+#time-slider::-webkit-slider-runnable-track { height: 6px; background: var(--surface-highest); border: 1px solid var(--line); }
+#time-slider::-moz-range-track { height: 6px; background: var(--surface-highest); border: 1px solid var(--line); }
 #time-slider::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none; width: 16px; height: 16px; margin-top: -7px;
-  background: var(--lime); border: 2px solid var(--line); border-radius: 0;
+  background: var(--lime); border: 1px solid var(--line); border-radius: 0;
 }
 #time-slider::-moz-range-thumb {
-  width: 16px; height: 16px; background: var(--lime); border: 2px solid var(--line); border-radius: 0;
+  width: 16px; height: 16px; background: var(--lime); border: 1px solid var(--line); border-radius: 0;
 }
 
 /* Legenda horizontal (bottom-right) */
@@ -501,7 +501,7 @@ html, body {
 .pt-body::-webkit-scrollbar-track,
 .pt-table-wrap::-webkit-scrollbar-track,
 .search-results::-webkit-scrollbar-track,
-.about-card::-webkit-scrollbar-track { background: var(--surface-high); border-left: 2px solid var(--line); }
+.about-card::-webkit-scrollbar-track { background: var(--surface-high); border-left: 1px solid var(--line); }
 .pt-body::-webkit-scrollbar-thumb,
 .pt-table-wrap::-webkit-scrollbar-thumb,
 .search-results::-webkit-scrollbar-thumb,
@@ -557,21 +557,21 @@ html, body {
 /* Skeleton loading kartu Skew-T (meniru bentuk plot + indeks) */
 .skt-skel { gap: 8px; }
 .skt-sk-note { height: 12px; width: 82%; }
-.skt-sk-plot { height: 360px; border-radius: 0; border: 2px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink); }
+.skt-sk-plot { height: 360px; border-radius: 0; border: 1px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink); }
 .skt-sk-exp { height: 30px; width: 128px; }
 .skt-sk-idx { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px; }
-.skt-sk-idx .sk-bar { height: 40px; border-radius: 0; border: 2px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink); }
-.pt-skewt-wrap svg { border: 2px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink); background: #fff; display: block; }
+.skt-sk-idx .sk-bar { height: 40px; border-radius: 0; border: 1px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink); }
+.pt-skewt-wrap svg { border: 1px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink); background: #fff; display: block; }
 .skt-idx { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
 .skt-cell {
-  border: 2px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink); background: var(--surface);
+  border: 1px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink); background: var(--surface);
   padding: 5px 7px; display: flex; flex-direction: column; gap: 1px;
 }
 .skt-k { font-size: 9px; letter-spacing: .04em; color: var(--variant); font-family: var(--font-mono); }
 .skt-v { font-size: 13px; font-weight: 700; font-family: var(--font-mono); }
 .skt-legend {
   display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px;
-  margin-top: 8px; padding-top: 8px; border-top: 2px solid var(--line);
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line);
 }
 .skt-lg { display: flex; align-items: center; gap: 6px; font-size: 10px; font-family: var(--font-mono); color: var(--ink); }
 .skt-lg svg { flex: none; }
@@ -586,30 +586,30 @@ html, body {
 
 /* Ringkasan bahasa manusia + saran aktivitas + kartu 3 hari (awam) */
 .pt-summary { font-size: 13.5px; line-height: 1.55; padding: 11px 13px; margin-bottom: 11px;
-  border: 2px solid var(--line); background: var(--surface-low); }
+  border: 1px solid var(--line); background: var(--surface-low); }
 .pt-summary b { font-weight: 700; }
-.pt-summary .feels { color: #e8590c; font-weight: 700; white-space: nowrap; }
+.pt-summary .feels { color: var(--alert); font-weight: 700; white-space: nowrap; }
 .pt-advice { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
 .adv-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700;
-  padding: 4px 8px; border: 2px solid var(--line); background: var(--surface); box-shadow: 2px 2px 0 0 var(--ink); }
+  padding: 4px 8px; border: 1px solid var(--line); background: var(--surface); box-shadow: 2px 2px 0 0 var(--ink); }
 .adv-chip .material-symbols-outlined { font-size: 15px; }
 .fc-cards { display: flex; gap: 8px; margin-bottom: 18px; }
 .fc-card { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
-  padding: 9px 4px; border: 2px solid var(--line); background: var(--surface); }
+  padding: 9px 4px; border: 1px solid var(--line); background: var(--surface); }
 .fc-day { font-size: 11px; font-weight: 700; text-align: center; line-height: 1.15; }
 .fc-day span { display: block; font-size: 9px; font-weight: 500; color: var(--variant); }
 .fc-temp { font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 2px; }
-.fc-temp .ft-ico { font-size: 15px; color: #e8590c; margin-right: -1px; }
-.fc-temp .t-max { color: #e8590c; }
-.fc-temp .t-min { color: #2360c8; }
+.fc-temp .ft-ico { font-size: 15px; color: var(--alert); margin-right: -1px; }
+.fc-temp .t-max { color: var(--alert); }
+.fc-temp .t-min { color: var(--primary); }
 .fc-temp .t-min::before { content: "/"; color: var(--variant); font-weight: 500; margin: 0 1px; }
-.fc-rain { font-size: 10px; color: #2360c8; font-weight: 700; }
+.fc-rain { font-size: 10px; color: var(--primary); font-weight: 700; }
 .pt-meteo { display: block; margin-bottom: 4px; }
 .chart-legend { display: flex; gap: 18px; justify-content: center; margin: 0 0 18px;
   font-size: 11px; font-weight: 600; color: var(--ink); }
 .chl-key { display: inline-flex; align-items: center; gap: 5px; }
 .chl-key i { font-style: italic; }
-.pt-ax { font-family: var(--font-mono); font-size: 9px; fill: #444; }
+.pt-ax { font-family: var(--font-mono); font-size: 9px; fill: var(--variant); }
 .pt-table-wrap { max-height: 300px; overflow-y: auto; border: var(--bw) solid var(--line); }
 .pt-table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 11px; }
 .pt-table th {
@@ -639,7 +639,7 @@ html, body {
   position: absolute; bottom: calc(100% + 8px); right: 0; z-index: 5;
   display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
   padding: 5px 10px 5px 8px; background: #e8342c; color: #fff;
-  border: 2px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink);
+  border: 1px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink);
   font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: .02em;
   pointer-events: auto;
 }
@@ -675,7 +675,7 @@ html, body {
 .cyc-note {
   position: relative;
   display: none; flex-direction: column; max-width: 92vw; width: max-content;
-  border: 2px solid var(--line); box-shadow: var(--shadow-sm); background: var(--surface);
+  border: 1px solid var(--line); box-shadow: var(--shadow-sm); background: var(--surface);
   pointer-events: auto;
 }
 .cyc-note.show { display: flex; }
@@ -690,7 +690,7 @@ html, body {
 .cyc-tab {
   position: absolute; left: 50%; bottom: -15px; transform: translateX(-50%); z-index: -1;
   width: 38px; height: 17px; display: flex; align-items: center; justify-content: center;
-  background: var(--surface); border: 2px solid var(--line); border-top: none;
+  background: var(--surface); border: 1px solid var(--line); border-top: none;
   cursor: pointer; padding: 0;
 }
 .cyc-caret { position: relative; top: 2px; font-size: 18px; line-height: 1; color: #d61f1f; transition: transform .15s ease; }
@@ -768,7 +768,7 @@ html, body {
 
 /* Tombol info kecil di brand → buka kartu Tentang */
 .brand-info { flex: none; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
-  background: var(--surface); border: 2px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink);
+  background: var(--surface); border: 1px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink);
   cursor: pointer; pointer-events: auto; margin-left: 2px; }
 .brand-info:hover { background: var(--lime); }
 .brand-info .material-symbols-outlined { font-size: 17px; color: var(--primary); }
@@ -780,7 +780,7 @@ html, body {
    brand-row dan panel Parameter di bawahnya terdorong turun. */
 .brand-row { position: relative; display: flex; align-items: flex-start; gap: 10px; }
 .nav-arrow { flex: none; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
-  background: var(--surface); border: 2px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink);
+  background: var(--surface); border: 1px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink);
   cursor: pointer; pointer-events: auto; margin-left: 2px; }
 .nav-arrow:hover { background: var(--lime); }
 .nav-arrow .material-symbols-outlined { font-size: 18px; color: var(--primary); transition: transform .25s ease; }
@@ -822,19 +822,19 @@ html, body {
   background: var(--surface); border: var(--bw) solid var(--line); box-shadow: var(--shadow); }
 .about-close { position: absolute; top: 8px; right: 8px; z-index: 2; width: 30px; height: 30px;
   display: flex; align-items: center; justify-content: center; background: var(--surface);
-  border: 2px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink); cursor: pointer; }
+  border: 1px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink); cursor: pointer; }
 .about-close .material-symbols-outlined { font-size: 18px; }
 .about-photo { flex: 0 0 42%; background: var(--lime); border-right: var(--bw) solid var(--line);
   display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
 .about-photo img { width: 100%; height: auto; display: block; }
 .about-body { flex: 1; min-width: 0; padding: 22px 20px 24px; display: flex; flex-direction: column; gap: 12px; }
 .about-tag { align-self: flex-start; font-family: var(--font-mono); font-size: 10px; font-weight: 700;
-  letter-spacing: .08em; background: var(--lime); color: var(--on-lime); border: 2px solid var(--line);
+  letter-spacing: .08em; background: var(--lime); color: var(--on-lime); border: 1px solid var(--line);
   box-shadow: 2px 2px 0 0 var(--ink); padding: 3px 8px; }
 .about-name { font-family: var(--font-display); font-size: 26px; letter-spacing: -.01em; line-height: 1; }
 .about-intro { font-family: var(--font-ui); font-size: 13px; line-height: 1.5; color: var(--ink); }
 .about-quote { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--ink);
-  background: var(--lime); border: 2px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink); padding: 9px 11px; margin-top: 2px; }
+  background: var(--lime); border: 1px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink); padding: 9px 11px; margin-top: 2px; }
 @media (max-width: 560px) {
   .about-card { flex-direction: column; max-width: 320px; max-height: 88vh; overflow-y: auto; }
   .about-photo { flex: none; border-right: none; border-bottom: var(--bw) solid var(--line); }
@@ -893,7 +893,7 @@ body.model-private #about-card-team { display: flex; }
 .pm-me {
   display: grid; place-items: center; width: 32px; height: 32px;
   background: var(--primary); color: var(--on-primary);
-  border: 2.5px solid var(--line); border-radius: 50%;
+  border: 1px solid var(--line); border-radius: 50%;
   box-shadow: var(--shadow-sm);
 }
 .pm-me .material-symbols-outlined { font-size: 20px; line-height: 1; }
@@ -1086,7 +1086,7 @@ body.model-private #about-card-team { display: flex; }
 .pos-mark {
   display: grid; place-items: center; width: 18px; height: 18px;
   background: var(--lime); color: var(--ink);
-  border: 2px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink);
+  border: 1px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink);
 }
 .pos-mark .material-symbols-outlined {
   font-size: 12px; line-height: 1;
@@ -1094,7 +1094,7 @@ body.model-private #about-card-team { display: flex; }
 }
 .leaflet-tooltip.pos-tip {
   background: var(--surface); color: var(--ink);
-  border: 2px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink);
+  border: 1px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink);
   border-radius: 0; font-family: var(--font-ui); font-size: 11px; font-weight: 600;
   padding: 6px 8px;
 }
@@ -1111,7 +1111,7 @@ body.model-private #about-card-team { display: flex; }
 .pw-input {
   width: 100%; padding: 10px 12px; font-family: var(--font-mono); font-size: 14px;
   color: var(--ink); background: var(--surface-high);
-  border: 2px solid var(--line); border-radius: 0; outline: none;
+  border: 1px solid var(--line); border-radius: 0; outline: none;
 }
 .pw-input:focus { box-shadow: 3px 3px 0 0 var(--ink); }
 .pw-err { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: #e8342c; }
@@ -1120,7 +1120,7 @@ body.model-private #about-card-team { display: flex; }
 .pw-btn {
   padding: 8px 14px; font-family: var(--font-ui); font-size: 13px; font-weight: 700;
   background: var(--surface); color: var(--ink);
-  border: 2px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink); cursor: pointer;
+  border: 1px solid var(--line); box-shadow: 3px 3px 0 0 var(--ink); cursor: pointer;
 }
 .pw-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 0 var(--ink); }
 .pw-btn-primary { background: var(--lime); color: var(--on-lime); }
@@ -1191,7 +1191,7 @@ body.model-private #about-card-team { display: flex; }
     min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     padding: 7px 8px; font-family: var(--font-ui); font-size: 11px; font-weight: 700;
     color: var(--ink); background: var(--surface-high);
-    border: 2px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink); cursor: pointer;
+    border: 1px solid var(--line); box-shadow: 2px 2px 0 0 var(--ink); cursor: pointer;
   }
   .lb-btn .material-symbols-outlined { font-size: 15px; flex: 0 0 auto; }
   .lb-btn.active { background: var(--lime); color: var(--on-lime); }
@@ -1554,3 +1554,122 @@ body.model-private #about-card-team { display: flex; }
 .tl-btn:hover:not(:disabled) { background: var(--lime); color: var(--on-lime); }
 .select-wrap select:focus { background: transparent; }
 .panel-toggle:hover { background: var(--primary); color: var(--on-primary); }
+
+/* ---- BAYANGAN DIBUNUH MENYELURUH ----------------------------------------
+   Mengejarnya satu per satu sudah terbukti bocor terus. Token --shadow sudah
+   none, tapi belasan aturan menulis offsetnya langsung dan tiap kali ada saja
+   yang terlewat, terakhir chip saran di panel titik.
+   DESIGN.md menutup perkara ini: sistemnya "strictly Flat (2D)" dan
+   "explicitly rejects shadows, blurs, and skeuomorphism". Jadi TIDAK ADA satu
+   pun bayangan yang sah di sini, dan menyapunya sekaligus itu benar. */
+*, *::before, *::after { box-shadow: none !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ULTRAMINIMAL, LAPIS KETIGA — KOTAKNYA DIBUANG SUNGGUHAN
+   ---------------------------------------------------------------------------
+   Dua lapis sebelumnya masih memelihara kotak, cuma kotaknya dihitamkan lalu
+   digaris tipis. Rujukan point_detail tidak punya kotak SAMA SEKALI: yang ada
+   cuma garis rambut sebagai sekat sel, label kecil huruf besar di pojok, dan
+   angka sebagai fokus. Wadahnya sendiri tak terlihat.
+
+   Panel kiri diminta MEMUDAR dari kiri ke kanan, bukan berupa kotak. Itu juga
+   lebih jujur pada peta yang terang, sebab selubung penuh selalu terbaca
+   sebagai kotak walau tak bergaris.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ---- Selubung MEMUDAR, menggantikan kotak panel ---- */
+#ui::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 400px;
+  background: linear-gradient(to right,
+    rgba(0,0,0,.94) 0%, rgba(0,0,0,.88) 30%, rgba(0,0,0,.55) 68%, rgba(0,0,0,0) 100%);
+  pointer-events: none; z-index: -1;
+}
+
+
+/* ---- Wadah jadi TAK TERLIHAT ---- */
+.panel, .panel.brand, .panel.layers, .panel.timeline,
+.legend-panel, .lang, .zoom, .selects, .levels {
+  background: transparent !important;
+  border: none !important;
+}
+.panel.timeline { background: rgba(0,0,0,.72) !important; }   /* bilah bawah tetap perlu alas tipis */
+.legend-panel   { background: rgba(0,0,0,.72) !important; }
+
+/* ---- Panel kanan: kotak dalam dibuang, diganti sekat garis rambut ---- */
+#point-panel { background: transparent; border-left: 1px solid var(--line); }
+.pt-head { border-bottom: 1px solid var(--line); }
+.pt-summary, .fc-card, .adv-chip, .pt-storm-chip, .pt-skewt-head, .skt-box,
+.pt-table-wrap, .pt-chart, .chart-wrap {
+  background: transparent !important; border: none !important; padding-left: 0; padding-right: 0;
+}
+/* Sekat antar bagian pakai garis rambut, bukan bingkai. */
+.pt-summary { border-bottom: 1px solid var(--line) !important; padding-bottom: 12px; margin-bottom: 12px; }
+.fc-cards { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+.fc-card + .fc-card { border-left: 1px solid var(--line) !important; }
+
+/* Chip: bingkai dibuang, tinggal kotak status 8px + teks. */
+.adv-chip, .pt-storm-chip {
+  padding: 0; gap: 7px; font-size: 10.5px; font-weight: 500;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--variant);
+}
+.adv-chip::before, .pt-storm-chip::before {
+  content: ""; flex: 0 0 auto; width: 8px; height: 8px; background: var(--lime);
+}
+.adv-chip .material-symbols-outlined, .pt-storm-chip .material-symbols-outlined { display: none; }
+.pt-advice { gap: 14px; margin-bottom: 14px; }
+
+/* Judul bagian: label kecil huruf besar berjarak, seperti rujukan. */
+.pt-sec, .pt-body h4, .pt-body .lbl, .skt-title {
+  font-size: 9.5px !important; letter-spacing: .2em !important;
+  text-transform: uppercase; color: var(--variant) !important; font-weight: 500 !important;
+}
+
+/* Tabel: sekat BARIS saja, tanpa bingkai sel. */
+.pt-table { border: none; }
+.pt-table th, .pt-table td {
+  border: none !important; border-bottom: 1px solid var(--line-dim) !important;
+  font-size: 10.5px; padding: 5px 6px;
+}
+.pt-table th { color: var(--variant); font-weight: 500; letter-spacing: .12em; text-transform: uppercase; }
+
+/* ---- Selubung panel kanan, jadi background panelnya sendiri --------------
+   Bukan pseudo-element. Memudar dari kanan ke kiri, senada dengan panel kiri
+   yang memudar dari kiri ke kanan, jadi dua duanya menyatu ke peta. */
+#point-panel {
+  background: linear-gradient(to left,
+    rgba(0,0,0,.96) 0%, rgba(0,0,0,.93) 62%, rgba(0,0,0,.82) 100%) !important;
+  border-left: 1px solid var(--line) !important;
+}
+.pt-summary {
+  background: transparent !important; border: none !important;
+  border-bottom: 1px solid var(--line) !important;
+  padding: 0 0 12px !important; margin-bottom: 14px !important;
+  font-size: 12px; line-height: 1.6;
+}
+.pt-meteo, .pt-table-wrap { background: transparent !important; border: none !important; }
+.pt-sec { font-size: 9.5px !important; letter-spacing: .2em !important;
+  text-transform: uppercase; color: var(--variant) !important; font-weight: 500 !important; }
+.pt-storm-note { font-size: 9.5px; letter-spacing: .08em; }
+
+/* ---- Kaki panel kanan perlu alas pekat ------------------------------------
+   Panelnya memudar ke arah kiri, dan di dasar layar tombol ekspor kebetulan
+   duduk tepat di atas legenda. Waktu wadahnya dibikin bening, legenda tembus
+   ke belakang tombol. Kakinya diberi alas rata, bukan gradien. */
+.pt-foot {
+  background: rgba(0,0,0,.96); border-top: 1px solid var(--line) !important;
+  padding: 12px 18px;
+}
+/* Kartu prakiraan: sekat tegak tipis, tanpa kotak. */
+.fc-cards { gap: 0; }
+.fc-card { padding: 10px 8px; }
+
+/* ---- Selubung kanan, cerminan yang kiri ----------------------------------
+   Waktu alas panel dibuang, tombol zoom dan ID/EN di kanan atas nyaris lenyap
+   di atas peta terang. Ditambah selubung memudar dari kanan, jadi kedua tepi
+   layar sama sama meredup ke tengah dan kontrolnya terbaca tanpa perlu kotak. */
+#ui::after {
+  content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 132px;
+  background: linear-gradient(to left,
+    rgba(0,0,0,.90) 0%, rgba(0,0,0,.74) 45%, rgba(0,0,0,0) 100%);
+  pointer-events: none; z-index: -1;
+}
