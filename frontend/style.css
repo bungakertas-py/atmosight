@@ -10,18 +10,20 @@
    stroke" dan "All text should be rendered in pure black".
    Yang diganti HANYA warnanya. Ketebalan garis, bayangan, dan huruf tetap. */
 :root {
-  --ink: #000000;
-  --paper: #f9f9f9;
-  --surface: #f9f9f9;
-  --surface-low: #f3f3f3;
-  --surface-high: #e6e6fa;
-  --surface-highest: #e2e2e2;
+  /* Palet Deep Sea Telemetry (biru laut, aksen cyan biolume). Warna saja,
+     bentuk, huruf, border, dan bayangan tidak diubah. */
+  --ink: #050a14;
+  --paper: #eef4fb;
+  --surface: #f6faff;
+  --surface-low: #e8eef5;
+  --surface-high: #dde3ea;
+  --surface-highest: #c9d2dc;
   --white: #ffffff;
-  --primary: #bc13fe;
+  --primary: #00696e;
   --on-primary: #ffffff;
-  --lime: #aaff00;
-  --on-lime: #111f00;
-  --variant: #504254;
+  --lime: #00f5ff;
+  --on-lime: #002021;
+  --variant: #3a494a;
 
   --bw: 3px;
   --shadow: 6px 6px 0 0 var(--ink);
