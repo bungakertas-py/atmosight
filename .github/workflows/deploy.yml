@@ -22,12 +22,11 @@ on:
   # gagal beruntun. Buka lagi kalau sudah siap terbit.
   # push:
   #   branches: [main]
-  # JADWAL OTOMATIS SENGAJA DIMATIKAN selama masa penyiapan, supaya repo baru
-  # ini tidak ikut masak tiap subuh sebelum kita siap. Buka lagi kalau sudah
-  # mau terbit.
-  # schedule:
-  #   # 04:00 WIB = 21:00 UTC (hari sebelumnya). Sekali sehari.
-  #   - cron: "0 21 * * *"
+  # JADWAL DIBUKA 3 Sep 2026. Situsnya sudah terbit dan namanya sudah final,
+  # jadi masa penyiapan selesai. Mulai sekarang menyegar sendiri tiap subuh.
+  schedule:
+    # 04:00 WIB = 21:00 UTC (hari sebelumnya). Sekali sehari.
+    - cron: "0 21 * * *"
   workflow_dispatch:
 
 permissions:
