@@ -1,6 +1,6 @@
 {
-  "name": "Primeon Atmos — Peta Cuaca Indonesia",
-  "short_name": "Primeon Atmos",
+  "name": "Atmosight — Peta Cuaca Indonesia",
+  "short_name": "Atmosight",
   "description": "Peta cuaca interaktif Indonesia dari model GFS: angin, hujan, suhu, kelembapan, awan, dan tekanan.",
   "lang": "id",
   "start_url": ".",

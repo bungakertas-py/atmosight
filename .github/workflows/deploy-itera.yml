@@ -10,7 +10,7 @@ name: refresh-wrf-itera
 # republish sama sekali. Kalau cache tak ada, dilewati (deploy utama tetap jalan).
 on:
   # DIMATIKAN. Workflow ini satu satunya gunanya menarik ulang nc Private Model,
-  # dan Private Model belum dinyalakan di Primeon Atmos. Buka lagi bareng
+  # dan Private Model belum dinyalakan di Atmosight. Buka lagi bareng
   # MODEL_AKTIF.wrf_itera di frontend/app.js dan MASAK_MODEL_EXTRA di deploy.yml.
   # schedule:
   #   - cron: "0 9 * * *"   # 09:00 UTC = 16:00 WIB (+12 jam dari deploy utama)
@@ -94,17 +94,17 @@ jobs:
           cp -r backend/data/output/. _site/backend/data/output/
           cat > _site/index.html <<'HTML'
           <!doctype html><meta charset="utf-8">
-          <title>Primeon Atmos — Peta cuaca interaktif Indonesia</title>
+          <title>Atmosight — Peta cuaca interaktif Indonesia</title>
           <meta http-equiv="refresh" content="0; url=./frontend/index.html">
           <meta property="og:type" content="website">
-          <meta property="og:site_name" content="Primeon Atmos">
-          <meta property="og:title" content="Primeon Atmos — Peta cuaca interaktif Indonesia">
+          <meta property="og:site_name" content="Atmosight">
+          <meta property="og:title" content="Atmosight — Peta cuaca interaktif Indonesia">
           <meta property="og:description" content="Angin, hujan, suhu, awan, dan tekanan untuk seluruh Indonesia. Klik lokasimu untuk prakiraan detail per jam.">
-          <meta property="og:url" content="https://bungakertas-py.github.io/primeon-atmos/">
-          <meta property="og:image" content="https://bungakertas-py.github.io/primeon-atmos/frontend/og-image.png">
+          <meta property="og:url" content="https://bungakertas-py.github.io/atmosight/">
+          <meta property="og:image" content="https://bungakertas-py.github.io/atmosight/frontend/og-image.png">
           <meta name="twitter:card" content="summary_large_image">
-          <meta name="twitter:image" content="https://bungakertas-py.github.io/primeon-atmos/frontend/og-image.png">
-          <a href="./frontend/index.html">Buka Primeon Atmos</a>
+          <meta name="twitter:image" content="https://bungakertas-py.github.io/atmosight/frontend/og-image.png">
+          <a href="./frontend/index.html">Buka Atmosight</a>
           HTML
 
       - uses: actions/upload-pages-artifact@v3

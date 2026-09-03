@@ -111,7 +111,7 @@ _HUM_SCALE = [
 # Tutupan awan (%) RGBA: INFERNO DIBALIK, langit bersih transparan -> biru donker.
 # Warna diambil dari colormap `inferno` matplotlib di posisi 1,00 turun ke 0,00
 # (jadi terbalik: makin tertutup makin gelap), lalu DIBEKUKAN di sini. Matplotlib
-# sengaja TIDAK jadi dependensi CI, konvensi yang sama dipakai Primeon Plume.
+# sengaja TIDAK jadi dependensi CI, konvensi yang sama dipakai Smokewatch.
 #
 # Dua penyimpangan yang disengaja dari inferno murni.
 # 1. Hentian 0 persen alfanya NOL. Langit tanpa awan berarti tak ada yang perlu
@@ -121,7 +121,7 @@ _HUM_SCALE = [
 #    penuh", malah tampak seperti lubang di peta.
 #
 # Alfanya menanjak pelan di ujung bawah supaya awan tipis tak terlihat berlebihan,
-# lalu rata di atas 40 persen. Ini beda dari kasus PBLH di Primeon Plume: di sini
+# lalu rata di atas 40 persen. Ini beda dari kasus PBLH di Smokewatch: di sini
 # nilai rendah memang berarti "nyaris tak ada", jadi pudar itu tepat.
 # WAJIB MAKIN GELAP KE BAWAH. Versi pertama kebalik di dua hentian terakhir:
 # 90 persen luminansinya 16,7 sedangkan 100 persen 27,3, jadi blok terakhir malah

@@ -1,4 +1,4 @@
-/* Service worker Primeon Atmos — cache SHELL app (berversi), data cuaca TETAP
+/* Service worker Atmosight — cache SHELL app (berversi), data cuaca TETAP
  * online. Naikkan VERSION tiap rilis frontend agar user dapat versi terbaru
  * (cache lama dihapus saat activate). */
 const VERSION = "v16";

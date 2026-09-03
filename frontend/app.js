@@ -17,7 +17,7 @@ const MODELS = {
 };
 
 // ================= SAKLAR MODEL =================
-// Primeon Atmos tahap awal SENGAJA cuma menampilkan GFS. Kode dan pipeline dua
+// Atmosight tahap awal SENGAJA cuma menampilkan GFS. Kode dan pipeline dua
 // model lain TIDAK dihapus, cuma dimatikan, supaya bisa dinyalakan lagi tanpa
 // menulis apa pun dari nol.
 //
@@ -1643,7 +1643,7 @@ function restoreFromHash() {
 async function shareCurrent() {
   updateHash();
   const url = location.href;
-  const data = { title: "Primeon Atmos", text: "Lihat cuaca di Primeon Atmos", url };
+  const data = { title: "Atmosight", text: "Lihat cuaca di Atmosight", url };
   try {
     if (navigator.share) { await navigator.share(data); return; }
     await navigator.clipboard.writeText(url);

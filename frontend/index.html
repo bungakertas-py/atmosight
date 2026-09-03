@@ -3,27 +3,27 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title>Primeon Atmos — From Sky to Data</title>
+  <title>Atmosight — From Sky to Data</title>
   <meta name="description" content="Peta cuaca interaktif Indonesia: angin, hujan, suhu, kelembapan, awan, dan tekanan dari model GFS. Klik lokasimu untuk prakiraan detail per jam." />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#fcf8f8" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="Primeon Atmos" />
+  <meta name="apple-mobile-web-app-title" content="Atmosight" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <!-- Open Graph / kartu preview saat link dibagikan -->
   <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="Primeon Atmos" />
-  <meta property="og:title" content="Primeon Atmos — Peta cuaca interaktif Indonesia" />
+  <meta property="og:site_name" content="Atmosight" />
+  <meta property="og:title" content="Atmosight — Peta cuaca interaktif Indonesia" />
   <meta property="og:description" content="Angin, hujan, suhu, awan, dan tekanan untuk seluruh Indonesia. Klik lokasimu untuk prakiraan detail per jam." />
-  <meta property="og:url" content="https://bungakertas-py.github.io/primeon-atmos/frontend/index.html" />
-  <meta property="og:image" content="https://bungakertas-py.github.io/primeon-atmos/frontend/og-image.png" />
+  <meta property="og:url" content="https://bungakertas-py.github.io/atmosight/frontend/index.html" />
+  <meta property="og:image" content="https://bungakertas-py.github.io/atmosight/frontend/og-image.png" />
   <meta property="og:image:width" content="2400" />
   <meta property="og:image:height" content="1260" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Primeon Atmos — Peta cuaca interaktif Indonesia" />
+  <meta name="twitter:title" content="Atmosight — Peta cuaca interaktif Indonesia" />
   <meta name="twitter:description" content="Angin, hujan, suhu, awan, dan tekanan untuk seluruh Indonesia. Klik lokasimu untuk prakiraan detail per jam." />
-  <meta name="twitter:image" content="https://bungakertas-py.github.io/primeon-atmos/frontend/og-image.png" />
+  <meta name="twitter:image" content="https://bungakertas-py.github.io/atmosight/frontend/og-image.png" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-velocity@1.7.0/dist/leaflet-velocity.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -56,18 +56,18 @@
                 </g>
               </svg>
               <div class="brand-text">
-                <strong>Primeon Atmos</strong>
-                <span>From Sky to Data · Tim Primeon</span>
+                <strong>Atmosight</strong>
+                <span>From Sky to Data · Tim Envirocircle</span>
               </div>
               <button id="about-btn" class="brand-info" title="Tentang" aria-label="Tentang"><span class="material-symbols-outlined">info</span></button>
               <button id="nav-arrow" class="nav-arrow" aria-label="Aplikasi lain" title="Aplikasi lain"><span class="material-symbols-outlined">chevron_right</span></button>
             </div>
             <!-- Kontainer saudara: dua aplikasi lain, tersembunyi sampai panah ditekan. -->
             <div class="sibling-links">
-              <a class="sibling-link" href="https://bungakertas-py.github.io/primeon-plume/" title="Buka Primeon Plume (peta kualitas udara)">
+              <a class="sibling-link" href="https://bungakertas-py.github.io/smokewatch/" title="Buka Smokewatch (peta kualitas udara)">
                 <span class="material-symbols-outlined pl-ico">air</span>
                 <span class="pl-txt">
-                  <strong>Primeon Plume</strong>
+                  <strong>Smokewatch</strong>
                   <span>ISPU dan sebaran polutan udara</span>
                 </span>
                 <span class="material-symbols-outlined pl-go">arrow_forward</span>
@@ -305,13 +305,13 @@
     </div>
 
     <div id="about-overlay" class="about-overlay">
-      <!-- Kartu Tim Primeon -->
+      <!-- Kartu Tim Envirocircle -->
       <div id="about-card-team" class="about-card about-card--team">
         <button id="about-close-team" class="about-close" aria-label="Tutup"><span class="material-symbols-outlined">close</span></button>
         <div class="tm-head">
-          <span class="about-tag">TIM PRIMEON</span>
-          <h2 class="about-name">Tim Primeon</h2>
-          <p class="about-intro">Primeon Atmos mengubah model cuaca global yang gratis jadi peta yang enak dibaca siapa saja. Angin, hujan, suhu, kelembapan, tekanan, dan tutupan awan sampai tiga hari ke depan, diperbarui otomatis tiap hari. Kami tim kecil di baliknya, dari data mentah sampai tampilan di layarmu.</p>
+          <span class="about-tag">TIM ENVIROCIRCLE</span>
+          <h2 class="about-name">Tim Envirocircle</h2>
+          <p class="about-intro">Atmosight mengubah model cuaca global yang gratis jadi peta yang enak dibaca siapa saja. Angin, hujan, suhu, kelembapan, tekanan, dan tutupan awan sampai tiga hari ke depan, diperbarui otomatis tiap hari. Kami tim kecil di baliknya, dari data mentah sampai tampilan di layarmu.</p>
         </div>
         <div class="tm-row">
           <figure class="tm tm--side tm--left">
