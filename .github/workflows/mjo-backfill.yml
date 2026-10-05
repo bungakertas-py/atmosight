@@ -1,0 +1,64 @@
+name: mjo-backfill
+
+# SEKALI JALAN, DITEKAN TANGAN. Mengisi riwayat MJO ke belakang supaya indeks
+# tidak perlu menunggu pipeline harian menumpuk 120 hari sendiri.
+#
+# Cara memakainya, buka tab Actions di repo ini, pilih "mjo-backfill" di
+# kiri, tekan "Run workflow", isi jumlah harinya, tekan tombol hijau.
+#
+# TIDAK DIJADWALKAN, dan memang tidak boleh. Dia menarik ratusan potongan
+# GRIB dari arsip NCEI, dan itu cuma perlu dilakukan sekali. Sesudah riwayat
+# terisi, pipeline harian menambah satu baris sehari sendiri.
+#
+# Boleh dijalankan ULANG dengan aman. Tanggal yang sudah ada di riwayat
+# dilewati, jadi dia cuma mengisi yang bolong.
+on:
+  workflow_dispatch:
+    inputs:
+      hari:
+        description: "Berapa hari ke belakang diisi (minimal 130, bawaan 200)"
+        required: false
+        default: "200"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mjo-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    # Server NCEI lambat untuk permintaan sepotong, sekitar 22 detik per pesan.
+    # Dengan 8 utas, 200 hari sekitar 10 menit, tapi diberi kelonggaran banyak
+    # supaya tidak mati di tengah dan meninggalkan riwayat separuh.
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install eccodes system lib (fallback)
+        run: sudo apt-get update && sudo apt-get install -y libeccodes0
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+
+      - name: Backfill riwayat MJO
+        working-directory: backend/pipeline
+        run: python mjo_backfill.py "${{ inputs.hari || '200' }}"
+
+      - name: Commit riwayat
+        run: |
+          if [ ! -f backend/data/state/mjo_riwayat.json.gz ]; then
+            echo "riwayat tidak terbentuk, tidak ada yang di-commit"; exit 1
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f backend/data/state/mjo_riwayat.json.gz
+          git diff --cached --quiet && { echo "riwayat tidak berubah"; exit 0; }
+          git commit -m "backfill riwayat MJO $(date -u +%F)"
+          git push
