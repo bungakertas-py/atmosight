@@ -19,6 +19,7 @@ from config import AKURASI, KEEP_PAST_HOURS, LAYERS, OUTPUT_DIR, PROFILE_LEVELS
 from cyclones import detect_and_track
 from itcz import detect_itcz
 from isobars import build_isobars
+from mjo import bangun as build_mjo
 from monsoon import build_monsoon, build_monsoon_velocity
 from profiles import build_profiles
 from download import download_grib, latest_available_run
@@ -301,6 +302,22 @@ def main() -> None:
         psz = build_profiles(run, steps, ctx["times"])
         if psz:
             print(f"profile.bin.gz: {psz/1e6:.1f} MB ({len(steps)} waktu, {len(PROFILE_LEVELS)} level)")
+
+        # Indeks MJO + Hovmoller -> mjo.json. DIBUNGKUS try, sebab dia menarik
+        # OLR dari server luar (NOAA PSL) dan itu satu satunya bagian pipeline
+        # ini yang bergantung pada pihak ketiga saat jalan. Kalau PSL sedang
+        # mati, kiriman hari itu TETAP LENGKAP, cuma tanpa MJO.
+        # Harus sesudah build_profiles, sebab dia membaca profile.bin.gz.
+        try:
+            mj = build_mjo(OUTPUT_DIR, run_time=run.strftime("%Y-%m-%dT%H:00:00Z"))
+        except Exception as e:
+            mj = None
+            print(f"  ! mjo dilewati: {e}")
+        if mj:
+            (OUTPUT_DIR / "mjo.json").write_text(json.dumps(mj, separators=(",", ":")))
+            ix = mj["indeks"]
+            print(f"mjo.json: fase {ix['fase']} amplitudo {ix['amplitudo']:.2f} "
+                  f"({ix['tanggal']}), hovmoller {len(mj['hovmoller']['waktu'])} hari")
 
     catalog, total = reconcile_and_catalog(run)
     (OUTPUT_DIR / "catalog.json").write_text(json.dumps(catalog, indent=2))
