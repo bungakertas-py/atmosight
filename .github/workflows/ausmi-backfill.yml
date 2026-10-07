@@ -1,0 +1,87 @@
+name: ausmi-backfill
+
+# SEKALI JALAN, DITEKAN TANGAN. Mengisi riwayat AUSMI ke belakang lalu
+# mengukur selisih GFS lawan reanalisis.
+#
+# Cara memakainya, buka tab Actions di repo ini, pilih "ausmi-backfill" di
+# kiri, tekan "Run workflow", isi jumlah harinya, tekan tombol hijau.
+#
+# TIDAK DIJADWALKAN. Dia menarik ratusan potongan GRIB dari arsip NCEI, dan
+# itu cuma perlu sekali. Sesudah riwayat terisi, pipeline harian menambah
+# satu baris sehari sendiri tanpa menyentuh NCEI sama sekali.
+#
+# Boleh dijalankan ULANG dengan aman. Tanggal yang sudah ada dilewati, jadi
+# dia cuma mengisi yang bolong.
+#
+# BEDA DENGAN MJO, indeks ini TIDAK BUTUH riwayat untuk jadi sah. AUSMI hari
+# ini sudah sah hari ini juga, dia nilai mentah bukan proyeksi. Backfill di
+# sini gunanya dua, menampilkan onset musim lalu sebagai pembanding, dan
+# memberi irisan waktu dengan reanalisis supaya biasnya bisa diukur.
+on:
+  workflow_dispatch:
+    inputs:
+      hari:
+        description: "Berapa hari ke belakang diisi (bawaan 400, satu musim penuh)"
+        required: false
+        default: "400"
+      ukur_bias:
+        description: "Ukur bias GFS lawan reanalisis lalu tulis ke basis"
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ausmi-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    # Server NCEI lambat untuk permintaan sepotong, sekitar 22 detik per
+    # pesan. Dengan 8 utas, 400 hari sekitar 18 menit. Kelonggarannya banyak
+    # supaya tidak mati di tengah dan meninggalkan riwayat separuh.
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install eccodes system lib (fallback)
+        run: sudo apt-get update && sudo apt-get install -y libeccodes0
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+
+      - name: Backfill riwayat AUSMI
+        working-directory: backend/pipeline
+        run: python ausmi_backfill.py "${{ inputs.hari || '400' }}"
+
+      - name: Ukur bias GFS lawan reanalisis
+        if: ${{ inputs.ukur_bias }}
+        working-directory: backend/pipeline
+        # Jangan menjatuhkan seluruh run kalau yang gagal cuma pengukuran
+        # biasnya. Riwayat yang sudah terisi jauh lebih berharga, dan tanpa
+        # kunci bias modul hariannya tetap jalan, cuma anomalinya tak
+        # terkoreksi dan itu sudah ditandai di keluarannya.
+        continue-on-error: true
+        run: python ausmi_bias.py --tulis
+
+      - name: Commit riwayat dan basis
+        run: |
+          if [ ! -f backend/data/state/ausmi_riwayat.json.gz ]; then
+            echo "riwayat tidak terbentuk, tidak ada yang di-commit"; exit 1
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f backend/data/state/ausmi_riwayat.json.gz
+          if [ -f backend/pipeline/ausmi_basis.json ]; then
+            git add -f backend/pipeline/ausmi_basis.json
+          fi
+          git diff --cached --quiet && { echo "tidak ada perubahan"; exit 0; }
+          git commit -m "backfill riwayat AUSMI $(date -u +%F)"
+          git push

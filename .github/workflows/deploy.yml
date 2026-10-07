@@ -107,21 +107,28 @@ jobs:
       # deploy kedua (deploy-itera.yml) bisa republish situs dengan ITERA baru
       # TANPA menjalankan GFS/Citarum lagi. Kunci unik per run; deploy kedua
       # mengambil yang terbaru lewat restore-keys prefix "site-output-".
-      # Riwayat MJO di-commit balik. Runner sekali pakai, jadi tanpa ini
-      # indeksnya tidak akan pernah terbentuk. Berkasnya terkompresi dan
-      # ber-mtime 0, jadi commit cuma terjadi kalau isinya memang berubah.
-      - name: Simpan riwayat MJO ke repo
+      # Riwayat MJO dan AUSMI di-commit balik. Runner sekali pakai, jadi
+      # tanpa ini indeksnya tidak akan pernah terbentuk. Dua duanya
+      # terkompresi ber-mtime 0, jadi commit cuma terjadi kalau isinya memang
+      # berubah. SATU commit untuk keduanya, bukan dua, supaya riwayat repo
+      # tidak jadi dua baris per hari untuk hal yang sama.
+      - name: Simpan riwayat indeks ke repo
         continue-on-error: true
         run: |
-          if [ -f backend/data/state/mjo_riwayat.json.gz ]; then
-            git config user.name  "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -f backend/data/state/mjo_riwayat.json.gz
-            git diff --cached --quiet || {
-              git commit -m "riwayat MJO $(date -u +%F)"
-              git push
-            }
-          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Sengaja if, BUKAN "[ -f x ] && git add x". Langkah run di Actions
+          # berjalan dengan bash -e, dan bentuk && itu mengembalikan status
+          # bukan nol waktu berkasnya tidak ada, sehingga skripnya berhenti
+          # tepat sebelum commit.
+          for f in backend/data/state/mjo_riwayat.json.gz \
+                   backend/data/state/ausmi_riwayat.json.gz; do
+            if [ -f "$f" ]; then git add -f "$f"; fi
+          done
+          git diff --cached --quiet || {
+            git commit -m "riwayat indeks $(date -u +%F)"
+            git push
+          }
 
       - name: Simpan output ke cache untuk re-check ITERA
         uses: actions/cache/save@v4

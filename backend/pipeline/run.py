@@ -19,6 +19,7 @@ from config import AKURASI, KEEP_PAST_HOURS, LAYERS, OUTPUT_DIR, PROFILE_LEVELS
 from cyclones import detect_and_track
 from itcz import detect_itcz
 from isobars import build_isobars
+from ausmi import bangun as build_ausmi
 from mjo import bangun as build_mjo
 from monsoon import build_monsoon, build_monsoon_velocity
 from profiles import build_profiles
@@ -318,6 +319,26 @@ def main() -> None:
             ix = mj["indeks"]
             print(f"mjo.json: fase {ix['fase']} amplitudo {ix['amplitudo']:.2f} "
                   f"({ix['tanggal']}), hovmoller {len(mj['hovmoller']['waktu'])} hari")
+
+        # Indeks AUSMI, monsun Australia -> ausmi.json. Dibungkus try dengan
+        # alasan yang sama, fitur pelengkap tidak boleh menjatuhkan kiriman.
+        # Bedanya dengan MJO, modul ini TIDAK menyentuh server luar sama
+        # sekali waktu jalan harian, semua bahannya sudah ada di profile.bin.gz
+        # dan klimatologinya sudah dipanggang ke ausmi_basis.json. Jadi dia
+        # praktis tidak punya cara untuk gagal karena pihak ketiga.
+        # Harus sesudah build_profiles, sebab dia membaca profile.bin.gz.
+        try:
+            au = build_ausmi(OUTPUT_DIR, run_time=run.strftime("%Y-%m-%dT%H:00:00Z"))
+        except Exception as e:
+            au = None
+            print(f"  ! ausmi dilewati: {e}")
+        if au:
+            (OUTPUT_DIR / "ausmi.json").write_text(json.dumps(au, separators=(",", ":")))
+            k = au["kini"]
+            print(f"ausmi.json: {k['nilai']:+.2f} m/s {k['arah']} "
+                  f"(anomali {k['anomali']:+.2f}), onset "
+                  f"{au['onset']['tanggal'] or au['onset']['catatan']}, "
+                  f"riwayat {len(au['deret']['hari'])} hari")
 
     catalog, total = reconcile_and_catalog(run)
     (OUTPUT_DIR / "catalog.json").write_text(json.dumps(catalog, indent=2))
