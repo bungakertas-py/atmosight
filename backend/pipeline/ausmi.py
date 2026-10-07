@@ -271,6 +271,13 @@ def bangun(output_dir: Path, run_time: str | None = None) -> dict | None:
             "aktif": bool(kini > 0),
         },
         "onset": _onset(hari, nilai, musim_kini),
+        # Semua musim yang tercakup riwayat, bukan cuma yang berjalan. Grafik
+        # di frontend memakainya untuk menandai onset musim LALU, dan itu yang
+        # memberi pembanding. Tanpa ini garis onset cuma muncul sesudah musim
+        # berjalan onset, padahal justru sebelum itulah orang bertanya
+        # "tahun lalu kapan".
+        "onset_semua": [_onset(hari, nilai, m)
+                        for m in sorted({_musim(h) for h in hari})],
         "deret": {
             "hari": hari,
             "nilai": nilai,
