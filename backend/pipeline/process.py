@@ -318,6 +318,33 @@ _SCALAR_SCALES = {
 }
 
 
+def _image_bounds(grid: dict) -> list:
+    """Kotak TEPI SEL, tempat gambar ditempel di peta.
+
+    `grid["west"]` dan kawan kawan itu PUSAT sel pertama dan terakhir, bukan
+    tepi gambar. Itu konvensi GRIB dan kode ini sudah mengakuinya di tempat
+    lain, lihat `_export_velocity_json` yang membagi dengan `nx - 1`.
+
+    Bedanya jadi penting waktu gambarnya ditempel dengan `L.imageOverlay`,
+    sebab Leaflet menarik TEPI gambar ke kotak yang diberikan. Kalau yang
+    diberikan pusat sel, seluruh medan tergeser setengah sel dan sedikit
+    terjepit. Nol di tengah domain, membesar ke tepi, dan di domain GFS
+    62-180 BT 33 LS-33 LU itu mencapai 13,9 km di tepinya.
+
+    Sempat terjadi dan dilaporkan pemilik 8 Oktober 2026. Jalur WRF sudah
+    benar sejak awal, lihat `wrf_run.py` dan `wrf_itera_run.py`, cuma jalur
+    GFS yang tak pernah mengirimnya sehingga frontend jatuh ke `bounds`.
+
+    dx DITURUNKAN DARI KISINYA SENDIRI, bukan konstanta. Kalau suatu hari
+    GFS pindah ke kerapatan lain, angka ini ikut sendiri.
+    """
+    nx, ny = grid["width"], grid["height"]
+    dx = (grid["east"] - grid["west"]) / (nx - 1) if nx > 1 else 0.0
+    dy = (grid["north"] - grid["south"]) / (ny - 1) if ny > 1 else 0.0
+    return [round(grid["west"] - dx / 2, 6), round(grid["south"] - dy / 2, 6),
+            round(grid["east"] + dx / 2, 6), round(grid["north"] + dy / 2, 6)]
+
+
 def _export_velocity_json(u: np.ndarray, v: np.ndarray, grid: dict,
                           run: dt.datetime, fstep: int, dest: Path) -> None:
     """Tulis JSON format 'velocity' (dipakai leaflet-velocity / earth wind-js).
@@ -374,6 +401,7 @@ def process_wind(grib_path: Path, layer_key: str, run: dt.datetime, fstep: int,
         "forecast_step_hours": fstep,
         "valid_time": valid_time.strftime("%Y-%m-%dT%H:00:00Z"),
         "bounds": [grid["west"], grid["south"], grid["east"], grid["north"]],
+        "image_bounds": _image_bounds(grid),
         "width": grid["width"],
         "height": grid["height"],
         "unscale": layer["unscale"],
@@ -412,6 +440,7 @@ def process_scalar(grib_path: Path, layer_key: str, run: dt.datetime, fstep: int
         "forecast_step_hours": fstep,
         "valid_time": valid_time.strftime("%Y-%m-%dT%H:00:00Z"),
         "bounds": [grid["west"], grid["south"], grid["east"], grid["north"]],
+        "image_bounds": _image_bounds(grid),
         "width": grid["width"],
         "height": grid["height"],
         "units": layer["units"],
@@ -445,6 +474,7 @@ def write_scalar_frame(values: np.ndarray, grid: dict, layer_key: str, run: dt.d
         "valid_time": valid_dt.strftime("%Y-%m-%dT%H:00:00Z"),
         "forecast_step_hours": int((valid_dt - run).total_seconds() // 3600),
         "bounds": [grid["west"], grid["south"], grid["east"], grid["north"]],
+        "image_bounds": _image_bounds(grid),
         "width": grid["width"], "height": grid["height"],
         "units": units, "preview_image": preview_png.name,
         "value_max": round(float(np.nanmax(values)), 2),

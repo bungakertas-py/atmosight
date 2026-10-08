@@ -206,7 +206,16 @@ def reconcile_and_catalog(run: dt.datetime) -> tuple[dict, int]:
             continue
         frames.sort(key=lambda m: _parse(m["valid_time"]))
         if catalog["region"] is None:
+            # bounds = PUSAT sel, dipakai panel titik dan pengambilan nilai.
+            # image_bounds = TEPI sel, tempat heatmap ditempel di peta.
+            # Keduanya WAJIB, sebab frontend menempelkan gambar dengan
+            # L.imageOverlay yang menarik tepi gambar ke kotak yang diberi.
+            # Dulu cuma bounds yang dikirim dan medannya tergeser setengah
+            # sel, sampai 13,9 km di tepi domain. Jalur WRF tidak pernah kena
+            # sebab dia sudah mengirim keduanya sejak awal.
             catalog["region"] = {"bounds": frames[0]["bounds"]}
+            if frames[0].get("image_bounds"):
+                catalog["region"]["image_bounds"] = frames[0]["image_bounds"]
         entry = {
             "kind": frames[0]["kind"],
             "level": frames[0]["level"],
