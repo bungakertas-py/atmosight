@@ -24,8 +24,9 @@ from mjo import bangun as build_mjo
 from monsoon import build_monsoon, build_monsoon_velocity
 from profiles import build_profiles
 from download import download_grib, latest_available_run
-from process import (load_prate_mmhr, process_scalar, process_wind,
-                     write_city_data, write_point_data, write_scalar_frame)
+from process import (image_bounds_from, load_prate_mmhr, process_scalar,
+                     process_wind, write_city_data, write_point_data,
+                     write_scalar_frame)
 
 # Langkah forecast yang diambil (jam): 0..72 tiap 3 jam (3 hari ke depan).
 FORECAST_STEPS = list(range(0, 73, 3))
@@ -213,9 +214,20 @@ def reconcile_and_catalog(run: dt.datetime) -> tuple[dict, int]:
             # Dulu cuma bounds yang dikirim dan medannya tergeser setengah
             # sel, sampai 13,9 km di tepi domain. Jalur WRF tidak pernah kena
             # sebab dia sudah mengirim keduanya sejak awal.
-            catalog["region"] = {"bounds": frames[0]["bounds"]}
-            if frames[0].get("image_bounds"):
-                catalog["region"]["image_bounds"] = frames[0]["image_bounds"]
+            f0 = frames[0]
+            catalog["region"] = {"bounds": f0["bounds"]}
+            # DIHITUNG ULANG, bukan diambil dari bingkainya. frames[0] itu
+            # bingkai TERTUA, dan yang tertua justru hasil unduhan hydrate.py
+            # dari situs live yang bisa ditulis versi kode lama tanpa kunci
+            # ini. Sempat terjadi, katalog keluar tanpa image_bounds walau
+            # pipeline sudah dibetulkan dan bingkai barunya sudah memuatnya.
+            # bounds, width, dan height pasti ada di bingkai mana pun.
+            if f0.get("width") and f0.get("height"):
+                w, so, e, n = f0["bounds"]
+                catalog["region"]["image_bounds"] = image_bounds_from(
+                    w, so, e, n, f0["width"], f0["height"])
+            elif f0.get("image_bounds"):
+                catalog["region"]["image_bounds"] = f0["image_bounds"]
         entry = {
             "kind": frames[0]["kind"],
             "level": frames[0]["level"],

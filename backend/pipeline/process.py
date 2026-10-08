@@ -338,11 +338,26 @@ def _image_bounds(grid: dict) -> list:
     dx DITURUNKAN DARI KISINYA SENDIRI, bukan konstanta. Kalau suatu hari
     GFS pindah ke kerapatan lain, angka ini ikut sendiri.
     """
-    nx, ny = grid["width"], grid["height"]
-    dx = (grid["east"] - grid["west"]) / (nx - 1) if nx > 1 else 0.0
-    dy = (grid["north"] - grid["south"]) / (ny - 1) if ny > 1 else 0.0
-    return [round(grid["west"] - dx / 2, 6), round(grid["south"] - dy / 2, 6),
-            round(grid["east"] + dx / 2, 6), round(grid["north"] + dy / 2, 6)]
+    return image_bounds_from(grid["west"], grid["south"], grid["east"],
+                             grid["north"], grid["width"], grid["height"])
+
+
+def image_bounds_from(west: float, south: float, east: float, north: float,
+                      nx: int, ny: int) -> list:
+    """Versi yang menerima angka telanjang, bukan dict grid.
+
+    Dipakai run.py waktu menyusun katalog. Dia TIDAK bisa memakai
+    `_image_bounds` sebab yang dia pegang cuma metadata bingkai, dan bingkai
+    yang paling tua itu hasil unduhan `hydrate.py` dari situs live yang bisa
+    saja ditulis versi kode lama dan belum memuat `image_bounds`. Sempat
+    terjadi, katalognya keluar tanpa kunci itu walau pipeline-nya sudah
+    dibetulkan. Yang pasti ada di tiap bingkai, lama maupun baru, cuma
+    `bounds`, `width`, dan `height`, jadi dari situlah dihitung ulang.
+    """
+    dx = (east - west) / (nx - 1) if nx and nx > 1 else 0.0
+    dy = (north - south) / (ny - 1) if ny and ny > 1 else 0.0
+    return [round(west - dx / 2, 6), round(south - dy / 2, 6),
+            round(east + dx / 2, 6), round(north + dy / 2, 6)]
 
 
 def _export_velocity_json(u: np.ndarray, v: np.ndarray, grid: dict,
