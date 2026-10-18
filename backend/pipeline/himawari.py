@@ -1,0 +1,213 @@
+# -*- coding: utf-8 -*-
+"""Suhu puncak awan dari Himawari-9, kanal 13.
+
+   KENAPA INI ADA. Semua layer Atmosight sekarang isinya RAMALAN. Tidak ada
+   satu pun yang menunjukkan keadaan yang sedang terjadi, jadi tidak ada cara
+   melihat modelnya kena atau meleset. Citra satelit menutup lubang itu, dan
+   kanal 13 yang paling berguna sebab suhu puncak awan itu penanda langsung
+   kedalaman konveksi.
+
+   SUMBERNYA ember terbuka NOAA di AWS, bukan JAXA P-Tree. Dua duanya punya
+   datanya, tapi P-Tree melarang mengedarkan ulang ke pihak ketiga sedangkan
+   menayangkannya di situs publik itu pengedaran ulang. Ember NOAA tidak
+   punya batasan itu dan tidak perlu akun sama sekali.
+
+   TIDAK MEMAKAI SATPY. Yang diperlukan cuma satu kanal inframerah dan satu
+   proyeksi geostasioner yang rumusnya tertutup, sedangkan satpy menyeret
+   pyresample, xarray, dan dask. Di GitAction itu tiga menit pasang dan
+   ratusan megabita, untuk pekerjaan yang muat di satu berkas.
+
+   Pembaca HSD-nya ada di hsd.py, sebelah."""
+from __future__ import annotations
+
+import datetime as dt
+import json
+import os
+import re
+import urllib.request
+from pathlib import Path
+
+import numpy as np
+from PIL import Image
+
+from . import hsd
+
+EMBER = "https://noaa-himawari9.s3.amazonaws.com"
+SAT = "h09"
+
+# Domainnya DISAMAKAN dengan GFS dan CAMS, 62BT sampai 180BT, 33LS sampai
+# 33LU. Pas sekali kebetulan, piringan Himawari mulai penuh di 61,9BT di
+# khatulistiwa. Yang tidak kebagian cuma pojok barat laut dan barat daya,
+# sebab tepi piringan itu melengkung, dan di situ sudutnya memang terlalu
+# miring untuk dipakai.
+LON0, LON1, LAT0, LAT1 = 62.0, 180.0, -33.0, 33.0
+DERAJAT = 0.05                 # 5,5 km, kira kira dua kali resolusi asli 2 km
+ZENIT_MAKS = 80.0              # di atas ini citranya terlalu miring, dibuang
+
+# Segmen piringan yang menyentuh pita lintang kita. Dihitung dari geometri,
+# bukan ditebak, lalu dipatok supaya tidak perlu mengunduh sepuluh duanya.
+# Lintang 33LU jatuh di baris 1076 dan 33LS di baris 4425, dari 5500 baris.
+SEGMEN = range(2, 10)
+
+LANGKAH_MENIT = 30
+JUM_BINGKAI = 6                # tiga jam ke belakang
+LAYER = "cloudtop_temp"
+
+# Skala derajat Celsius. Yang hangat BENING supaya peta di bawahnya tembus,
+# sebab di situ memang tidak ada awan tinggi. Warnanya mulai berubah di
+# minus 40, dan itu bukan selera, minus 40 ambang yang biasa dipakai untuk
+# menandai konveksi dalam.
+# ANGKA DI SINI WAJIB SAMA dengan legenda cloudtop_temp di app.js.
+SKALA = [
+    (-90, (0x2e, 0x1c, 0x7d, 250)),
+    (-80, (0x75, 0x24, 0x8a, 248)),
+    (-70, (0xc2, 0x41, 0x5c, 245)),
+    (-60, (0xe0, 0x5a, 0x41, 240)),
+    (-50, (0xfc, 0xac, 0x1c, 235)),
+    (-40, (0xf9, 0xdc, 0x5c, 225)),
+    (-32, (0x5a, 0x6e, 0x82, 205)),
+    (-20, (0x96, 0xa5, 0xb4, 170)),
+    (0,   (0xc8, 0xd2, 0xdc, 110)),
+    (10,  (0xe6, 0xeb, 0xf0, 40)),
+    (20,  (0xff, 0xff, 0xff, 0)),
+]
+
+
+def _ambil(url: str, timeout: int = 180) -> bytes:
+    with urllib.request.urlopen(url, timeout=timeout) as r:
+        return r.read()
+
+
+def slot_tersedia(batas: int = 12) -> list[dt.datetime]:
+    """Slot sepuluh menitan yang berkasnya sudah mendarat, terbaru dulu.
+
+    Ember didaftar per jam, bukan ditebak dari jam dinding. Keterlambatan
+    Himawari biasanya setengah jam, tapi pernah lebih, dan menebak berarti
+    separuh unduhan jadi 404."""
+    sekarang = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
+    ada: list[dt.datetime] = []
+    for mundur in (0, 1, 2):
+        jam = (sekarang - dt.timedelta(hours=mundur)).replace(minute=0, second=0, microsecond=0)
+        # Awalannya sampai JAM saja, lalu pembatas garis miring, supaya
+        # ember memulangkan daftar slot sepuluh menitan sebagai awalan
+        # bersama. Sempat kutulis memotong teks jam menit dan hasilnya
+        # awalan yang tidak pernah ada, daftarnya selalu kosong.
+        # Awalannya berhenti di JAM dan TANPA garis miring. Kunci aslinya
+        # menyatukan jam dan menit, ".../18/0700/...", jadi awalan
+        # ".../18/07/" tidak pernah cocok dan daftarnya selalu kosong.
+        # Sudah kena dua kali, sekali memotong teks, sekali menambah
+        # garis miring.
+        pre = "AHI-L1b-FLDK/%s" % jam.strftime("%Y/%m/%d/%H")
+        url = "%s/?list-type=2&prefix=%s&delimiter=/" % (EMBER, pre)
+        try:
+            xml = _ambil(url, 60).decode("utf-8", "replace")
+        except Exception as e:
+            print("  daftar ember gagal untuk %s, %s" % (pre, e))
+            continue
+        for p in re.findall(r"<Prefix>([^<]+)</Prefix>", xml):
+            m = re.search(r"/(\d{4})/$", p)
+            if not m:
+                continue
+            ada.append(jam.replace(minute=int(m.group(1)[2:])))
+    ada = sorted(set(ada), reverse=True)
+    return ada[:batas]
+
+
+def pilih_bingkai(slot: list[dt.datetime]) -> list[dt.datetime]:
+    """Ambil satu slot tiap LANGKAH_MENIT, terbaru dulu."""
+    pakai: list[dt.datetime] = []
+    for s in slot:
+        if s.minute % LANGKAH_MENIT:
+            continue
+        pakai.append(s)
+        if len(pakai) >= JUM_BINGKAI:
+            break
+    return pakai
+
+
+def unduh(waktu: dt.datetime, folder: Path) -> list[Path]:
+    folder.mkdir(parents=True, exist_ok=True)
+    jalur = []
+    for s in SEGMEN:
+        nama = "HS_H09_%s_B13_FLDK_R20_S%02d10.DAT.bz2" % (waktu.strftime("%Y%m%d_%H%M"), s)
+        tujuan = folder / nama
+        if not tujuan.exists() or tujuan.stat().st_size < 1000:
+            url = "%s/AHI-L1b-FLDK/%s/%s" % (EMBER, waktu.strftime("%Y/%m/%d/%H%M"), nama)
+            try:
+                tujuan.write_bytes(_ambil(url))
+            except Exception as e:
+                print("    segmen %d gagal, %s" % (s, e))
+                continue
+        jalur.append(tujuan)
+    return jalur
+
+
+def _kisi(h: dict):
+    """Peta sekali pakai dari kisi lintang bujur ke piksel satelit."""
+    lon = np.arange(LON0, LON1 + DERAJAT / 2, DERAJAT)
+    lat = np.arange(LAT1, LAT0 - DERAJAT / 2, -DERAJAT)
+    LON, LAT = np.meshgrid(lon, lat)
+    rasio = h["rasio_pol"]
+    d = np.radians(LON - h["sub_lon"])
+    phi = np.arctan(rasio * np.tan(np.radians(LAT)))
+    rl = h["rpol"] / np.sqrt(1.0 - (1.0 - rasio) * np.cos(phi) ** 2)
+    r1 = h["rs"] - rl * np.cos(phi) * np.cos(d)
+    r2 = -rl * np.cos(phi) * np.sin(d)
+    r3 = rl * np.sin(phi)
+    rn = np.sqrt(r1 * r1 + r2 * r2 + r3 * r3)
+    # Tampak kalau titiknya menghadap satelit, uji hasil kali titik, bukan
+    # tebakan sudut, jadi tepi piringannya persis.
+    hadap = h["rs"] * np.cos(phi) * np.cos(d)
+    tampak = hadap > rl
+    # Sudut zenit satelit. Di atas 80 derajat citranya terlalu memanjang dan
+    # bergeser, lebih baik dikosongkan daripada menipu.
+    kos = np.clip((hadap - rl) / np.where(rn > 0, rn, 1), -1, 1)
+    tampak &= np.degrees(np.arccos(kos)) <= ZENIT_MAKS
+    x = np.degrees(np.arctan2(-r2, r1))
+    y = np.degrees(np.arcsin(np.clip(-r3 / rn, -1, 1)))
+    kol = np.rint(h["coff"] + x * (2.0 ** -16) * h["cfac"]).astype(np.int32)
+    bar = np.rint(h["loff"] + y * (2.0 ** -16) * h["lfac"]).astype(np.int32)
+    sah = tampak & (kol >= 0) & (kol < h["kolom"]) & (bar >= 0) & (bar < 5500)
+    return kol, bar, sah, LON.shape
+
+
+def bingkai(jalur: list[Path]) -> np.ndarray | None:
+    """Suhu kecerahan kelvin di kisi lintang bujur, NaN di luar jangkauan."""
+    if not jalur:
+        return None
+    h0 = hsd.baca(str(jalur[0]))
+    kol, bar, sah, bentuk = _kisi(h0)
+    hasil = np.full(bentuk, np.nan, np.float32)
+    for p in jalur:
+        h = hsd.baca(str(p))
+        tb = hsd.suhu_kecerahan(h).astype(np.float32)
+        b0 = h["baris_awal"] - 1
+        pilih = sah & (bar >= b0) & (bar < b0 + h["baris"])
+        if pilih.any():
+            hasil[pilih] = tb[bar[pilih] - b0, kol[pilih]]
+    # suhu di luar nalar dibuang, bukan dipaksa masuk skala
+    hasil[(hasil < 170) | (hasil > 340)] = np.nan
+    return hasil
+
+
+def warnai(celsius: np.ndarray) -> np.ndarray:
+    henti = np.array([s[0] for s in SKALA], float)
+    warna = np.array([s[1] for s in SKALA], float)
+    out = np.zeros(celsius.shape + (4,), np.float32)
+    for c in range(4):
+        out[..., c] = np.interp(celsius, henti, warna[:, c])
+    out[~np.isfinite(celsius)] = 0
+    return out.round().astype(np.uint8)
+
+
+def simpan(kelvin: np.ndarray, tujuan: Path) -> None:
+    img = Image.fromarray(warnai(kelvin - 273.15), "RGBA")
+    img.save(tujuan, "WEBP", quality=78, method=4, alpha_quality=100)
+
+
+def image_bounds() -> list:
+    """Kotak TEPI gambar, bukan pusat sel. Leaflet menarik tepi gambar ke
+    kotak yang diberikan, jadi memberi pusat sel menggeser seluruh medan
+    setengah sel. Jebakan yang sama sudah pernah kena di GFS."""
+    s = DERAJAT / 2.0
+    return [LON0 - s, LAT0 - s, LON1 + s, LAT1 + s]

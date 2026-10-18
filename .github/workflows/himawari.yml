@@ -1,0 +1,111 @@
+name: himawari-puncak-awan
+
+# Layer PENGAMATAN, bukan ramalan. Suhu puncak awan dari Himawari-9 kanal 13,
+# diambil dari ember terbuka NOAA di AWS. Tidak menyentuh pipeline GFS sama
+# sekali, cuma menambah satu layer ke katalog yang sudah ada.
+#
+# POLANYA SAMA dengan refresh-wrf-itera. Keluaran situs terakhir dipulihkan
+# dari cache, bagian Himawari diperbarui, lalu situsnya diterbitkan ulang.
+# Tanpa itu, terbitan dari sini akan MENGHAPUS keluaran GFS, sebab GitHub
+# Pages mengganti seluruh situs tiap kali diterbitkan.
+#
+# SOAL KETEPATAN WAKTU. Jadwal GitHub Actions sering telat, kadang berjam
+# jam waktu pelayanannya sibuk. Jadi salinan di sini TIDAK BOLEH dianggap
+# waktu nyata. Dia bukti resep dan cadangan. Yang sungguh sungguh segar
+# nanti dari server, lewat permintaan ke backend.
+on:
+  schedule:
+    # Tiap setengah jam. Citranya sendiri sepuluh menitan, tapi setengah jam
+    # sudah cukup untuk melihat awan tumbuh, dan tiap bingkai 1,7 MB.
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false   # jangan batalkan deploy utama yang mungkin jalan
+
+jobs:
+  masak:
+    runs-on: ubuntu-latest
+    outputs:
+      berubah: ${{ steps.masak.outputs.berubah }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # numpy dan Pillow saja. Pembaca HSD dan proyeksinya ditulis sendiri,
+      # jadi tidak perlu satpy berikut pyresample, xarray, dan dask.
+      - name: Pasang pustaka
+        run: pip install --quiet numpy Pillow
+
+      - name: Pulihkan keluaran situs dari cache
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/data/output
+          key: site-output-none
+          restore-keys: |
+            site-output-
+
+      - name: Masak suhu puncak awan
+        id: masak
+        run: |
+          if [ ! -f backend/data/output/catalog.json ]; then
+            echo "cache keluaran belum ada, lewati, deploy utama tetap jalan"
+            echo "berubah=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          sebelum=$(ls backend/data/output/himawari/cloudtop_temp_*_preview.webp 2>/dev/null | md5sum)
+          python backend/pipeline/himawari_run.py
+          sesudah=$(ls backend/data/output/himawari/cloudtop_temp_*_preview.webp 2>/dev/null | md5sum)
+          if [ "$sebelum" = "$sesudah" ]; then
+            echo "tidak ada bingkai baru, tidak diterbitkan ulang"
+            echo "berubah=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "berubah=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Cache disimpan ULANG supaya bingkai yang sudah jadi tidak diunduh
+      # lagi di jalan berikutnya. Kuncinya memakai run_id, dan pemulihan di
+      # atas memakai awalan, jadi yang terbaru yang terambil.
+      - name: Simpan keluaran ke cache
+        if: steps.masak.outputs.berubah == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: backend/data/output
+          key: site-output-${{ github.run_id }}
+
+      - name: Rakit situs, jaga struktur ../backend/data/output
+        if: steps.masak.outputs.berubah == 'true'
+        run: |
+          mkdir -p _site/frontend _site/backend/data/output
+          cp -r frontend/. _site/frontend/
+          cp -r backend/data/output/. _site/backend/data/output/
+          cat > _site/index.html <<'HTML'
+          <!doctype html><meta charset="utf-8">
+          <title>Atmosight, peta cuaca interaktif Indonesia</title>
+          <meta http-equiv="refresh" content="0; url=./frontend/index.html">
+          <a href="./frontend/index.html">Buka Atmosight</a>
+          HTML
+
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.masak.outputs.berubah == 'true'
+        with:
+          path: _site
+
+  terbit:
+    needs: masak
+    if: needs.masak.outputs.berubah == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
