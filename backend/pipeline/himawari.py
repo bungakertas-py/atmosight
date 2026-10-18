@@ -76,10 +76,15 @@ SEGMEN = range(2, 10)
 # tepi barat dibetulkan.
 #   1  potongan keras di zenit 80
 #   2  tepi dipudarkan sampai batas piringan
-VERSI_RENDER = 2
+#   3  layer angin gerak awan ditambahkan
+VERSI_RENDER = 3
 
 LANGKAH_MENIT = 30
-JUM_BINGKAI = 6                # tiga jam ke belakang
+# ENAM JAM ke belakang. Awalnya tiga jam, dan pemilik benar waktu bilang
+# sumbu waktunya terasa tidak punya masa lalu. Dua belas bingkai sudah cukup
+# untuk melihat awan tumbuh dan bergerak, dan karena yang baru tiap jalan
+# cuma satu, menambah riwayat itu murah sesudah jalan pertama.
+JUM_BINGKAI = 12
 LAYER = "cloudtop_temp"
 
 # Skala derajat Celsius. Yang hangat BENING supaya peta di bawahnya tembus,
@@ -107,15 +112,23 @@ def _ambil(url: str, timeout: int = 180) -> bytes:
         return r.read()
 
 
-def slot_tersedia(batas: int = 12) -> list[dt.datetime]:
+def slot_tersedia(batas: int = 300) -> list[dt.datetime]:
     """Slot sepuluh menitan yang berkasnya sudah mendarat, terbaru dulu.
+
+    BATASNYA LONGGAR, dan itu disengaja. Pemotongan terjadi SEBELUM
+    penyaringan irama, jadi batas yang ketat memangkas slot yang justru
+    dibutuhkan. Dengan batas 12 dan irama sejam, yang lolos cuma dua
+    bingkai dari enam yang diminta, sebab dua belas slot sepuluh menitan
+    itu cuma dua jam. Sudah kejadian di dua app sekaligus.
 
     Ember didaftar per jam, bukan ditebak dari jam dinding. Keterlambatan
     Himawari biasanya setengah jam, tapi pernah lebih, dan menebak berarti
     separuh unduhan jadi 404."""
     sekarang = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
     ada: list[dt.datetime] = []
-    for mundur in (0, 1, 2):
+    # Tujuh jam ke belakang didaftar, cukup untuk mengisi dua belas bingkai
+    # setengah jaman walau beberapa slot bolong.
+    for mundur in range(7):
         jam = (sekarang - dt.timedelta(hours=mundur)).replace(minute=0, second=0, microsecond=0)
         # Awalannya sampai JAM saja, lalu pembatas garis miring, supaya
         # ember memulangkan daftar slot sepuluh menitan sebagai awalan

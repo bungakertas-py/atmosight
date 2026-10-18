@@ -23,6 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from backend.pipeline import himawari as H
+from backend.pipeline import himawari_angin as A
 
 AKAR = Path(__file__).resolve().parents[1]
 # Folder keluaran boleh ditimpa lewat argumen. Di repo ini data/output itu
@@ -36,6 +37,10 @@ SEMENTARA = Path(sys.argv[2]) if len(sys.argv) > 2 else AKAR / "data" / "tmp_him
 
 def nama_bingkai(w: dt.datetime) -> str:
     return "%s_%s_preview.webp" % (H.LAYER, w.strftime("%Y%m%d_%H%M"))
+
+
+def nama_angin(w: dt.datetime) -> str:
+    return "%s_%s_preview.webp" % (A.LAYER, w.strftime("%Y%m%d_%H%M"))
 
 
 def versi_lama() -> int:
@@ -89,13 +94,39 @@ def main() -> int:
               % (terisi, berkas.stat().st_size / 1024))
         bingkai_jadi.append(w)
 
+    # ---- ANGIN GERAK AWAN, berkas dan antrean sendiri ----
+    # Sengaja dipisah dari gelung di atas. Kalau produk AMV satu jam bolong,
+    # yang hilang cuma panahnya, suhu puncak awannya tetap terbit.
+    angin_jadi = []
+    for w in sorted(pakai):
+        berkas = KELUARAN / nama_angin(w)
+        if berkas.exists() and berkas.stat().st_size > 1000 and not gambar_ulang:
+            angin_jadi.append(w)
+            continue
+        folder = SEMENTARA / ("amv_" + w.strftime("%Y%m%d_%H%M"))
+        nc = A.unduh(w, folder)
+        if nc is None:
+            print("  angin %s tidak ada, dilewati" % w.strftime("%H:%M"))
+            shutil.rmtree(folder, ignore_errors=True)
+            continue
+        try:
+            lat, lon, spd, arah, pres, qi = A.baca(nc)
+            lat, lon, spd, arah, pres = A.jarangkan(lat, lon, spd, arah, pres, qi)
+            n = A.gambar(lat, lon, spd, arah, pres, berkas)
+            print("  angin %s, %d panah, %.0f KB"
+                  % (w.strftime("%H:%M"), n, berkas.stat().st_size / 1024))
+            angin_jadi.append(w)
+        except Exception as e:
+            print("  angin %s gagal, %s" % (w.strftime("%H:%M"), e))
+        shutil.rmtree(folder, ignore_errors=True)
+
     if not bingkai_jadi:
         print("tidak ada bingkai yang jadi, katalog tidak disentuh")
         return 0
 
     # bingkai lama dibuang, simpanan tidak boleh tumbuh tanpa batas
-    sah = {nama_bingkai(w) for w in bingkai_jadi}
-    for f in KELUARAN.glob("%s_*_preview.webp" % H.LAYER):
+    sah = {nama_bingkai(w) for w in bingkai_jadi} | {nama_angin(w) for w in angin_jadi}
+    for f in KELUARAN.glob("*_preview.webp"):
         if f.name not in sah:
             f.unlink()
             print("  buang bingkai lama", f.name)
@@ -129,9 +160,20 @@ def main() -> int:
                      "preview_image": nama_bingkai(w)}
                     for w in sorted(bingkai_jadi)
                 ],
-            }
+            },
         },
     }
+    if angin_jadi:
+        data["layers"][A.LAYER] = {
+            "kind": "scalar",
+            "level": "surface",
+            "units": "m/detik",
+            "frames": [
+                {"valid_time": w.strftime("%Y-%m-%dT%H:%M:00Z"),
+                 "preview_image": nama_angin(w)}
+                for w in sorted(angin_jadi)
+            ],
+        }
     kat.write_text(json.dumps(data, indent=1), "utf-8")
     print("katalog diperbarui, %d bingkai" % len(bingkai_jadi))
     return 0
