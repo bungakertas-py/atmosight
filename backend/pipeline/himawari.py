@@ -42,7 +42,24 @@ SAT = "h09"
 # miring untuk dipakai.
 LON0, LON1, LAT0, LAT1 = 62.0, 180.0, -33.0, 33.0
 DERAJAT = 0.05                 # 5,5 km, kira kira dua kali resolusi asli 2 km
-ZENIT_MAKS = 80.0              # di atas ini citranya terlalu miring, dibuang
+
+# TEPI BARAT. Versi pertama memotong keras di sudut zenit 80 derajat, dan itu
+# SALAH. Yang terjadi, data berhenti di 69,3BT di khatulistiwa dan 73,0BT di
+# lintang 33, padahal domain kita mulai di 62,0BT. Jadi sepuluh derajat paling
+# barat hilang bukan karena satelitnya tidak melihat, tapi karena kupotong
+# sendiri.
+#
+# Piringan Himawari-9 sebenarnya sampai 59,5BT di khatulistiwa dan 61,1BT di
+# lintang 33, jadi SELURUH domain kita sebetulnya terlihat.
+#
+# Sekarang yang dipakai batas piringan sungguhan, dan mutunya yang turun di
+# tepi disampaikan lewat ALFA YANG MEMUDAR, bukan lewat potongan. Di sudut 80
+# derajat satu piksel sudah memanjang enam kali, di 85 derajat sebelas kali,
+# jadi pembaca memang perlu tahu bahwa yang di tepi itu lebih kasar. Tapi
+# memudar itu memberi tahu, memotong itu menyembunyikan.
+ZEN_PUDAR_MULAI = 78.0         # sampai sini mutunya masih penuh
+ZEN_PUDAR_AKHIR = 88.0         # di luar ini tinggal sisa paling redup
+REDAM_MIN = 0.33
 
 # Segmen piringan yang menyentuh pita lintang kita. Dihitung dari geometri,
 # bukan ditebak, lalu dipatok supaya tidak perlu mengunduh sepuluh duanya.
@@ -159,16 +176,16 @@ def _kisi(h: dict):
     # tebakan sudut, jadi tepi piringannya persis.
     hadap = h["rs"] * np.cos(phi) * np.cos(d)
     tampak = hadap > rl
-    # Sudut zenit satelit. Di atas 80 derajat citranya terlalu memanjang dan
-    # bergeser, lebih baik dikosongkan daripada menipu.
+    # Sudut zenit satelit, dipakai MEMUDARKAN tepi, bukan memotongnya.
     kos = np.clip((hadap - rl) / np.where(rn > 0, rn, 1), -1, 1)
-    tampak &= np.degrees(np.arccos(kos)) <= ZENIT_MAKS
+    zen = np.degrees(np.arccos(kos))
     x = np.degrees(np.arctan2(-r2, r1))
     y = np.degrees(np.arcsin(np.clip(-r3 / rn, -1, 1)))
     kol = np.rint(h["coff"] + x * (2.0 ** -16) * h["cfac"]).astype(np.int32)
     bar = np.rint(h["loff"] + y * (2.0 ** -16) * h["lfac"]).astype(np.int32)
     sah = tampak & (kol >= 0) & (kol < h["kolom"]) & (bar >= 0) & (bar < 5500)
-    return kol, bar, sah, LON.shape
+    redam = np.clip((ZEN_PUDAR_AKHIR - zen) / (ZEN_PUDAR_AKHIR - ZEN_PUDAR_MULAI), REDAM_MIN, 1.0)
+    return kol, bar, sah, LON.shape, redam.astype(np.float32)
 
 
 def bingkai(jalur: list[Path]) -> np.ndarray | None:
@@ -176,7 +193,7 @@ def bingkai(jalur: list[Path]) -> np.ndarray | None:
     if not jalur:
         return None
     h0 = hsd.baca(str(jalur[0]))
-    kol, bar, sah, bentuk = _kisi(h0)
+    kol, bar, sah, bentuk, redam = _kisi(h0)
     hasil = np.full(bentuk, np.nan, np.float32)
     for p in jalur:
         h = hsd.baca(str(p))
@@ -187,7 +204,7 @@ def bingkai(jalur: list[Path]) -> np.ndarray | None:
             hasil[pilih] = tb[bar[pilih] - b0, kol[pilih]]
     # suhu di luar nalar dibuang, bukan dipaksa masuk skala
     hasil[(hasil < 170) | (hasil > 340)] = np.nan
-    return hasil
+    return hasil, redam
 
 
 def warnai(celsius: np.ndarray) -> np.ndarray:
@@ -200,8 +217,11 @@ def warnai(celsius: np.ndarray) -> np.ndarray:
     return out.round().astype(np.uint8)
 
 
-def simpan(kelvin: np.ndarray, tujuan: Path) -> None:
-    img = Image.fromarray(warnai(kelvin - 273.15), "RGBA")
+def simpan(kelvin: np.ndarray, tujuan: Path, redam: np.ndarray | None = None) -> None:
+    rgba = warnai(kelvin - 273.15)
+    if redam is not None:
+        rgba[..., 3] = (rgba[..., 3] * redam).round().astype(np.uint8)
+    img = Image.fromarray(rgba, "RGBA")
     img.save(tujuan, "WEBP", quality=78, method=4, alpha_quality=100)
 
 

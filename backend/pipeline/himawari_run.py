@@ -58,7 +58,8 @@ def main() -> int:
         print("  %s mengunduh %d segmen" % (w.strftime("%H:%M"), len(H.SEGMEN)))
         folder = SEMENTARA / w.strftime("%Y%m%d_%H%M")
         jalur = H.unduh(w, folder)
-        arr = H.bingkai(jalur)
+        hasil = H.bingkai(jalur)
+        arr, redam = hasil if hasil else (None, None)
         shutil.rmtree(folder, ignore_errors=True)
         if arr is None:
             print("    gagal, dilewati")
@@ -68,7 +69,7 @@ def main() -> int:
         if terisi < 40:
             print("    cuma %.0f persen terisi, dibuang sebagai cacat" % terisi)
             continue
-        H.simpan(arr, berkas)
+        H.simpan(arr, berkas, redam)
         print("    jadi, %.0f persen terisi, %.0f KB"
               % (terisi, berkas.stat().st_size / 1024))
         bingkai_jadi.append(w)
