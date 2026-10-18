@@ -38,8 +38,23 @@ def nama_bingkai(w: dt.datetime) -> str:
     return "%s_%s_preview.webp" % (H.LAYER, w.strftime("%Y%m%d_%H%M"))
 
 
+def versi_lama() -> int:
+    """Cap versi gambar yang tersimpan di katalog, 0 kalau belum ada."""
+    kat = KELUARAN / "catalog.json"
+    if not kat.exists():
+        return 0
+    try:
+        return int(json.loads(kat.read_text("utf-8")).get("versi_render", 0))
+    except Exception:
+        return 0
+
+
 def main() -> int:
     KELUARAN.mkdir(parents=True, exist_ok=True)
+    gambar_ulang = versi_lama() != H.VERSI_RENDER
+    if gambar_ulang:
+        print("cap versi gambar berubah, %d jadi %d, semua bingkai digambar ulang"
+              % (versi_lama(), H.VERSI_RENDER))
     slot = H.slot_tersedia()
     if not slot:
         print("tidak ada slot yang terdaftar di ember, berhenti tanpa mengubah apa apa")
@@ -51,7 +66,7 @@ def main() -> int:
     bingkai_jadi = []
     for w in sorted(pakai):
         berkas = KELUARAN / nama_bingkai(w)
-        if berkas.exists() and berkas.stat().st_size > 1000:
+        if berkas.exists() and berkas.stat().st_size > 1000 and not gambar_ulang:
             print("  %s sudah ada, dilewati" % w.strftime("%H:%M"))
             bingkai_jadi.append(w)
             continue
@@ -93,6 +108,7 @@ def main() -> int:
         "generated_at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "model": "himawari9_ahi_b13",
         "model_label": "Satelit Himawari-9",
+        "versi_render": H.VERSI_RENDER,
         # Satelit tidak punya jam inisiasi, jadi yang dipakai jam PENGAMATAN
         # terbaru. Frontend memakainya untuk lencana Last update, dan untuk
         # pengamatan itu justru angka yang paling benar di situ.

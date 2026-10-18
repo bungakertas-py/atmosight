@@ -66,6 +66,18 @@ REDAM_MIN = 0.33
 # Lintang 33LU jatuh di baris 1076 dan 33LS di baris 4425, dari 5500 baris.
 SEGMEN = range(2, 10)
 
+# CAP VERSI GAMBAR. Dinaikkan tiap kali cara menggambarnya berubah, misalnya
+# skala warna atau perlakuan tepi. Bingkai yang capnya beda DIGAMBAR ULANG
+# walaupun berkasnya sudah ada.
+#
+# Tanpa ini perbaikan render tidak pernah sampai ke bingkai lama. Pemulihan
+# dari cache membawa berkas lama, pemeriksa melihat berkasnya ada lalu
+# melewatinya, dan yang terbit tetap yang lama. Sudah kejadian tepat sesudah
+# tepi barat dibetulkan.
+#   1  potongan keras di zenit 80
+#   2  tepi dipudarkan sampai batas piringan
+VERSI_RENDER = 2
+
 LANGKAH_MENIT = 30
 JUM_BINGKAI = 6                # tiga jam ke belakang
 LAYER = "cloudtop_temp"

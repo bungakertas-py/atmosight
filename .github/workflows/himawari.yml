@@ -61,9 +61,12 @@ jobs:
             echo "cache keluaran belum ada, lewati, deploy utama tetap jalan"
             echo "berubah=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          sebelum=$(ls backend/data/output/himawari/cloudtop_temp_*_preview.webp 2>/dev/null | md5sum)
+          # Yang dibandingkan ISI berkasnya, bukan daftar namanya. Dengan
+          # daftar nama, perbaikan cara menggambar pada bingkai yang namanya
+          # sama tidak terdeteksi dan tidak pernah terbit.
+          sebelum=$(cat backend/data/output/himawari/*.webp backend/data/output/himawari/catalog.json 2>/dev/null | md5sum)
           python backend/pipeline/himawari_run.py
-          sesudah=$(ls backend/data/output/himawari/cloudtop_temp_*_preview.webp 2>/dev/null | md5sum)
+          sesudah=$(cat backend/data/output/himawari/*.webp backend/data/output/himawari/catalog.json 2>/dev/null | md5sum)
           if [ "$sebelum" = "$sesudah" ]; then
             echo "tidak ada bingkai baru, tidak diterbitkan ulang"
             echo "berubah=false" >> "$GITHUB_OUTPUT"
