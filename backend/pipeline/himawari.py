@@ -77,7 +77,9 @@ SEGMEN = range(2, 10)
 #   1  potongan keras di zenit 80
 #   2  tepi dipudarkan sampai batas piringan
 #   3  layer angin gerak awan ditambahkan
-VERSI_RENDER = 3
+#   4  gerak awan tidak lagi dari produk AMV NOAA, dijejak sendiri dari
+#      dua citra berurutan, jadi domainnya penuh sampai 62 BT
+VERSI_RENDER = 4
 
 LANGKAH_MENIT = 30
 # ENAM JAM ke belakang. Awalnya tiga jam, dan pemilik benar waktu bilang

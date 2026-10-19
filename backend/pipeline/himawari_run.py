@@ -23,7 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from backend.pipeline import himawari as H
-from backend.pipeline import himawari_angin as A
+from backend.pipeline import himawari_gerak as G
 
 AKAR = Path(__file__).resolve().parents[1]
 # Folder keluaran boleh ditimpa lewat argumen. Di repo ini data/output itu
@@ -40,7 +40,7 @@ def nama_bingkai(w: dt.datetime) -> str:
 
 
 def nama_angin(w: dt.datetime) -> str:
-    return "%s_%s_preview.webp" % (A.LAYER, w.strftime("%Y%m%d_%H%M"))
+    return "%s_%s_preview.webp" % (G.LAYER, w.strftime("%Y%m%d_%H%M"))
 
 
 def versi_lama() -> int:
@@ -68,57 +68,72 @@ def main() -> int:
     print("slot terbaru di ember:", slot[0].strftime("%Y-%m-%d %H:%M"), "UTC")
     print("bingkai yang dipakai :", ", ".join(w.strftime("%H:%M") for w in pakai))
 
+    import numpy as np
+
+    urut = sorted(pakai)
+    # Gerak awan dijejak dari DUA citra berurutan, jadi satu slot kadang
+    # perlu dibangun kisinya walau gambarnya sudah tersimpan. Yang perlu itu
+    # slot yang medannya sendiri belum ada, dan slot SEBELUM slot semacam
+    # itu. Biasanya cuma satu dua, sebab tiap jalan paling cuma ada satu
+    # bingkai baru.
+    perlu_kisi = set()
+    for i in range(1, len(urut)):
+        f = KELUARAN / nama_angin(urut[i])
+        if gambar_ulang or not f.exists() or f.stat().st_size < 1000:
+            perlu_kisi.add(urut[i - 1])
+            perlu_kisi.add(urut[i])
+
     bingkai_jadi = []
-    for w in sorted(pakai):
+    angin_jadi = []
+    lalu_w, lalu_arr = None, None      # kisi slot sebelumnya, cuma SATU yang ditahan
+    for idx, w in enumerate(urut):
         berkas = KELUARAN / nama_bingkai(w)
-        if berkas.exists() and berkas.stat().st_size > 1000 and not gambar_ulang:
+        sudah = berkas.exists() and berkas.stat().st_size > 1000 and not gambar_ulang
+        arr = None
+        if sudah and w not in perlu_kisi:
             print("  %s sudah ada, dilewati" % w.strftime("%H:%M"))
             bingkai_jadi.append(w)
-            continue
-        print("  %s mengunduh %d segmen" % (w.strftime("%H:%M"), len(H.SEGMEN)))
-        folder = SEMENTARA / w.strftime("%Y%m%d_%H%M")
-        jalur = H.unduh(w, folder)
-        hasil = H.bingkai(jalur)
-        arr, redam = hasil if hasil else (None, None)
-        shutil.rmtree(folder, ignore_errors=True)
-        if arr is None:
-            print("    gagal, dilewati")
-            continue
-        import numpy as np
-        terisi = float(100.0 * np.isfinite(arr).mean())
-        if terisi < 40:
-            print("    cuma %.0f persen terisi, dibuang sebagai cacat" % terisi)
-            continue
-        H.simpan(arr, berkas, redam)
-        print("    jadi, %.0f persen terisi, %.0f KB"
-              % (terisi, berkas.stat().st_size / 1024))
-        bingkai_jadi.append(w)
-
-    # ---- ANGIN GERAK AWAN, berkas dan antrean sendiri ----
-    # Sengaja dipisah dari gelung di atas. Kalau produk AMV satu jam bolong,
-    # yang hilang cuma panahnya, suhu puncak awannya tetap terbit.
-    angin_jadi = []
-    for w in sorted(pakai):
-        berkas = KELUARAN / nama_angin(w)
-        if berkas.exists() and berkas.stat().st_size > 1000 and not gambar_ulang:
-            angin_jadi.append(w)
-            continue
-        folder = SEMENTARA / ("amv_" + w.strftime("%Y%m%d_%H%M"))
-        nc = A.unduh(w, folder)
-        if nc is None:
-            print("  angin %s tidak ada, dilewati" % w.strftime("%H:%M"))
+        else:
+            sebab = "gambarnya belum ada" if not sudah else "kisinya dipakai menjejak gerak"
+            print("  %s mengunduh %d segmen, %s" % (w.strftime("%H:%M"), len(H.SEGMEN), sebab))
+            folder = SEMENTARA / w.strftime("%Y%m%d_%H%M")
+            jalur = H.unduh(w, folder)
+            hasil = H.bingkai(jalur)
+            arr, redam = hasil if hasil else (None, None)
             shutil.rmtree(folder, ignore_errors=True)
-            continue
-        try:
-            lat, lon, spd, arah, pres, qi = A.baca(nc)
-            lat, lon, spd, arah, pres = A.jarangkan(lat, lon, spd, arah, pres, qi)
-            n = A.gambar(lat, lon, spd, arah, pres, berkas)
-            print("  angin %s, %d panah, %.0f KB"
-                  % (w.strftime("%H:%M"), n, berkas.stat().st_size / 1024))
+            if arr is None:
+                print("    gagal, dilewati")
+                lalu_w, lalu_arr = None, None
+                continue
+            terisi = float(100.0 * np.isfinite(arr).mean())
+            if terisi < 40:
+                print("    cuma %.0f persen terisi, dibuang sebagai cacat" % terisi)
+                lalu_w, lalu_arr = None, None
+                continue
+            if not sudah:
+                H.simpan(arr, berkas, redam)
+                print("    jadi, %.0f persen terisi, %.0f KB"
+                      % (terisi, berkas.stat().st_size / 1024))
+            bingkai_jadi.append(w)
+
+        # ---- GERAK AWAN, dijejak dari pasangan slot ini dan sebelumnya ----
+        # Medannya dicap dengan jam slot BELAKANGAN, sebab artinya "gerak
+        # awan sampai jam ini". Dengan begitu bingkai terbaru selalu punya
+        # angin, dan yang tidak punya justru bingkai paling tua.
+        fa = KELUARAN / nama_angin(w)
+        if fa.exists() and fa.stat().st_size > 1000 and not gambar_ulang:
             angin_jadi.append(w)
-        except Exception as e:
-            print("  angin %s gagal, %s" % (w.strftime("%H:%M"), e))
-        shutil.rmtree(folder, ignore_errors=True)
+        elif lalu_arr is not None and lalu_w is not None and arr is not None:
+            detik = (w - lalu_w).total_seconds()
+            try:
+                U, V, BT = G.medan(lalu_arr, arr, detik)
+                n = G.gambar(U, V, BT, fa)
+                print("    gerak awan %s, %d panah, %.0f KB"
+                      % (w.strftime("%H:%M"), n, fa.stat().st_size / 1024))
+                angin_jadi.append(w)
+            except Exception as e:
+                print("    gerak awan %s gagal, %s" % (w.strftime("%H:%M"), e))
+        lalu_w, lalu_arr = w, arr
 
     if not bingkai_jadi:
         print("tidak ada bingkai yang jadi, katalog tidak disentuh")
@@ -164,7 +179,7 @@ def main() -> int:
         },
     }
     if angin_jadi:
-        data["layers"][A.LAYER] = {
+        data["layers"][G.LAYER] = {
             "kind": "scalar",
             "level": "surface",
             "units": "m/detik",

@@ -43,11 +43,13 @@ jobs:
 
       # numpy dan Pillow saja. Pembaca HSD dan proyeksinya ditulis sendiri,
       # jadi tidak perlu satpy berikut pyresample, xarray, dan dask.
-      # h5py cuma untuk produk angin gerak awan, yang berkasnya NetCDF-4
-      # alias HDF5. Suhu puncak awan tidak memerlukannya, pembacanya sendiri
-      # cukup numpy.
+      # h5py DIKELUARKAN 19 Oktober. Dia dulu dipakai membaca produk AMV
+      # NOAA yang berkasnya NetCDF-4, dan produk itu sudah tidak dipakai
+      # lagi sebab berhenti di sudut zenit 69,5 derajat sehingga sepertiga
+      # domain kita tidak pernah kebagian angin. Gerak awan sekarang
+      # dijejak sendiri dari dua citra berurutan, numpy saja.
       - name: Pasang pustaka
-        run: pip install --quiet numpy Pillow h5py
+        run: pip install --quiet numpy Pillow
 
       - name: Pulihkan keluaran situs dari cache
         uses: actions/cache/restore@v4
