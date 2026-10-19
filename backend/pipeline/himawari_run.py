@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from backend.pipeline import himawari as H
 from backend.pipeline import himawari_gerak as G
+from backend.pipeline import himawari_tampak as T
 
 AKAR = Path(__file__).resolve().parents[1]
 # Folder keluaran boleh ditimpa lewat argumen. Di repo ini data/output itu
@@ -37,6 +38,10 @@ SEMENTARA = Path(sys.argv[2]) if len(sys.argv) > 2 else AKAR / "data" / "tmp_him
 
 def nama_bingkai(w: dt.datetime) -> str:
     return "%s_%s_preview.webp" % (H.LAYER, w.strftime("%Y%m%d_%H%M"))
+
+
+def nama_tampak(w: dt.datetime) -> str:
+    return "%s_%s_preview.webp" % (T.LAYER, w.strftime("%Y%m%d_%H%M"))
 
 
 def nama_angin(w: dt.datetime) -> str:
@@ -135,12 +140,43 @@ def main() -> int:
                 print("    gerak awan %s gagal, %s" % (w.strftime("%H:%M"), e))
         lalu_w, lalu_arr = w, arr
 
+    # ---- CITRA WARNA ASLI, gelung dan unduhan sendiri ----
+    # Sengaja dipisah dari gelung di atas. Kanal tampak itu 535 MB per slot
+    # lawan 25 MB punya inframerah, dan kalau unduhannya putus di tengah,
+    # yang hilang cukup gambarnya saja. Suhu kecerahan dan gerak awan sudah
+    # terbit duluan dan tidak ikut gagal.
+    tampak_jadi = []
+    for w in urut:
+        ft = KELUARAN / nama_tampak(w)
+        if ft.exists() and ft.stat().st_size > 1000 and not gambar_ulang:
+            tampak_jadi.append(w)
+            continue
+        folder = SEMENTARA / ("tampak_" + w.strftime("%Y%m%d_%H%M"))
+        try:
+            alb, redam = {}, None
+            for band in sorted(T.KANAL):
+                jalur = T.unduh(w, band, folder)
+                a, rd = T.kisi(jalur)
+                if a is None:
+                    raise RuntimeError("kanal %d kosong" % band)
+                alb[band] = a
+                redam = rd
+            siang = T.gambar(alb, redam, w, ft)
+            print("  citra tampak %s, siang %.0f%% domain, %.0f KB"
+                  % (w.strftime("%H:%M"), siang, ft.stat().st_size / 1024))
+            tampak_jadi.append(w)
+        except Exception as e:
+            print("  citra tampak %s gagal, %s" % (w.strftime("%H:%M"), e))
+        finally:
+            shutil.rmtree(folder, ignore_errors=True)
+
     if not bingkai_jadi:
         print("tidak ada bingkai yang jadi, katalog tidak disentuh")
         return 0
 
     # bingkai lama dibuang, simpanan tidak boleh tumbuh tanpa batas
-    sah = {nama_bingkai(w) for w in bingkai_jadi} | {nama_angin(w) for w in angin_jadi}
+    sah = ({nama_bingkai(w) for w in bingkai_jadi} | {nama_angin(w) for w in angin_jadi}
+           | {nama_tampak(w) for w in tampak_jadi})
     for f in KELUARAN.glob("*_preview.webp"):
         if f.name not in sah:
             f.unlink()
@@ -178,6 +214,17 @@ def main() -> int:
             },
         },
     }
+    if tampak_jadi:
+        data["layers"][T.LAYER] = {
+            "kind": "scalar",
+            "level": "surface",
+            "units": "",
+            "frames": [
+                {"valid_time": w.strftime("%Y-%m-%dT%H:%M:00Z"),
+                 "preview_image": nama_tampak(w)}
+                for w in sorted(tampak_jadi)
+            ],
+        }
     if angin_jadi:
         data["layers"][G.LAYER] = {
             "kind": "scalar",
