@@ -319,11 +319,13 @@ def main() -> None:
         ph = mon.get("phase") or {}
         print(f"monsoon.json: {ph.get('label', '-')} ({ph.get('season', '-')})")
 
-        # Profil vertikal (Skew-T): unduh multi-level per waktu -> profile.bin.gz
+        # Profil vertikal (Skew-T): unduh multi-level per waktu. Keluarannya
+        # DUA berkas, profile_cells.bin yang dibaca frontend per titik lewat
+        # Range, dan profile.bin.gz yang dibaca ausmi.py dan mjo.py di bawah.
         print("\nProfil vertikal (Skew-T):")
         psz = build_profiles(run, steps, ctx["times"])
         if psz:
-            print(f"profile.bin.gz: {psz/1e6:.1f} MB ({len(steps)} waktu, {len(PROFILE_LEVELS)} level)")
+            print(f"profile_cells.bin: {psz/1e6:.1f} MB ({len(steps)} waktu, {len(PROFILE_LEVELS)} level)")
 
         # Indeks MJO + Hovmoller -> mjo.json. DIBUNGKUS try, sebab dia menarik
         # OLR dari server luar (NOAA PSL) dan itu satu satunya bagian pipeline

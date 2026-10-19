@@ -117,12 +117,20 @@ def write_profile_data(times: list[str], per_time: list[dict], grid: dict,
     sel_semua = np.concatenate(per_sel, axis=2)
     (out_dir / "profile_cells.bin").write_bytes(sel_semua.tobytes(order="C"))
 
-    # BERKAS LAMA MASIH DIPAKAI, jangan dibuang. Dua pemakainya. Pertama
-    # frontend yang tersimpan di cache orang dan belum tahu susunan per sel.
-    # Kedua, dan ini yang menetap, MODE MJO LOKAL di Atmosight, yang merata
-    # ratakan kelembapan sepanjang pita lintang untuk SETIAP bujur sehingga
-    # memang butuh seluruh kisi. Mode itu hidup selama mjo.json belum berisi
-    # `amplop`, dan per 19 Okt 2026 belum.
+    # BERKAS LAMA MASIH DIPAKAI, JANGAN DIBUANG. Tiga pemakainya.
+    #
+    # 1. `ausmi.py` dan `mjo.py` di pipeline ini juga, dua duanya membacanya
+    #    dari cakram sesudah langkah ini. Kalau dia hilang, dua indeks itu
+    #    ikut mati, dan itu alasan yang paling mengikat.
+    # 2. Mode MJO lokal di frontend, yang merata ratakan kelembapan
+    #    sepanjang pita lintang untuk SETIAP bujur sehingga memang butuh
+    #    seluruh kisi. Hidup selama mjo.json belum berisi `amplop`, dan per
+    #    19 Okt 2026 belum.
+    # 3. Frontend yang tersimpan di cache orang dan belum tahu susunan per
+    #    sel.
+    #
+    # Yang nomor 1 tidak akan hilang sendiri, jadi perlakukan berkas ini
+    # sebagai keluaran tetap, bukan sisa masa peralihan.
     (out_dir / "profile.bin.gz").write_bytes(gzip.compress(bytes(blob), compresslevel=6))
     meta = {
         "bounds": [grid["west"], grid["south"], grid["east"], grid["north"]],
