@@ -102,10 +102,33 @@ _TEMP_STRATO_SCALE = [
 ]
 
 # Kelembapan (%) OPAQUE: coklat kering -> hijau -> biru lembap.
+# Kelembapan relatif (%) RGBA. DISAMAKAN dengan tabel yang dipakai suite WRF
+# Python milik Will Hatheway, 20 Oktober 2026, atas permintaan pemilik.
+#
+# KENAPA YANG INI YANG DIIKUTI, dan cuma yang ini. Sebelas palet miliknya
+# diadu dengan data domain kita, dan kelembapan satu satunya yang rentangnya
+# memang pas, 9 dari 10 selnya terpakai. Yang lain ujungnya jauh di luar
+# jangkauan tropis, misalnya tangga suhunya -50 sampai 50 yang cuma terpakai
+# 36 persen, dan tangga anginnya mulai di 34 knot padahal median domain kita
+# 12 knot.
+#
+# Tabelnya DIVERGEN cokelat ke hijau, sisi keringnya dari BrBG ColorBrewer
+# dan sisi basahnya dari PiYG, dengan #f5f5f5 netral di tengah. Dua duanya
+# palet ColorBrewer yang memang dirancang dan diuji untuk buta warna.
+#
+# Yang lama cokelat lalu hijau lalu teal lalu biru donker, buatan sendiri dan
+# tidak pernah diuji. Hijau ke biru di ujung basah itu dua lompatan rona yang
+# tidak perlu, dan di mata buta warna deutan dua duanya menyatu.
+#
+# HENTIANNYA TIAP 10 PERSEN, sama dengan np.arange(0, 100, 10) punya dia. Di
+# atas 90 persen warnanya dipatok ke hentian terakhir, sama seperti perilaku
+# `extend` di contourf-nya.
 _HUM_SCALE = [
-    (0,  (0x7a, 0x45, 0x0a, 255)), (25, (0xb9, 0x84, 0x3a, 255)),
-    (50, (0x88, 0xb0, 0x55, 255)), (70, (0x35, 0x9a, 0x86, 255)),
-    (85, (0x21, 0x6b, 0xb0, 255)), (100, (0x12, 0x3f, 0x86, 255)),
+    (0,  (0x8c, 0x51, 0x0a, 255)), (10, (0xbf, 0x81, 0x2d, 255)),
+    (20, (0xdf, 0xc2, 0x7d, 255)), (30, (0xf6, 0xe8, 0xc3, 255)),
+    (40, (0xf5, 0xf5, 0xf5, 255)), (50, (0xe6, 0xf5, 0xd0, 255)),
+    (60, (0xb8, 0xe1, 0x86, 255)), (70, (0x7f, 0xbc, 0x41, 255)),
+    (80, (0x4d, 0x92, 0x21, 255)), (90, (0x3d, 0x74, 0x1a, 255)),
 ]
 
 # Tutupan awan (%) RGBA: INFERNO DIBALIK, langit bersih transparan -> biru donker.
