@@ -27,10 +27,24 @@ SUMBERNYA.
 
 Dua sumber berbeda berarti ada selisih bias di dalam anomalinya. Itu
 pelajaran dari MJO dan di sini TIDAK diabaikan, selisihnya diukur oleh
-ausmi_bias.py lalu disimpan di basis sebagai "bias_gfs" dan dikurangkan di
-sini. Kalau kuncinya belum ada, anomalinya tetap dihitung tanpa koreksi dan
+ausmi_bias.py lalu disimpan di basis dan dikurangkan di sini. Kalau
+kuncinya belum ada, anomalinya tetap dihitung tanpa koreksi dan
 `bias_terukur` di keluaran berisi null, supaya jelas mana yang sudah
 diperiksa dan mana yang belum.
+
+BIASNYA PER MODEL, DAN ITU BUKAN KERAPIAN. Angka ini selisih sistematis
+antara satu model tertentu dan reanalisis NCEP/NCAR. Dia milik model yang
+diukur, bukan sifat umum AUSMI. Memakai bias GFS untuk ECMWF berarti
+menggeser acuan ECMWF sejauh kesalahan GFS, dan hasilnya anomali yang salah
+ke arah yang tidak ada hubungannya dengan ECMWF. Diukur 21 Oktober 2026,
+bias GFS -0,3226 m/detik pada anomali yang besarnya satuan, jadi
+kesalahannya bukan pembulatan.
+
+Jadi tiap model punya kuncinya sendiri di basis, di bawah "bias" dan
+dinamai dengan nama modelnya. Model yang belum pernah diukur TIDAK
+MEMINJAM punya tetangganya, dia jalan tanpa koreksi dengan
+`bias_terukur` null. Kunci lama "bias_gfs" yang di tingkat atas masih
+dibaca, tapi hanya untuk GFS.
 
 Modul ini GAGAL LEMBUT, sama dengan mjo.py. Apa pun yang salah, dia
 mengembalikan None dan pipeline lanjut tanpa AUSMI.
@@ -86,7 +100,12 @@ def _simpan_riwayat(r: dict, jalur: Path | None = None) -> None:
 def _rapikan(r: dict) -> dict:
     pasang = {h: r["u850"][i] for i, h in enumerate(r["hari"])}
     kunci = sorted(pasang)[-RIWAYAT_HARI:]
-    return {"hari": kunci, "u850": [pasang[h] for h in kunci]}
+    # Kunci selain deretnya DIBAWA IKUT. Riwayat semaian membawa
+    # `semai_sampai`, dan tanpa baris ini tanda itu hilang pada penyimpanan
+    # pertama, sehingga hari hari yang nilainya milik model lain kembali
+    # terlihat seperti hasil ukur model ini.
+    lain = {k: v for k, v in r.items() if k not in ("hari", "u850")}
+    return {**lain, "hari": kunci, "u850": [pasang[h] for h in kunci]}
 
 
 def kotak_indeks(meta: dict) -> tuple[np.ndarray, np.ndarray]:
@@ -221,6 +240,24 @@ def _onset(hari: list[str], nilai: list[float], musim: str) -> dict:
     return {"musim": musim, "tanggal": None, "catatan": "belum onset"}
 
 
+def _bias_model(basis: dict, model: str) -> float | None:
+    """Koreksi bias milik `model`, atau None kalau model itu belum diukur.
+
+    TIDAK ADA PEMINJAMAN antar model. Model yang belum punya angkanya jalan
+    tanpa koreksi, dan itu jauh lebih jujur daripada memakai angka tetangga,
+    sebab anomali yang digeser dengan bias model lain salah ke arah yang
+    tidak ada hubungannya dengan model yang sedang ditayangkan."""
+    per = basis.get("bias")
+    if isinstance(per, dict) and model in per:
+        n = per[model]
+        return float(n["bias"]) if isinstance(n, dict) else float(n)
+    # Kunci lama, dari sebelum biasnya dipisah per model. Milik GFS, jadi
+    # cuma GFS yang boleh membacanya.
+    if model == "gfs" and basis.get("bias_gfs") is not None:
+        return float(basis["bias_gfs"])
+    return None
+
+
 # RIWAYATNYA BOLEH DIPISAH PER MODEL lewat `riwayat_jalur`, dan itu BUKAN
 # kemewahan. Deret ini panjang, ratusan hari, dan dipakai menghitung anomali
 # serta onset. Kalau GFS dan ECMWF menulis ke berkas yang sama, satu deret
@@ -228,7 +265,8 @@ def _onset(hari: list[str], nilai: list[float], musim: str) -> dict:
 # dan kerusakannya menumpuk diam diam selama bertahun tahun. Tanpa argumen
 # ini perilakunya persis seperti sebelumnya.
 def bangun(output_dir: Path, run_time: str | None = None,
-           riwayat_jalur: Path | None = None) -> dict | None:
+           riwayat_jalur: Path | None = None,
+           model: str = "gfs") -> dict | None:
     basis = _muat_basis()
     if not basis:
         return None
@@ -247,7 +285,7 @@ def bangun(output_dir: Path, run_time: str | None = None,
     _simpan_riwayat(riwayat, riwayat_jalur)
 
     hari, nilai = riwayat["hari"], riwayat["u850"]
-    bias = basis.get("bias_gfs")
+    bias = _bias_model(basis, model)
     klim = [round(_klim(basis, h), 3) for h in hari]
     # Bias dikurangkan dari KLIMATOLOGINYA, bukan dari nilai hariannya. Nilai
     # harian itu yang ditayangkan sebagai AUSMI dan dia harus tetap apa adanya
@@ -299,7 +337,10 @@ def bangun(output_dir: Path, run_time: str | None = None,
             "hari": basis.get("hari_klim"),
             "sd_bulan_ini": round(sd, 3),
         },
+        # Angkanya selalu didampingi nama pemiliknya, kalau tidak pembacanya
+        # tidak punya cara tahu bias siapa yang sedang dipakai.
         "bias_terukur": bias,
+        "bias_model": model if bias is not None else None,
     }
     return out
 

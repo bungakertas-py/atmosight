@@ -90,7 +90,14 @@ def _rapikan(r: dict) -> dict:
     for i, h in enumerate(r["hari"]):
         pasang[h] = (r["olr"][i], r["u850"][i], r["u200"][i])
     kunci = sorted(pasang)[-RIWAYAT_HARI:]
-    return {"hari": kunci,
+    # Kunci selain deretnya DIBAWA IKUT. Riwayat semaian membawa
+    # `semai_sampai`, dan tanpa baris ini tanda itu hilang pada penyimpanan
+    # pertama, sehingga hari hari yang nilainya milik model lain kembali
+    # terlihat seperti hasil ukur model ini.
+    lain = {k: v for k, v in r.items()
+            if k not in ("hari", "olr", "u850", "u200")}
+    return {**lain,
+            "hari": kunci,
             "olr": [pasang[h][0] for h in kunci],
             "u850": [pasang[h][1] for h in kunci],
             "u200": [pasang[h][2] for h in kunci]}

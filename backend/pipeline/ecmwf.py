@@ -585,10 +585,24 @@ def _semai_riwayat(nama: str) -> Path:
     if kosong:
         punya_gfs = STATE / ("%s_riwayat.json.gz" % nama)
         if punya_gfs.exists():
+            isi = json.loads(gzip.decompress(punya_gfs.read_bytes()).decode("utf-8"))
+            # HARI SEMAIAN DITANDAI, dan ini bukan kerapian. Hari hari ini
+            # nilainya GFS, cuma berkasnya saja yang milik ECMWF. Tanpa tanda,
+            # ausmi_bias.py akan mengukur bias dari deret ini dan memulangkan
+            # bias GFS dengan label ECMWF. Sudah dibuktikan 21 Oktober 2026,
+            # keluarannya -0,323 dari 193 hari dengan korelasi 0,9891, angka
+            # yang sama persis dengan bias_gfs di basis. Angka salah yang
+            # terlihat meyakinkan itu lebih berbahaya daripada tidak ada
+            # angka sama sekali.
+            if isi.get("hari"):
+                isi["semai_dari"] = "gfs"
+                isi["semai_sampai"] = isi["hari"][-1]
             punya_kita.parent.mkdir(parents=True, exist_ok=True)
-            punya_kita.write_bytes(punya_gfs.read_bytes())
-            print("  riwayat %s disemai dari GFS, %.0f KB"
-                  % (nama, punya_kita.stat().st_size / 1024))
+            punya_kita.write_bytes(gzip.compress(
+                json.dumps(isi, separators=(",", ":")).encode("utf-8"), mtime=0))
+            print("  riwayat %s disemai dari GFS sampai %s, %.0f KB"
+                  % (nama, isi.get("semai_sampai", "-"),
+                     punya_kita.stat().st_size / 1024))
     return punya_kita
 
 
@@ -691,7 +705,8 @@ def produk_turunan(deret: dict, waktu: list, kisi: dict, run: dt.datetime,
 
     def indeks_ausmi():
         a = ausmi.bangun(out_dir, run_time=jam,
-                         riwayat_jalur=_semai_riwayat("ausmi"))
+                         riwayat_jalur=_semai_riwayat("ausmi"),
+                         model="ecmwf")
         if a:
             (out_dir / "ausmi.json").write_text(json.dumps(a, separators=(",", ":")))
             k = a["kini"]
