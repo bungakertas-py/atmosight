@@ -1,0 +1,181 @@
+name: ecmwf
+
+# ECMWF IFS 9 km, DELAPAN layer plus profil, akurasi METAR, dan semua produk
+# turunan. MENERBITKAN ke GitHub Pages.
+#
+# Dulu alur kerja ini bernama ecmwf-uji dan sengaja tidak menerbitkan apa apa,
+# hasilnya artefak saja. Dinaikkan jadi penerbit 21 Oktober 2026 atas
+# permintaan pemilik, sebab permintaan ke backend supaya server yang jadi
+# peran utama belum bisa dikerjakan, dan selama datanya tidak ada di tempat
+# yang bisa dibaca frontend, ECMWF tidak akan pernah muncul di situs.
+#
+# PERANNYA SEMENTARA, DAN ITU DISENGAJA. Begitu server mengirim ECMWF ke
+# hostingan, frontend otomatis memakai kiriman itu dan alur kerja ini turun
+# jadi cadangan tanpa perlu disentuh sama sekali. Aturannya sudah ada di
+# ambilKatalog(), yang dekat menang kecuali cadangan lebih segar lewat
+# ambang. Yang perlu diubah nanti cuma satu kata `pemasok` di app.js, itu
+# pun hanya supaya chip sumbernya menulis cirrus.
+#
+# ---- KENAPA INI TIDAK MENIMPA FOLDER MODEL LAIN ----
+#
+# Alur kerja di repo ini saling menimpa kalau dua duanya menerbitkan ke
+# Pages, dan jebakan itu sudah pernah kena sekali waktu folder himawari
+# terhapus oleh deploy GFS. Jalan keluarnya SUDAH ADA dan dipakai
+# himawari.yml, jadi di sini disalin apa adanya: seluruh backend/data/output
+# dipulihkan dari cache bersama `site-output-*` dulu, bagian sendiri dimasak
+# di atasnya, lalu _site dirakit dari SELURUH isi folder itu. Siapa pun yang
+# menerbitkan, model lain ikut terbawa utuh. Urutannya dijaga
+# `concurrency: group: pages`.
+#
+# ---- KENAPA GAGAL LEMBUT ----
+#
+# Rilis 0p1 belum teratur. Diukur 21 Oktober 2026 jam 06:16 UTC: tanggal 20
+# membawa 06z, 12z, dan 18z, tanggal 19 tidak ada sama sekali, dan tanggal 21
+# belum ada apa apa padahal run 00z plus latensi dua jam mestinya sudah
+# mendarat empat jam sebelumnya. Arsipnya sendiri cuma bertahan sehari.
+#
+# Jadi jadwal yang jatuh di jam kosong itu keadaan NORMAL, bukan kerusakan.
+# ecmwf_terbit.py memisahkan tiga keadaan dan cuma yang terakhir menerbitkan:
+# tidak ada run, run sama dengan yang sudah terbit, atau run baru. Yang merah
+# cuma kalau runnya ada tapi memasaknya gugur di tengah, dan itu memang perlu
+# dilihat orang. Log merah yang artinya "memang belum ada" melatih orang
+# mengabaikan log.
+#
+# CIN dan tiga layer anomali SENGAJA TIDAK ADA di katalog, sebab open data
+# ECMWF memang tidak menyediakannya. Tombolnya otomatis redup di situs.
+# Alasan lengkapnya di docstring backend/pipeline/ecmwf.py.
+on:
+  # Empat kali sehari, masing masing sekitar empat jam sesudah jam run, yaitu
+  # latensi dua jam ditambah jarak aman sebab rilisnya belum teratur. Jam
+  # yang kosong berhenti sendiri tanpa menerbitkan dan tanpa merah.
+  schedule:
+    - cron: "45 3,9,15,21 * * *"
+  workflow_dispatch:
+    inputs:
+      langkah_maks:
+        description: "Batas jam prakiraan, 72 sejajar dengan GFS, 144 maksimum ECMWF"
+        required: false
+        default: "72"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Satu antrean dengan deploy.yml dan himawari.yml. JANGAN dibatalkan di
+# tengah, sebab yang dibatalkan bisa saja yang sedang mengunggah situs.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  masak:
+    runs-on: ubuntu-latest
+    # Satu run penuh terukur sekitar satu jam di runner, 25 bingkai berikut
+    # profil 14 level. Dilebihkan jadi tiga jam supaya jaringan yang sedang
+    # lambat tidak memotongnya di tengah.
+    timeout-minutes: 180
+    outputs:
+      berubah: ${{ steps.masak.outputs.berubah }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # cfgrib dan eccodes dipasang di sini, dan itu beda dengan alur kerja
+      # Himawari yang cuma butuh numpy sebab pembaca HSD-nya ditulis sendiri.
+      # GRIB2 ECMWF memakai pemampatan CCSDS, jadi menulis pembacanya sendiri
+      # tidak sepadan. Versinya dikunci sama dengan backend/requirements.txt
+      # supaya hasilnya bisa diadu dengan keluaran lokal.
+      - name: Pasang pustaka
+        run: pip install --quiet numpy==2.5.1 xarray==2026.7.0 cfgrib==0.9.15.1 eccodes==2.47.0 pillow==12.3.0
+
+      # Cache BERSAMA dengan deploy.yml dan himawari.yml. Isinya seluruh
+      # keluaran situs, bukan cuma punya ECMWF, dan itu yang menjaga model
+      # lain tidak hilang waktu alur kerja ini yang menerbitkan.
+      - name: Pulihkan keluaran situs dari cache
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/data/output
+          key: site-output-none
+          restore-keys: |
+            site-output-
+
+      - name: Masak ECMWF 9 km
+        id: masak
+        env:
+          LANGKAH_MAKS: ${{ inputs.langkah_maks }}
+          PYTHONUNBUFFERED: "1"
+        working-directory: backend/pipeline
+        run: python ecmwf_terbit.py
+
+      - name: Simpan keluaran ke cache
+        if: steps.masak.outputs.berubah == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: backend/data/output
+          key: site-output-${{ github.run_id }}
+
+      # Ringkasannya DITULIS PIPELINE, bukan dirakit di sini. Heredoc python
+      # di dalam blok `run: |` itu rapuh, penutupnya wajib rata kiri sedangkan
+      # YAML menjorokkan seluruh bloknya, jadi dia diam diam tidak pernah
+      # menutup. Lebih aman pipeline menulis berkasnya lalu di sini tinggal
+      # dituang.
+      - name: Ringkas hasilnya
+        if: always()
+        run: |
+          R=backend/data/output/ecmwf_9km/ringkas.md
+          if [ "${{ steps.masak.outputs.berubah }}" != "true" ]; then
+            echo "Tidak diterbitkan: ${{ steps.masak.outputs.alasan }}" >> "$GITHUB_STEP_SUMMARY"
+          elif [ -f "$R" ]; then
+            cat "$R" >> "$GITHUB_STEP_SUMMARY"
+            printf '\nFolder terbit %s MB.\n' "${{ steps.masak.outputs.mb }}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Masaknya gagal, tidak ada ringkasan." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Rakit situs, jaga struktur ../backend/data/output
+        if: steps.masak.outputs.berubah == 'true'
+        run: |
+          mkdir -p _site/frontend _site/backend/data/output
+          cp -r frontend/. _site/frontend/
+          cp -r backend/data/output/. _site/backend/data/output/
+          cat > _site/index.html <<'HTML'
+          <!doctype html><meta charset="utf-8">
+          <title>Atmosight, peta cuaca interaktif Indonesia</title>
+          <meta http-equiv="refresh" content="0; url=./frontend/index.html">
+          <a href="./frontend/index.html">Buka Atmosight</a>
+          HTML
+          # Batas lunak GitHub Pages 1 GB untuk SELURUH situs, dan di sana
+          # sudah ada GFS dan Himawari sebelum ECMWF ikut. Angkanya dicetak
+          # tiap jalan supaya kalau nanti mepet, ketahuan dari log sebelum
+          # terbitnya ditolak diam diam.
+          echo "== besar situs =="
+          du -sh _site
+          du -sh _site/backend/data/output/* 2>/dev/null | sort -h
+          {
+            echo ""
+            echo "| isi situs | besar |"
+            echo "|---|---|"
+            du -sh _site | awk '{print "| SELURUH situs | " $1 " |"}'
+            du -sh _site/backend/data/output/* 2>/dev/null | sort -h \
+              | awk '{n=$2; sub(".*/","",n); print "| " n " | " $1 " |"}'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.masak.outputs.berubah == 'true'
+        with:
+          path: _site
+
+  terbit:
+    needs: masak
+    if: needs.masak.outputs.berubah == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
