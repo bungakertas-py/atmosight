@@ -80,27 +80,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 3.13, BUKAN 3.11. numpy 2.5 menuntut Python 3.12 ke atas, dan dengan
-      # 3.11 pemasangannya gugur di baris pertama dengan "No matching
-      # distribution found". Kena betulan 21 Oktober 2026 waktu alur kerja ini
-      # pertama kali dijalankan di runner. Sebelumnya dia cuma pernah diuji
-      # lokal, dan venv lokal itu Python 3.13, jadi bentrokannya tidak pernah
-      # kelihatan.
+      # 3.12, SAMA DENGAN deploy.yml. numpy yang dikunci di requirements.txt
+      # menuntut Python 3.12 ke atas, dan dengan 3.11 pemasangannya gugur di
+      # baris pertama dengan "No matching distribution found". Kena betulan
+      # 21 Oktober 2026 waktu alur kerja ini pertama kali dijalankan di
+      # runner. Sebelumnya dia cuma pernah diuji lokal, dan venv lokal itu
+      # Python 3.13, jadi bentrokannya tidak pernah kelihatan.
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.12"
 
-      # cfgrib dan eccodes dipasang di sini, dan itu beda dengan alur kerja
-      # Himawari yang cuma butuh numpy sebab pembaca HSD-nya ditulis sendiri.
-      # GRIB2 ECMWF memakai pemampatan CCSDS, jadi menulis pembacanya sendiri
-      # tidak sepadan.
+      # cfgrib memakai eccodes dari wheel, tapi pasang libeccodes0 sistem
+      # sebagai jaring pengaman, sama dengan alur kerja yang lain.
+      - name: Pasang eccodes sistem
+        run: sudo apt-get update && sudo apt-get install -y libeccodes0
+
+      # LEWAT requirements.txt, BUKAN daftar sendiri. Alur kerja ini sempat
+      # memasang lima pustaka yang ditulis tangan di sini, dan jalan pertama
+      # di runner gugur sesudah delapan layer selesai sebab `requests` tidak
+      # ada di daftar itu. Rantainya tidak kelihatan dari sini: ecmwf.py
+      # memanggil profiles.py, profiles.py mengimpor download.py, dan
+      # download.py yang butuh requests. Begitu juga contourpy untuk isobar
+      # dan netCDF4 untuk OLR MJO.
       #
-      # Versinya DISAMAKAN PERSIS dengan venv yang dipakai menguji ECMWF
-      # lokal, sebab di situlah semua angka di dokumen backend diukur. Kalau
-      # runner memakai versi lain, keluarannya tidak bisa diadu lagi dengan
-      # keluaran lokal dan selisihnya akan dikira kesalahan kita.
+      # Lokal tidak pernah menunjukkan masalah ini sebab venv ujinya dibuat
+      # dengan --system-site-packages, jadi tiga pustaka itu terbaca dari
+      # sistem tanpa pernah disebut di mana pun.
+      #
+      # Satu berkas untuk semua alur kerja berarti pustaka yang kurang
+      # ketahuan di alur mana pun yang jalan duluan, bukan di satu alur yang
+      # kebetulan daftarnya tertinggal.
       - name: Pasang pustaka
-        run: pip install --quiet numpy==2.5.2 xarray==2026.7.0 cfgrib==0.9.15.1 eccodes==2.50.0 pillow==12.3.0
+        run: pip install --quiet -r requirements.txt
 
       # Cache BERSAMA dengan deploy.yml dan himawari.yml. Isinya seluruh
       # keluaran situs, bukan cuma punya ECMWF, dan itu yang menjaga model
