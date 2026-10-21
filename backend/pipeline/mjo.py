@@ -65,21 +65,22 @@ def _muat_basis() -> dict | None:
         return None
 
 
-def _muat_riwayat() -> dict:
+def _muat_riwayat(jalur: Path | None = None) -> dict:
     import gzip
     try:
-        return json.loads(gzip.decompress(RIWAYAT.read_bytes()).decode("utf-8"))
+        return json.loads(gzip.decompress((jalur or RIWAYAT).read_bytes()).decode("utf-8"))
     except Exception:
         return {"hari": [], "olr": [], "u850": [], "u200": []}
 
 
-def _simpan_riwayat(r: dict) -> None:
+def _simpan_riwayat(r: dict, jalur: Path | None = None) -> None:
     import gzip
-    RIWAYAT.parent.mkdir(parents=True, exist_ok=True)
+    jalur = jalur or RIWAYAT
+    jalur.parent.mkdir(parents=True, exist_ok=True)
     # mtime=0 supaya berkasnya BIT PER BIT SAMA kalau isinya sama. Tanpa itu
     # gzip menanam cap waktu dan git melihat perubahan tiap hari walau datanya
     # tidak berubah, lalu repo gemuk tanpa alasan.
-    RIWAYAT.write_bytes(gzip.compress(
+    jalur.write_bytes(gzip.compress(
         json.dumps(r, separators=(",", ":")).encode("utf-8"), mtime=0))
 
 
@@ -237,13 +238,27 @@ def hitung_indeks(basis: dict, riwayat: dict) -> dict | None:
             "hovmoller_anom": hov, "hovmoller_hari": hari[awal_hov:]}
 
 
-def bangun(output_dir: Path, kisi_amplop=None, run_time: str = "") -> dict | None:
-    """Pintu masuk dari run.py. Memulangkan isi mjo.json, atau None."""
+# RIWAYATNYA BOLEH DIPISAH PER MODEL lewat `riwayat_jalur`, dan itu BUKAN
+# kemewahan. Deret ini panjang, ratusan hari, dan dipakai menghitung anomali
+# serta onset. Kalau GFS dan ECMWF menulis ke berkas yang sama, satu deret
+# berisi dua model berselang seling tanpa ada yang bisa membedakannya lagi,
+# dan kerusakannya menumpuk diam diam selama bertahun tahun. Tanpa argumen
+# ini perilakunya persis seperti sebelumnya.
+def bangun(output_dir: Path, kisi_amplop=None, run_time: str = "",
+           riwayat_jalur: Path | None = None,
+           label_angin: str = "GFS") -> dict | None:
+    """Pintu masuk dari run.py. Memulangkan isi mjo.json, atau None.
+
+    `label_angin` masuk ke kalimat `sumber`, dan frontend MENAMPILKAN kalimat
+    itu apa adanya di panel MJO ("Indeks RMM dari ..."). Dulu kalimatnya
+    menyebut GFS secara mati, jadi begitu mjo dijalankan untuk model lain
+    panelnya mengaku memakai angin GFS padahal tidak. Bawaannya tetap GFS,
+    jadi GFS tidak berubah sama sekali."""
     basis = _muat_basis()
     if not basis:
         return None
     kisi = [float(x) for x in basis["lon"]]
-    riwayat = _rapikan(_muat_riwayat())
+    riwayat = _rapikan(_muat_riwayat(riwayat_jalur))
 
     hari_ini = dt.date.today().isoformat()
     mulai = (dt.date.today() - dt.timedelta(days=RIWAYAT_HARI)).isoformat()
@@ -271,7 +286,7 @@ def bangun(output_dir: Path, kisi_amplop=None, run_time: str = "") -> dict | Non
             riwayat["u850"].append(angin[0])
             riwayat["u200"].append(angin[1])
     riwayat = _rapikan(riwayat)
-    _simpan_riwayat(riwayat)
+    _simpan_riwayat(riwayat, riwayat_jalur)
     print(f"  mjo: riwayat {len(riwayat['hari'])} hari, terakhir "
           f"{riwayat['hari'][-1] if riwayat['hari'] else '-'}")
 
@@ -282,7 +297,7 @@ def bangun(output_dir: Path, kisi_amplop=None, run_time: str = "") -> dict | Non
     doc = {
         "run_time": run_time,
         "generated_at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "sumber": "OLR CPC blended + angin analisis GFS, dimasak GitHub Actions",
+        "sumber": f"OLR CPC blended + angin analisis {label_angin}, dimasak GitHub Actions",
         "metode": basis["metode"],
         "domain": {"lon_barat": kisi[0], "lon_timur": kisi[-1],
                    "lat_selatan": -15.0, "lat_utara": 15.0},

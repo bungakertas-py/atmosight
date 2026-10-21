@@ -74,10 +74,18 @@ def fetch_profile(run: dt.datetime, fstep: int) -> tuple[dict, dict] | None:
 
 
 def write_profile_data(times: list[str], per_time: list[dict], grid: dict,
-                       out_dir: Path = OUTPUT_DIR) -> int:
+                       out_dir: Path = OUTPUT_DIR,
+                       levels: list[int] | None = None) -> int:
     """Tulis profile.bin.gz + profile_meta.json dari daftar profil per-waktu.
-    per_time[i] = {t,r,u,v} shape (nlev, ny, nx) untuk times[i]."""
-    ntime, nlev, ny, nx = len(times), len(PROFILE_LEVELS), grid["ny"], grid["nx"]
+    per_time[i] = {t,r,u,v} shape (nlev, ny, nx) untuk times[i].
+
+    `levels` BOLEH BEDA DARI PROFILE_LEVELS, dan itu dipakai ECMWF. Open data
+    ECMWF cuma memberi 14 level tekanan sedangkan GFS 22. Bentuk berkasnya
+    sama persis, yang berbeda cuma panjang sumbu levelnya, dan frontend
+    membacanya dari `meta.levels` bukan dari angka mati. Tanpa argumen ini
+    perilakunya persis seperti sebelumnya."""
+    levels = PROFILE_LEVELS if levels is None else list(levels)
+    ntime, nlev, ny, nx = len(times), len(levels), grid["ny"], grid["nx"]
     blob = bytearray()
     layout = []
     per_sel = []
@@ -137,7 +145,7 @@ def write_profile_data(times: list[str], per_time: list[dict], grid: dict,
         "nx": nx, "ny": ny,
         "dx": round((grid["east"] - grid["west"]) / (nx - 1), 4),
         "dy": round((grid["north"] - grid["south"]) / (ny - 1), 4),
-        "levels": PROFILE_LEVELS, "times": times, "vars": layout,
+        "levels": levels, "times": times, "vars": layout,
         "cells": {"file": "profile_cells.bin", "stride": stride,
                   "bytes": int(ny) * int(nx) * stride},
     }

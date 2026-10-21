@@ -1,0 +1,87 @@
+name: ecmwf-uji
+
+# UJI COBA ECMWF IFS 9 km, DELAPAN layer plus akurasi METAR.
+#
+# SENGAJA TIDAK MENERBITKAN APA APA KE GITHUB PAGES. Hasilnya diunggah
+# sebagai artefak alur kerja saja, jadi situs yang hidup tidak tersentuh dan
+# deploy.yml tidak perlu diubah. Itu penting, sebab alur kerja di repo ini
+# saling menimpa kalau dua duanya menerbitkan ke Pages, dan jebakan itu
+# sudah pernah kena sekali waktu folder himawari terhapus oleh deploy GFS.
+#
+# TIDAK PUNYA JADWAL. Cuma workflow_dispatch, jadi dia tidak akan pernah
+# jalan sendiri. Layanan 9 km ECMWF baru dibuka 20 Oktober 2026 dan belum
+# tentu tiap run membawa folder 0p1, jadi menjadwalkannya sekarang cuma
+# akan mengisi log dengan kegagalan yang tidak berarti apa apa.
+#
+# YANG DIBUKTIKAN alur kerja ini empat hal.
+#   1. Berkas 0p1 bisa diambil dari runner GitHub tanpa akun dan tanpa kunci.
+#   2. Satu pesan GRIB bisa dipetik lewat .index plus HTTP Range, jadi yang
+#      diunduh megabita bukan ratusan megabita.
+#   3. Hasilnya bisa dipotong ke domain Atmosight dan diwarnai dengan skala
+#      warna yang SAMA PERSIS dengan GFS, jadi legenda tidak perlu disentuh.
+#   4. Akurasinya lawan METAR betul betul bisa dihitung di runner.
+#   5. Berapa lama satu run memakan waktu, dan berapa besar keluarannya.
+#
+# CIN dan tiga layer anomali SENGAJA TIDAK ADA di katalog, sebab open data
+# ECMWF memang tidak menyediakannya. Tombolnya otomatis redup di situs.
+# Alasan lengkapnya di docstring backend/pipeline/ecmwf.py.
+#
+# Kalau tiga kali jalan berturut turut mulus, barulah dipikirkan menaikkannya
+# jadi model sungguhan, dan waktu itu kontraknya ditulis untuk backend.
+on:
+  workflow_dispatch:
+    inputs:
+      langkah_maks:
+        description: "Batas jam prakiraan, 72 sejajar dengan GFS, 144 maksimum ECMWF"
+        required: false
+        default: "72"
+
+permissions:
+  contents: read
+
+jobs:
+  uji:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # cfgrib dan eccodes dipasang di sini, dan itu beda dengan alur kerja
+      # Himawari yang cuma butuh numpy sebab pembaca HSD-nya ditulis sendiri.
+      # GRIB2 ECMWF memakai pemampatan CCSDS, jadi menulis pembacanya sendiri
+      # tidak sepadan. Versinya dikunci sama dengan backend/requirements.txt
+      # supaya hasilnya bisa diadu dengan keluaran lokal.
+      - name: Pasang pustaka
+        run: pip install --quiet numpy==2.5.1 xarray==2026.7.0 cfgrib==0.9.15.1 eccodes==2.47.0 pillow==12.3.0
+
+      - name: Masak ECMWF 9 km
+        env:
+          LANGKAH_MAKS: ${{ inputs.langkah_maks }}
+          PYTHONUNBUFFERED: "1"
+        working-directory: backend/pipeline
+        run: python ecmwf.py
+
+      # Ringkasannya DITULIS PIPELINE, bukan dirakit di sini. Heredoc python
+      # di dalam blok `run: |` itu rapuh, penutupnya wajib rata kiri sedangkan
+      # YAML menjorokkan seluruh bloknya, jadi dia diam diam tidak pernah
+      # menutup. Lebih aman pipeline menulis berkasnya lalu di sini tinggal
+      # dituang.
+      - name: Ringkas hasilnya
+        if: always()
+        run: |
+          R=backend/data/output/ecmwf_9km/ringkas.md
+          if [ -f "$R" ]; then cat "$R" >> "$GITHUB_STEP_SUMMARY"
+          else echo "Ujinya gagal, tidak ada ringkasan." >> "$GITHUB_STEP_SUMMARY"; fi
+
+      - name: Unggah hasilnya buat dilihat
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ecmwf-9km
+          path: backend/data/output/ecmwf_9km
+          retention-days: 7
+          if-no-files-found: warn

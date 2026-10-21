@@ -67,18 +67,19 @@ def _muat_basis() -> dict | None:
         return None
 
 
-def _muat_riwayat() -> dict:
+def _muat_riwayat(jalur: Path | None = None) -> dict:
     try:
-        return json.loads(gzip.decompress(RIWAYAT.read_bytes()).decode("utf-8"))
+        return json.loads(gzip.decompress((jalur or RIWAYAT).read_bytes()).decode("utf-8"))
     except Exception:
         return {"hari": [], "u850": []}
 
 
-def _simpan_riwayat(r: dict) -> None:
-    RIWAYAT.parent.mkdir(parents=True, exist_ok=True)
+def _simpan_riwayat(r: dict, jalur: Path | None = None) -> None:
+    jalur = jalur or RIWAYAT
+    jalur.parent.mkdir(parents=True, exist_ok=True)
     # mtime=0 supaya berkasnya bit per bit sama kalau isinya sama, kalau tidak
     # git melihat perubahan tiap hari walau datanya tidak berubah.
-    RIWAYAT.write_bytes(gzip.compress(
+    jalur.write_bytes(gzip.compress(
         json.dumps(r, separators=(",", ":")).encode("utf-8"), mtime=0))
 
 
@@ -220,7 +221,14 @@ def _onset(hari: list[str], nilai: list[float], musim: str) -> dict:
     return {"musim": musim, "tanggal": None, "catatan": "belum onset"}
 
 
-def bangun(output_dir: Path, run_time: str | None = None) -> dict | None:
+# RIWAYATNYA BOLEH DIPISAH PER MODEL lewat `riwayat_jalur`, dan itu BUKAN
+# kemewahan. Deret ini panjang, ratusan hari, dan dipakai menghitung anomali
+# serta onset. Kalau GFS dan ECMWF menulis ke berkas yang sama, satu deret
+# berisi dua model berselang seling tanpa ada yang bisa membedakannya lagi,
+# dan kerusakannya menumpuk diam diam selama bertahun tahun. Tanpa argumen
+# ini perilakunya persis seperti sebelumnya.
+def bangun(output_dir: Path, run_time: str | None = None,
+           riwayat_jalur: Path | None = None) -> dict | None:
     basis = _muat_basis()
     if not basis:
         return None
@@ -232,11 +240,11 @@ def bangun(output_dir: Path, run_time: str | None = None) -> dict | None:
     tgl_anl = deret[0][0][:10]
     nilai_anl = deret[0][1]
 
-    riwayat = _rapikan(_muat_riwayat())
+    riwayat = _rapikan(_muat_riwayat(riwayat_jalur))
     pasang = dict(zip(riwayat["hari"], riwayat["u850"]))
     pasang[tgl_anl] = nilai_anl
     riwayat = _rapikan({"hari": list(pasang), "u850": [pasang[h] for h in pasang]})
-    _simpan_riwayat(riwayat)
+    _simpan_riwayat(riwayat, riwayat_jalur)
 
     hari, nilai = riwayat["hari"], riwayat["u850"]
     bias = basis.get("bias_gfs")
