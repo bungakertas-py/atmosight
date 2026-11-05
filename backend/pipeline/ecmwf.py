@@ -474,6 +474,11 @@ def profil_satu(run: dt.datetime, langkah: int, kerja: Path) -> tuple[dict, dict
     return keluar, g
 
 
+# Diisi bangun_profil(), dibaca penyusun katalog di bawah. Variabel modul,
+# bukan nilai kembalian, supaya tanda tangan bangun_profil tidak berubah.
+AKURASI_SONDE = None
+
+
 def bangun_profil(run: dt.datetime, langkah: list[int], kerja: Path,
                   out_dir: Path) -> int:
     """profile_cells.bin plus profile_meta.json, bentuknya sama dengan GFS.
@@ -502,8 +507,20 @@ def bangun_profil(run: dt.datetime, langkah: list[int], kerja: Path,
     if not waktu:
         print("  profil gagal seluruhnya, Skew-T tidak akan muncul")
         return 0
-    return write_profile_data(waktu, per_waktu, kisi, out_dir=out_dir,
-                              levels=PROFIL_LEVEL)
+    sz = write_profile_data(waktu, per_waktu, kisi, out_dir=out_dir,
+                            levels=PROFIL_LEVEL)
+    # Verifikasi radiosonde menumpang di sini, persis seperti di profiles.py
+    # milik GFS. Bahannya sudah di memori, nol unduhan tambahan. Dibungkus
+    # try sebab menarik dari server luar, dan kiriman tidak boleh gagal cuma
+    # karena kartu akurasi.
+    global AKURASI_SONDE
+    try:
+        import sonde_verify
+        AKURASI_SONDE = sonde_verify.jalankan(out_dir, per_waktu, waktu, kisi,
+                                              PROFIL_LEVEL, run)
+    except Exception as e:
+        print("  ! verifikasi radiosonde dilewati: %s" % str(e)[:90])
+    return sz
 
 
 # -------------------------------------------------------------------- utama
@@ -864,6 +881,12 @@ def jalan(out_dir: Path = OUTPUT, verifikasi: bool = True,
     }
     if akurasi:
         katalog["akurasi"] = akurasi
+    # Kartu akurasi KEDUA, lawan radiosonde. Punya sumbu level dan lead 24
+    # jam, jadi dia tidak pernah menimpa `akurasi` yang METAR dan permukaan.
+    if AKURASI_SONDE:
+        katalog["akurasi_sonde"] = AKURASI_SONDE
+        print("  akurasi radiosonde %.1f persen dari %d pasangan"
+              % (AKURASI_SONDE["nilai"], AKURASI_SONDE["pasangan"]))
     (out_dir / "catalog.json").write_text(json.dumps(katalog, indent=2))
 
     besar = sum(f.stat().st_size for f in out_dir.iterdir() if f.is_file())

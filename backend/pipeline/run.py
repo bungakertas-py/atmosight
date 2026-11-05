@@ -364,6 +364,17 @@ def main() -> None:
                   f"riwayat {len(au['deret']['hari'])} hari")
 
     catalog, total = reconcile_and_catalog(run)
+    # Kartu akurasi KEDUA, lawan radiosonde. Beda dari `akurasi` yang METAR
+    # dan permukaan: yang ini punya sumbu level dan lead 24 jam.
+    #
+    # WAJIB di sini, bukan di dekat build_profiles. `catalog` baru LAHIR di
+    # baris di atas, jadi menyisipkannya lebih awal memberi NameError dan
+    # menggagalkan seluruh kiriman. Sudah kejadian sekali waktu ditulis.
+    import profiles as _pf
+    if _pf.AKURASI_SONDE:
+        catalog["akurasi_sonde"] = _pf.AKURASI_SONDE
+        print(f"akurasi_sonde: {_pf.AKURASI_SONDE['nilai']}% "
+              f"({_pf.AKURASI_SONDE['pasangan']} pasangan)")
     (OUTPUT_DIR / "catalog.json").write_text(json.dumps(catalog, indent=2))
     days = sorted({f["valid_time"][:10]
                    for L in catalog["layers"].values() for f in L["frames"]})

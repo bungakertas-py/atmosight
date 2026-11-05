@@ -156,6 +156,11 @@ def write_profile_data(times: list[str], per_time: list[dict], grid: dict,
     return n_sel
 
 
+# Diisi build_profiles(), dibaca run.py sesudahnya. Dipakai variabel modul
+# dan bukan nilai kembalian supaya tanda tangan build_profiles tidak berubah.
+AKURASI_SONDE = None
+
+
 def build_profiles(run: dt.datetime, steps: list[int], times_of: dict) -> int:
     """Unduh & tulis profil untuk daftar langkah forecast. times_of[fstep] =
     valid_time string. Kembalikan ukuran file (byte), 0 bila kosong."""
@@ -170,4 +175,17 @@ def build_profiles(run: dt.datetime, steps: list[int], times_of: dict) -> int:
         print(f"  + profil f{fstep:03d} valid {times_of[fstep]}")
     if not per or pgrid is None:
         return 0
-    return write_profile_data(ptimes, per, pgrid)
+    sz = write_profile_data(ptimes, per, pgrid)
+    # Verifikasi radiosonde menumpang di sini, sebab seluruh bahannya SUDAH
+    # di memori: nilai model di level tekanan, waktunya, dan kisinya. Nol
+    # unduhan tambahan. Dibungkus try sebab dia menarik dari server luar
+    # (University of Wyoming) dan kiriman hari itu tidak boleh gagal cuma
+    # karena kartu akurasi. Hasilnya diambil pemanggil lewat AKURASI_SONDE.
+    global AKURASI_SONDE
+    try:
+        import sonde_verify
+        AKURASI_SONDE = sonde_verify.jalankan(OUTPUT_DIR, per, ptimes, pgrid,
+                                              PROFILE_LEVELS, run)
+    except Exception as e:
+        print(f"  ! verifikasi radiosonde dilewati: {e}")
+    return sz
